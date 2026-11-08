@@ -26,10 +26,14 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.2"
 ))()
 
-local Window = Athena:CreateWindow({ Title = "Athena", Theme = "Athena" })
+local Window = Athena:CreateWindow({
+    Title = "Athena",
+    Theme = "Athena",
+    DynamicIsland = { Enabled = true, Expanded = false, Animated = true },
+})
 local Tab = Window:CreateTab("Main")
 local Section = Tab:CreateSection("General")
 
@@ -99,7 +103,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.2"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -442,7 +446,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.2"
 ))()
 ```
 

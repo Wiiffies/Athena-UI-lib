@@ -89,7 +89,7 @@ function DynamicIsland.new(window, options)
 	root.Active = false
 	self.Root = root
 
-	local island = Util.Create("CanvasGroup", {
+	local island = Util.Create("Frame", {
 		Name = "Island",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromOffset(center.X, center.Y),
@@ -98,7 +98,6 @@ function DynamicIsland.new(window, options)
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
-		GroupTransparency = options.Animated == false and 0 or 1,
 		Visible = true,
 		ZIndex = 1001,
 		Parent = root,
@@ -106,7 +105,7 @@ function DynamicIsland.new(window, options)
 	Util.Corner(island, 22)
 	local islandStroke = Util.Stroke(island, theme.Border, 1, 1)
 	local islandScale = Instance.new("UIScale")
-	islandScale.Scale = options.Animated == false and 1 or 0.92
+	islandScale.Scale = 1
 	islandScale.Parent = island
 
 	self.Island = island
@@ -599,16 +598,13 @@ function DynamicIsland.new(window, options)
 
 	if self.Enabled then
 		self:_PlayIntro()
-		-- If a tween is interrupted before the island becomes opaque, snap it on.
+		-- The island is a plain Frame, so it stays visible even if a tween is interrupted.
 		task.delay(0.55, function()
 			if self.Destroyed or not self.Enabled then
 				return
 			end
 			self.Island.Visible = true
-			if self.Island.GroupTransparency > 0.99 then
-				self.Island.GroupTransparency = 0
-				self.IslandScale.Scale = 1
-			end
+			self.Island.BackgroundTransparency = 0
 		end)
 	else
 		island.Visible = false
@@ -625,6 +621,7 @@ function DynamicIsland:_PlayIntro()
 	local startY = targetY - 16
 
 	local function resetContent()
+		self.Island.BackgroundTransparency = 0
 		self.Avatar.Position = AVATAR_POS
 		self.AvatarScale.Scale = 1
 		self.NameLabel.Position = NAME_POS
@@ -636,7 +633,8 @@ function DynamicIsland:_PlayIntro()
 	end
 
 	if self.Options.Animated == false then
-		self.Island.GroupTransparency = 0
+		self.Island.Visible = true
+		self.Island.BackgroundTransparency = 0
 		self.IslandScale.Scale = 1
 		self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, targetY)
 		self.IslandStroke.Transparency = 0.8
@@ -646,8 +644,8 @@ function DynamicIsland:_PlayIntro()
 
 	self.Island.Visible = true
 	self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, startY)
-	self.Island.GroupTransparency = 1
-	self.IslandScale.Scale = 0.88
+	self.Island.BackgroundTransparency = 0
+	self.IslandScale.Scale = 0.96
 	self.IslandStroke.Transparency = 1
 	self.Island.Rotation = 0
 	self.Avatar.Position = UDim2.fromOffset(4, 8)
@@ -657,7 +655,7 @@ function DynamicIsland:_PlayIntro()
 	self.StatusLabel.Position = UDim2.fromOffset(38, 22)
 	self.StatusLabel.TextTransparency = 1
 	self.Dot.BackgroundTransparency = 1
-	Util.Tween(self.Island, { GroupTransparency = 0, Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandScale, { Scale = 1 }, 0.46, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandStroke, { Transparency = 0.8 }, 0.5)
 	task.delay(0.1, function()
@@ -788,24 +786,18 @@ function DynamicIsland:SetVisible(value, instant)
 
 	if value then
 		self.Island.Visible = true
-		self.Island.GroupTransparency = 1
-		self.IslandScale.Scale = 0.9
-		if instant then
-			self.Island.GroupTransparency = 0
-			self.IslandScale.Scale = 1
-		else
-			Util.Tween(self.Island, { GroupTransparency = 0 }, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		self.Island.BackgroundTransparency = 0
+		self.IslandScale.Scale = instant and 1 or 0.94
+		if not instant then
 			Util.Tween(self.IslandScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 		end
 	else
-		self.Island.GroupTransparency = 0
 		if instant then
 			self.Island.Visible = false
 			self.IslandScale.Scale = 1
 		else
-			Util.Tween(self.Island, { GroupTransparency = 1 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			Util.Tween(self.IslandScale, { Scale = 0.9 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			task.delay(0.2, function()
+			Util.Tween(self.IslandScale, { Scale = 0.94 }, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+			task.delay(0.16, function()
 				if self.Destroyed or token ~= self._visToken or self.Enabled then
 					return
 				end
