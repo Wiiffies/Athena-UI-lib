@@ -170,9 +170,11 @@ function Tab:AddAction(input)
 	local label = config.Name or config.Text or "Action"
 	local style = config.Style or "Secondary"
 	local isPrimary = style == "Primary"
+	local lowered = string.lower(tostring(label))
+	local showIcon = config.Icon and not (isPrimary and (lowered == "run" or lowered == "execute"))
 	local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 	local textWidth = Util.Measure(label, 11.5, labelFont).X
-	local iconSpace = config.Icon and (isPrimary and 28 or 20) or 0
+	local iconSpace = showIcon and (isPrimary and 28 or 20) or 0
 	local extra = isPrimary and 36 or 28
 	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 74 or 44, 168))
 
@@ -189,29 +191,6 @@ function Tab:AddAction(input)
 	Util.Corner(button, isPrimary and 17 or 9)
 	local buttonScale = Instance.new("UIScale")
 	buttonScale.Parent = button
-
-	local shadow
-	if isPrimary then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(1, theme.Primary),
-		})
-		gradient.Rotation = 90
-		gradient.Parent = button
-		shadow = Util.Create("Frame", {
-			Name = "Shadow",
-			Position = UDim2.fromOffset(0, 3),
-			Size = UDim2.fromScale(1, 1),
-			BackgroundColor3 = theme.Scrim,
-			BackgroundTransparency = 0.5,
-			BorderSizePixel = 0,
-			ZIndex = 0,
-			Parent = button,
-		})
-		Util.Corner(shadow, 17)
-		button.ZIndex = 1
-	end
 
 	local stroke
 	if style == "Secondary" then
@@ -234,7 +213,7 @@ function Tab:AddAction(input)
 	local icon
 	local iconChip
 	local iconChipScale
-	if config.Icon then
+	if showIcon then
 		if isPrimary then
 			iconChip = Util.Create("Frame", {
 				Name = "IconChip",
@@ -261,7 +240,7 @@ function Tab:AddAction(input)
 
 	local textX
 	local textRight
-	if config.Icon then
+	if showIcon then
 		textX = isPrimary and 32 or 25
 		textRight = isPrimary and 11 or 9
 	else
@@ -277,19 +256,18 @@ function Tab:AddAction(input)
 		Font = labelFont,
 		TextSize = 11.5,
 		TextColor3 = textColor,
-		TextXAlignment = config.Icon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+		TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3,
 		Parent = button,
 	})
 
+	local hovered = false
 	self.Maid:Add(button.MouseEnter:Connect(function()
+		hovered = true
 		if isPrimary then
 			Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
-			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = 0.34 }, 0.12)
-			end
-			Util.Tween(buttonScale, { Scale = 1.045 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Util.Tween(buttonScale, { Scale = 1.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			if iconChipScale then
 				Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end
@@ -310,11 +288,9 @@ function Tab:AddAction(input)
 		end
 	end))
 	self.Maid:Add(button.MouseLeave:Connect(function()
+		hovered = false
 		if isPrimary then
 			Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
-			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = 0.5 }, 0.12)
-			end
 			Util.Tween(buttonScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			if iconChipScale then
 				Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -332,12 +308,18 @@ function Tab:AddAction(input)
 		end
 	end))
 	self.Maid:Add(button.MouseButton1Down:Connect(function()
-		Util.Tween(buttonScale, { Scale = 0.955 }, 0.07)
+		if isPrimary then
+			Util.Tween(button, { BackgroundColor3 = theme.PrimaryPressed }, 0.07)
+		end
+		Util.Tween(buttonScale, { Scale = 0.97 }, 0.07)
 		if iconChipScale then
 			Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
 		end
 	end))
 	self.Maid:Add(button.MouseButton1Up:Connect(function()
+		if isPrimary then
+			Util.Tween(button, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
+		end
 		Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		if iconChipScale then
 			Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)

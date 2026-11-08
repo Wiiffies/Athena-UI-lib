@@ -87,7 +87,7 @@ function QuickMenu.new(window, options)
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -MARGIN, 1, -MARGIN),
 		Size = UDim2.fromOffset(PANEL_WIDTH, PANEL_HEIGHT),
-		BackgroundColor3 = theme.Overlay,
+		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		GroupTransparency = 1,
@@ -96,8 +96,8 @@ function QuickMenu.new(window, options)
 		Parent = root,
 	})
 	Util.Corner(panel, 13)
-	local panelStroke = Util.Stroke(panel, theme.Border, 1, 0.05)
-	panelStroke.Transparency = 0.05
+	local panelStroke = Util.Stroke(panel, theme.BorderSoft, 1, 0.35)
+	panelStroke.Transparency = 0.35
 	local panelScale = Instance.new("UIScale")
 	panelScale.Scale = 1
 	panelScale.Parent = panel
@@ -115,26 +115,10 @@ function QuickMenu.new(window, options)
 		Parent = panel,
 	})
 
-	local headerIcon = Util.Create("Frame", {
-		Name = "Glyph",
-		Position = UDim2.fromOffset(0, 3),
-		Size = UDim2.fromOffset(28, 28),
-		BackgroundColor3 = theme.SurfaceAlt,
-		BorderSizePixel = 0,
-		ZIndex = 223,
-		Parent = header,
-	})
-	Util.Corner(headerIcon, 8)
-	Util.Stroke(headerIcon, theme.BorderSoft, 1, 0.4)
-	local glyph = Icons.New("grid", 13, theme.Text, headerIcon, 224)
-	glyph.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	glyph.Frame.Position = UDim2.fromScale(0.5, 0.5)
-	self.HeaderIcon = glyph
-
 	Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(38, 1),
-		Size = UDim2.new(1, -120, 0, 17),
+		Position = UDim2.fromOffset(0, 1),
+		Size = UDim2.new(1, -90, 0, 17),
 		BackgroundTransparency = 1,
 		Text = options.Title or "Quick menu",
 		Font = theme.FontBold,
@@ -148,8 +132,8 @@ function QuickMenu.new(window, options)
 
 	Util.Create("TextLabel", {
 		Name = "Subtitle",
-		Position = UDim2.fromOffset(38, 18),
-		Size = UDim2.new(1, -120, 0, 13),
+		Position = UDim2.fromOffset(0, 18),
+		Size = UDim2.new(1, -90, 0, 13),
 		BackgroundTransparency = 1,
 		Text = options.Subtitle or "Search or run a command",
 		Font = theme.Font,
@@ -373,8 +357,7 @@ function QuickMenu:Open(instant)
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
 
 	if not instant then
-		self.HeaderIcon:Pulse(1.16, 0.3)
-		Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
+		Util.Tween(self.PanelStroke, { Transparency = 0.25 }, 0.2)
 	end
 
 	if self.Search.Text ~= "" then
@@ -387,7 +370,7 @@ function QuickMenu:Open(instant)
 		self.Panel.GroupTransparency = 0
 		self.PanelScale.Scale = 1
 		self.Panel.Position = self.PanelBase
-		self.PanelStroke.Transparency = 0.02
+		self.PanelStroke.Transparency = 0.25
 		return
 	end
 
@@ -409,9 +392,9 @@ function QuickMenu:Close(instant)
 		self.Search:ReleaseFocus()
 	end
 	if instant then
-		self.PanelStroke.Transparency = 0.05
+		self.PanelStroke.Transparency = 0.35
 	else
-		Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
+		Util.Tween(self.PanelStroke, { Transparency = 0.35 }, 0.18)
 	end
 
 	if not wasOpen or instant then
@@ -516,9 +499,6 @@ function QuickMenu:_Run(command)
 		return
 	end
 	-- Commands do not dismiss the palette; it belongs to the window shell.
-	if self.HeaderIcon then
-		self.HeaderIcon:Pulse(1.12, 0.2)
-	end
 	Util.Safe(command.Run)
 end
 
@@ -542,24 +522,10 @@ function QuickMenu:_BuildRow(command, index)
 	rowScale.Scale = 0.94
 	rowScale.Parent = row
 
-	local iconTile = Util.Create("Frame", {
-		Name = "Glyph",
-		Position = UDim2.fromOffset(9, 8),
-		Size = UDim2.fromOffset(28, 28),
-		BackgroundColor3 = theme.Surface,
-		BorderSizePixel = 0,
-		ZIndex = 223,
-		Parent = row,
-	})
-	Util.Corner(iconTile, 7)
-	local icon = Icons.New(command.Icon, 12, theme.TextSoft, iconTile, 224)
-	icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-
 	Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(47, 5),
-		Size = UDim2.new(1, -82, 0, 15),
+		Position = UDim2.fromOffset(12, 5),
+		Size = UDim2.new(1, -24, 0, 15),
 		BackgroundTransparency = 1,
 		Text = command.Title,
 		Font = theme.FontMedium,
@@ -572,8 +538,8 @@ function QuickMenu:_BuildRow(command, index)
 	})
 	Util.Create("TextLabel", {
 		Name = "Description",
-		Position = UDim2.fromOffset(47, 20),
-		Size = UDim2.new(1, -82, 0, 13),
+		Position = UDim2.fromOffset(12, 20),
+		Size = UDim2.new(1, -24, 0, 13),
 		BackgroundTransparency = 1,
 		Text = command.Description,
 		Font = theme.Font,
@@ -584,9 +550,6 @@ function QuickMenu:_BuildRow(command, index)
 		ZIndex = 223,
 		Parent = row,
 	})
-	local chevron = Icons.New("chevronRight", 9, theme.TextFaint, row, 223)
-	chevron.Frame.AnchorPoint = Vector2.new(1, 0.5)
-	chevron.Frame.Position = UDim2.new(1, -10, 0.5, 0)
 
 	local rowMaid = Util.Maid.new()
 	row.Destroying:Once(function()
@@ -596,21 +559,13 @@ function QuickMenu:_BuildRow(command, index)
 	rowMaid:Add(row.MouseEnter:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.55 }, 0.1)
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		icon:SetColor(theme.Text)
-		chevron:SetColor(theme.TextSoft)
-		icon:Pulse(1.12, 0.2)
-		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -6, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 		Util.Tween(rowScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		icon:SetColor(theme.TextSoft)
-		chevron:SetColor(theme.TextFaint)
-		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -10, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(rowScale, { Scale = 0.97 }, 0.06)
-		icon:Pulse(0.88, 0.1)
 	end))
 	rowMaid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)

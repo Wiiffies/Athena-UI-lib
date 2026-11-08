@@ -7,7 +7,7 @@
 	Press RightShift to hide or show the window.
 ]]
 
-local LIBRARY_VERSION = "1.0.3"
+local LIBRARY_VERSION = "1.1.0"
 local LIBRARY_URL = "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=" .. LIBRARY_VERSION
 
 local Athena = loadstring(game:HttpGet(LIBRARY_URL))()
@@ -157,7 +157,6 @@ Editor:AddAction({
 
 Editor:AddAction({
 	Name = "Execute",
-	Icon = "play",
 	Style = "Primary",
 	Callback = function()
 		toast("Executed", "player_esp.lua is running.", "Success")
@@ -218,7 +217,6 @@ ScriptSection:CreateButton({
 	Name = "Run script",
 	Description = "Executes the current buffer.",
 	ButtonText = "Execute",
-	Icon = "play",
 	Callback = function()
 		toast("Executed", fileBox:Get() .. " is running.", "Success")
 	end,
@@ -262,7 +260,6 @@ Hub:CreateCard({
 		{
 			Name = "Run",
 			Style = "Primary",
-			Icon = "play",
 			Callback = function()
 				toast("Player ESP", "Script injected.", "Success")
 			end,
@@ -292,7 +289,6 @@ Hub:CreateCard({
 		{
 			Name = "Run",
 			Style = "Primary",
-			Icon = "play",
 			Callback = function()
 				toast("Aimbot", "Script injected.", "Success")
 			end,
@@ -398,7 +394,6 @@ Target:CreateButton({
 	Name = "Launch client",
 	Description = "Starts a new client and joins the game.",
 	ButtonText = "Launch",
-	Icon = "play",
 	Callback = function()
 		toast("Launching", "Opening 1 client in Adopt Me!.", "Success")
 	end,
@@ -469,7 +464,6 @@ Automation:CreateCard({
 		{
 			Name = "Run",
 			Style = "Primary",
-			Icon = "play",
 			Callback = function()
 				toast("Adopt Me farm", "Started, opening 1 client in Adopt Me!.", "Success")
 			end,
@@ -521,7 +515,6 @@ Automation:CreateCard({
 		{
 			Name = "Run",
 			Style = "Primary",
-			Icon = "play",
 			Callback = function()
 				toast("MM2 grind", "Started, opening 1 client in Murder Mystery 2.", "Success")
 			end,
@@ -557,7 +550,6 @@ RunSettings:CreateButton({
 	Name = "Run the selected automation",
 	Description = "Starts it with the settings above.",
 	ButtonText = "Run",
-	Icon = "play",
 	Callback = function()
 		toast("Automation", "Started with the current run settings.", "Success")
 	end,
@@ -580,7 +572,6 @@ General:CreateButton({
 	Name = "Example Button",
 	Description = "Runs the callback below.",
 	ButtonText = "Run",
-	Icon = "play",
 	Callback = function()
 		toast("Button", "Clicked at " .. os.date("%H:%M:%S") .. ".", "Info")
 	end,
@@ -746,7 +737,7 @@ IslandSection:CreateButton({
 
 IslandSection:CreateButton({
 	Name = "Expand or collapse the readouts",
-	Description = "Adds uptime, FPS and ping tiles.",
+	Description = "Adds uptime, FPS, ping, memory, players and local-time tiles.",
 	ButtonText = "Expand",
 	Style = "Secondary",
 	Callback = function()

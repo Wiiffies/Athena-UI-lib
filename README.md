@@ -18,15 +18,15 @@ interface library, written in Luau.
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
-- A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated command rows and window actions. The old floating grid trigger is gone.
-- A draggable dynamic island above the window with the player's avatar, username, live uptime and expandable FPS/ping readouts. Click it to expand, drag it to reposition it, and toggle it from the quick menu or `Window:ToggleDynamicIsland()`.
+- A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated text-only command rows and window actions. The old floating grid trigger is gone.
+- A draggable dynamic island pinned to the top centre. The collapsed pill shows the avatar, username, runtime, FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. It clamps to every edge while dragging without clipping.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
 
 ## Quick start
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.3"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -83,8 +83,9 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The dynamic island is created automatically at the top centre. Click it to expand its FPS and ping
-readouts, drag it anywhere, or start it hidden with `DynamicIsland = { Enabled = false }`.
+The dynamic island is created automatically at the top centre. The collapsed pill shows runtime,
+FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. Drag it anywhere,
+or start it hidden with `DynamicIsland = { Enabled = false }`.
 
 The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
 with the tabs. Use `Window:Center()`, `Window:SetTitle(text)` and `Window:SetToggleKey(key)` to drive
@@ -107,7 +108,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.3"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -197,7 +198,7 @@ Main:CreateCard({
     Status = "Ready",
     Actions = {
         { Name = "Edit", Style = "Ghost", Callback = function() print("Edit clicked") end },
-        { Name = "Run", Style = "Primary", Icon = "play", Callback = function() print("Run clicked") end },
+        { Name = "Run", Style = "Primary", Callback = function() print("Run clicked") end },
     },
 })
 
@@ -217,7 +218,6 @@ General:CreateButton({
     Name = "Example Button",
     Description = "Runs the callback below.",
     ButtonText = "Run",
-    Icon = "play",
     Callback = function()
         Window:Notify({ Title = "Button", Text = "Clicked at " .. os.date("%H:%M:%S"), Tone = "Info" })
     end,
@@ -450,7 +450,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.3"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
 ))()
 ```
 
@@ -585,19 +585,19 @@ The recreation follows the reference screen closely:
 - Active tab is white with a 2px white underline that scrolls into view; counts use compact white badges.
 - Sliders use an inset white rail with a centred thumb; the page stays still while you drag.
 - Motion is short and restrained (0.12–0.46s, Quint/Quad/Back out): tab pages fade and slide in,
-  pills lift and press, the underline glides, the bell badge pulses, popups rise, and the island
-  slides in, shimmers its username, orbits its avatar, sweeps a glass highlight, breathes on hover,
-  springs open into its stats and pulses its live dot.
+  pills lift and press, the underline glides, the bell badge pulses and popups rise. Primary
+  buttons are flat matte white with no icon and step down to gray on hover and press. The island
+  settles in from a short lift, springs open into its stats and pulses its live dot — no sheen.
 - Type uses Gotham/GothamMedium/GothamBold — the closest Roblox families to Athena's Geist/Inter.
 
 ## Notes
 
 - UI icons are public Lucide image assets, colour-tinted at runtime; the Athena brand mark keeps
-  its original vector logo. Button icons lift on hover, dip on press and pulse in the quick menu,
-  dropdowns and notifications.
-- Window and island drags keep a 44px top safe area so neither can slide under Roblox's top bar.
-- The dynamic island's avatar, uptime, FPS and ping refresh live; clicking toggles its stat row and
-  dragging it never moves the main window.
+  its original vector logo. Secondary and ghost button icons lift on hover and dip on press.
+- Window drags keep a 44px top safe area. The island is pinned 8px from the top edge and clamps
+  to the viewport on every side while dragging.
+- The island's runtime, FPS, ping, memory, player count and local time refresh live; clicking
+  toggles its stat panel and dragging it never moves the main window.
 - Dropdown, colour-picker, bell and search panels close on outside click, `Escape`, tab change,
   drag and viewport resize.
 - `Section:Destroy()`, `Tab:Destroy()` and `Window:Destroy()` disconnect everything they created.

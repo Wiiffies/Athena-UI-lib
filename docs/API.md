@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.3"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -43,7 +43,7 @@ Window:SetDynamicIslandEnabled(true)
 | `ToggleKey` | Enum.KeyCode or `false` | `RightShift` | Keyboard show/hide. |
 | `QuickMenu` | boolean or table | `true` | Bottom-right command palette, visible with the window; `false` disables it. |
 | `QuickMenuKey` | Enum.KeyCode or `false` | `K` | Hide/show the window and quick menu together. |
-| `DynamicIsland` | boolean or table | `true` | Draggable live session HUD. `false` disables it; table accepts `Enabled`, `Expanded`, `Animated`. |
+| `DynamicIsland` | boolean or table | `true` | Draggable live session HUD pinned to the top centre. `false` disables it; table accepts `Enabled`, `Expanded`, `Animated`. |
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
 
@@ -70,10 +70,11 @@ Window:SetDynamicIslandEnabled(true)
 
 ### Dynamic island
 
-Every window creates a small draggable HUD at the top centre by default. It shows the local
-player's avatar, `@username` and a live running clock. Click it to expand FPS and ping readouts;
-drag it anywhere to move it. It is independent of the main window, so **K** can hide the window
-while the island stays visible.
+Every window creates a small draggable HUD pinned 8px from the top edge and centred horizontally.
+The collapsed pill shows the local player's avatar, `@username`, runtime, FPS and ping. Click it
+to expand memory, player count and local time alongside uptime, FPS and ping. Drag it anywhere;
+it clamps to the viewport without clipping. It is independent of the main window, so **K** can
+hide the window while the island stays visible.
 
 ```lua
 Window:ToggleDynamicIsland()
@@ -92,7 +93,7 @@ end
 | --- | --- |
 | `SetVisible(bool, instant)` | Animate the island in or out (`instant = true` snaps it). |
 | `Toggle()` | Flip the current visibility. |
-| `SetExpanded(bool)` / `ToggleExpanded()` | Open or close the uptime, FPS and ping row. |
+| `SetExpanded(bool)` / `ToggleExpanded()` | Open or close the uptime, FPS, ping, memory, players and local-time panel. |
 | `GetUptime()` | Seconds since the island was created. |
 | `Destroy()` | Remove the island and disconnect its updates. |
 
@@ -155,7 +156,7 @@ Tab:CreateCard({
     Status = "Opening clients",
     Actions = {
         { Name = "Edit", Style = "Ghost", Callback = function() end },
-        { Name = "Run", Style = "Primary", Icon = "play", Callback = function() end },
+        { Name = "Run", Style = "Primary", Callback = function() end },
     },
     Toggle = {
         Default = true,
@@ -200,8 +201,7 @@ Section:CreateButton({
     Name = "Example Button",
     Description = "Runs the callback.",
     ButtonText = "Run",        -- text shown on the pill (default "Run")
-    Icon = "play",             -- optional icon inside the pill
-    Style = "Primary",         -- Primary | Secondary | Ghost
+    Style = "Primary",         -- Primary | Secondary | Ghost; primary is flat white with no icon
     Enabled = true,
     Callback = function() end,
 })
@@ -377,7 +377,7 @@ Returns `{ Close = function() end }`.
 | Lines | `Border`, `BorderSoft`, `Highlight` |
 | Type | `Text`, `TextSoft`, `TextMuted`, `TextFaint` |
 | Accent | `Accent`, `AccentText`, `AccentSoft`, `Success`, `Warning`, `Error`, `Info` |
-| Controls | `Primary`, `PrimaryHover`, `PrimaryText`, `Track`, `TrackFill`, `ToggleOn`, `ToggleOff`, `Knob`, `KnobOn`, `Chip`, `Scrim` |
+| Controls | `Primary`, `PrimaryHover`, `PrimaryPressed`, `PrimaryText`, `Track`, `TrackFill`, `ToggleOn`, `ToggleOff`, `Knob`, `KnobOn`, `Chip`, `Scrim` |
 | Typography | `Font`, `FontMedium`, `FontBold`, `FontMono`, `TextSize`, `TextSizeSmall`, `TextSizeTitle` |
 | Metrics | `Corner`, `CornerCard`, `CornerSmall`, `CornerChip`, `TopbarHeight` |
 | Motion | `Speed`, `SpeedSlow` |
@@ -417,7 +417,7 @@ hover and press automatically.
 ## Behaviour and cleanup
 
 - The window is draggable from the top bar and clamped to the viewport, with a 44px top safe
-  area so it cannot slide under Roblox's top bar.
+  area. The island sits 8px from the top edge and clamps on every side without clipping.
 - Title bar controls: tab search, notification panel, minimise, expand and close (hovering close
   tints it with the accent colour).
 - `UIScale` keeps the layout proportional on small and large screens; the base size never changes,

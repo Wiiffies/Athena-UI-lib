@@ -1,8 +1,8 @@
 --[[
 	Athena · DynamicIsland
-	A small, draggable status pill that lives above the window.
-	It shows who is running the script, how long it has been running,
-	and expands into live FPS and ping readouts.
+	A small, draggable status pill pinned to the top centre.
+	It shows who is running the script, runtime, live FPS and ping,
+	and expands into memory, player count and local-time readouts.
 ]]
 
 local Players = game:GetService("Players")
@@ -15,11 +15,11 @@ local Dragger = require(script.Parent.Core.Dragger)
 local DynamicIsland = {}
 DynamicIsland.__index = DynamicIsland
 
-local COLLAPSED_WIDTH = 236
+local COLLAPSED_WIDTH = 252
 local COLLAPSED_HEIGHT = 44
 local EXPANDED_WIDTH = 312
-local EXPANDED_HEIGHT = 112
-local SAFE_TOP = 64
+local EXPANDED_HEIGHT = 154
+local SAFE_TOP = 8
 local SIDE_MARGIN = 8
 local AVATAR_POS = UDim2.fromOffset(9, 8)
 local NAME_POS = UDim2.fromOffset(46, 7)
@@ -42,6 +42,16 @@ local function getPing()
 	end)
 	if ok and type(value) == "number" then
 		return math.max(0, math.floor(value + 0.5))
+	end
+	return nil
+end
+
+local function getMemory()
+	local ok, value = pcall(function()
+		return Stats:GetTotalMemoryUsageMb()
+	end)
+	if ok and type(value) == "number" then
+		return math.max(0, value)
 	end
 	return nil
 end
@@ -94,16 +104,16 @@ function DynamicIsland.new(window, options)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromOffset(center.X, center.Y),
 		Size = UDim2.fromOffset(self.Expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH, initialHeight),
-		BackgroundColor3 = theme.Overlay,
+		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
+		ClipsDescendants = false,
 		Visible = true,
 		ZIndex = 1001,
 		Parent = root,
 	})
 	Util.Corner(island, 22)
-	local islandStroke = Util.Stroke(island, theme.Border, 1, 1)
+	local islandStroke = Util.Stroke(island, theme.BorderSoft, 1, 0.55)
 	local islandScale = Instance.new("UIScale")
 	islandScale.Scale = 1
 	islandScale.Parent = island
@@ -143,31 +153,6 @@ function DynamicIsland.new(window, options)
 		Parent = avatar,
 	})
 
-	-- A slow orbit dot and ring make the avatar feel alive without distracting from the name.
-	local orbit = Util.Create("Frame", {
-		Name = "AvatarOrbit",
-		Position = UDim2.fromOffset(7, 6),
-		Size = UDim2.fromOffset(32, 32),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Active = false,
-		ZIndex = 2,
-		Parent = island,
-	})
-	Util.Corner(orbit, 16)
-	Util.Stroke(orbit, theme.Primary, 1, 0.72)
-	local orbitDot = Util.Create("Frame", {
-		Name = "OrbitDot",
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 0),
-		Size = UDim2.fromOffset(3, 3),
-		BackgroundColor3 = theme.Primary,
-		BorderSizePixel = 0,
-		ZIndex = 3,
-		Parent = orbit,
-	})
-	Util.Corner(orbitDot, 1.5)
-
 	local nameLabel = Util.Create("TextLabel", {
 		Name = "Username",
 		Position = UDim2.fromOffset(46, 7),
@@ -183,21 +168,12 @@ function DynamicIsland.new(window, options)
 		ZIndex = 3,
 		Parent = island,
 	})
-	local nameGradient = Instance.new("UIGradient")
-	nameGradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, theme.TextSoft),
-		ColorSequenceKeypoint.new(0.5, theme.Text),
-		ColorSequenceKeypoint.new(1, theme.TextSoft),
-	})
-	nameGradient.Parent = nameLabel
-	self.NameGradient = nameGradient
-
 	local statusLabel = Util.Create("TextLabel", {
 		Name = "Status",
 		Position = UDim2.fromOffset(46, 22),
 		Size = UDim2.new(1, -92, 0, 13),
 		BackgroundTransparency = 1,
-		Text = "Running 00:00",
+		Text = "00:00 · 0 FPS",
 		Font = theme.Font,
 		TextSize = 9.5,
 		TextColor3 = theme.TextMuted,
@@ -262,7 +238,7 @@ function DynamicIsland.new(window, options)
 	local statsFrame = Util.Create("CanvasGroup", {
 		Name = "Stats",
 		Position = UDim2.fromOffset(10, 54),
-		Size = UDim2.new(1, -20, 0, 44),
+		Size = UDim2.new(1, -20, 0, 88),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		GroupTransparency = 1,
@@ -270,8 +246,14 @@ function DynamicIsland.new(window, options)
 		ZIndex = 2,
 		Parent = island,
 	})
-	local statsLayout = Util.RowList(statsFrame, 6)
-	statsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	local statsGrid = Instance.new("UIGridLayout")
+	statsGrid.CellSize = UDim2.fromOffset(87, 40)
+	statsGrid.CellPadding = UDim2.fromOffset(6, 6)
+	statsGrid.FillDirection = Enum.FillDirection.Horizontal
+	statsGrid.SortOrder = Enum.SortOrder.LayoutOrder
+	statsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	statsGrid.VerticalAlignment = Enum.VerticalAlignment.Top
+	statsGrid.Parent = statsFrame
 	local statsScale = Instance.new("UIScale")
 	statsScale.Parent = statsFrame
 
@@ -323,14 +305,15 @@ function DynamicIsland.new(window, options)
 	local uptimeTile, uptimeTileScale, uptimeValue, uptimeValueScale = makeStat("UPTIME", 1)
 	local fpsTile, fpsTileScale, fpsValue, fpsValueScale = makeStat("FPS", 2)
 	local pingTile, pingTileScale, pingValue, pingValueScale = makeStat("PING", 3)
+	local memoryTile, memoryTileScale, memoryValue, memoryValueScale = makeStat("MEMORY", 4)
+	local playersTile, playersTileScale, playersValue, playersValueScale = makeStat("PLAYERS", 5)
+	local timeTile, timeTileScale, timeValue, timeValueScale = makeStat("LOCAL TIME", 6)
 
 	self.Avatar = avatar
 	self.AvatarScale = avatarScale
 	self.AvatarLetter = avatarLetter
 	self.NameLabel = nameLabel
 	self.StatusLabel = statusLabel
-	self.Orbit = orbit
-	self.OrbitDot = orbitDot
 	self.Dot = dot
 	self.DotScale = dotScale
 	self.DotRing = dotRing
@@ -342,16 +325,25 @@ function DynamicIsland.new(window, options)
 		{ Frame = uptimeTile, Scale = uptimeTileScale },
 		{ Frame = fpsTile, Scale = fpsTileScale },
 		{ Frame = pingTile, Scale = pingTileScale },
+		{ Frame = memoryTile, Scale = memoryTileScale },
+		{ Frame = playersTile, Scale = playersTileScale },
+		{ Frame = timeTile, Scale = timeTileScale },
 	}
 	self.Values = {
 		Uptime = uptimeValue,
 		FPS = fpsValue,
 		Ping = pingValue,
+		Memory = memoryValue,
+		Players = playersValue,
+		Time = timeValue,
 	}
 	self.ValueScales = {
 		Uptime = uptimeValueScale,
 		FPS = fpsValueScale,
 		Ping = pingValueScale,
+		Memory = memoryValueScale,
+		Players = playersValueScale,
+		Time = timeValueScale,
 	}
 
 	-- The drag surface sits above the labels so every part of the pill drags.
@@ -366,49 +358,17 @@ function DynamicIsland.new(window, options)
 	})
 	self.DragSurface = dragSurface
 
-	-- A soft specular sweep across the glass, clipped to the pill.
-	local sheen = Util.Create("Frame", {
-		Name = "Sheen",
-		Position = UDim2.fromOffset(-60, -70),
-		Size = UDim2.fromOffset(50, 220),
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.82,
-		BorderSizePixel = 0,
-		Rotation = 16,
-		Active = false,
-		ZIndex = 20,
-		Parent = island,
-	})
-	local sheenGradient = Instance.new("UIGradient")
-	sheenGradient.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.5, 0.45),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	sheenGradient.Parent = sheen
-	self.Sheen = sheen
-
 	Dragger.Attach(island, dragSurface, self.Maid, {
 		Threshold = 4,
 		Margin = SIDE_MARGIN,
 		TopMargin = SAFE_TOP,
 		OnDragStart = function()
 			self.Dragging = true
-			self.Island.Rotation = 0
-			self.IslandScale.Scale = 1.045
-			self.IslandStroke.Transparency = 0.25
-		end,
-		OnDrag = function()
-			if not self.Dragging then
-				return
-			end
-			self.IslandScale.Scale = 1.025
+			self.IslandStroke.Transparency = 0.3
 		end,
 		OnDragEnd = function(moved)
 			self.Dragging = false
-			self.IslandScale.Scale = 1
-			self.IslandStroke.Transparency = 0.8
-			Util.Tween(self.Island, { Rotation = 0 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			self.IslandStroke.Transparency = 0.55
 			Dragger.Clamp(island, SIDE_MARGIN, SAFE_TOP)
 			if not moved then
 				self:_SetExpanded(not self.Expanded)
@@ -417,43 +377,14 @@ function DynamicIsland.new(window, options)
 	})
 
 	self.Maid:Add(dragSurface.MouseEnter:Connect(function()
-		if self.Dragging then
-			return
+		if not self.Dragging then
+			Util.Tween(self.IslandStroke, { Transparency = 0.3 }, 0.18)
 		end
-		Util.Tween(self.IslandScale, { Scale = 1.015 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Util.Tween(self.IslandStroke, { Transparency = 0.35 }, 0.18)
 	end))
 
 	self.Maid:Add(dragSurface.MouseLeave:Connect(function()
-		if self.Dragging then
-			return
-		end
-		Util.Tween(self.IslandScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Util.Tween(self.IslandStroke, { Transparency = 0.8 }, 0.2)
-		Util.Tween(self.Island, { Rotation = 0 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end))
-
-	-- A tiny parallax tilt follows the cursor while the pill is hovered.
-	self.Maid:Add(dragSurface.MouseMoved:Connect(function(x, y)
-		if self.Dragging or not self.Enabled then
-			return
-		end
-		local size = self.Island.AbsoluteSize
-		if size.X <= 1 or size.Y <= 1 then
-			return
-		end
-		local origin = self.Island.AbsolutePosition
-		local relativeX = ((x - origin.X) / size.X) - 0.5
-		Util.Tween(self.Island, { Rotation = relativeX * 1.1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end))
-
-	self.Maid:Add(dragSurface.MouseButton1Down:Connect(function()
-		Util.Tween(self.IslandScale, { Scale = 0.985 }, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	end))
-
-	self.Maid:Add(dragSurface.MouseButton1Up:Connect(function()
 		if not self.Dragging then
-			Util.Tween(self.IslandScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.2)
 		end
 	end))
 
@@ -490,12 +421,6 @@ function DynamicIsland.new(window, options)
 			frameCount = 0
 			frameTime = 0
 		end
-		if self.Orbit then
-			self.Orbit.Rotation = (os.clock() * 38) % 360
-		end
-		if self.NameGradient then
-			self.NameGradient.Offset = Vector2.new(math.sin(os.clock() * 0.9) * 0.25, 0)
-		end
 	end))
 
 	local function pulseValue(scale)
@@ -509,12 +434,14 @@ function DynamicIsland.new(window, options)
 	local lastClock = ""
 	local lastFPS = nil
 	local lastPing = nil
+	local lastMemory = nil
+	local lastPlayers = nil
+	local lastTime = nil
 	local updateThread = task.spawn(function()
 		while not self.Destroyed do
 			local clock = formatTime(os.clock() - self.StartedAt)
 			if clock ~= lastClock then
 				lastClock = clock
-				self.StatusLabel.Text = "Running " .. clock
 				self.Values.Uptime.Text = clock
 				pulseValue(self.ValueScales.Uptime)
 			end
@@ -529,6 +456,30 @@ function DynamicIsland.new(window, options)
 				self.Values.Ping.Text = self.Ping and (tostring(self.Ping) .. " ms") or "—"
 				pulseValue(self.ValueScales.Ping)
 			end
+			self.StatusLabel.Text = lastClock .. " · " .. tostring(self.FPS) .. " FPS" .. (self.Ping and (" · " .. tostring(self.Ping) .. " ms") or "")
+
+			local memory = getMemory()
+			local memoryText = memory and (string.format("%.0f MB", memory)) or "—"
+			if memoryText ~= lastMemory then
+				lastMemory = memoryText
+				self.Values.Memory.Text = memoryText
+				pulseValue(self.ValueScales.Memory)
+			end
+
+			local playerCount = #Players:GetPlayers()
+			if playerCount ~= lastPlayers then
+				lastPlayers = playerCount
+				self.Values.Players.Text = tostring(playerCount)
+				pulseValue(self.ValueScales.Players)
+			end
+
+			local localTime = os.date("%H:%M")
+			if localTime ~= lastTime then
+				lastTime = localTime
+				self.Values.Time.Text = localTime
+				pulseValue(self.ValueScales.Time)
+			end
+
 			task.wait(0.25)
 		end
 	end)
@@ -566,23 +517,6 @@ function DynamicIsland.new(window, options)
 		end
 	end)
 	self.Maid:Add(pulseThread)
-
-	local sheenThread = task.spawn(function()
-		while not self.Destroyed do
-			if self.Enabled and self.Island.Visible then
-				local width = self.Island.AbsoluteSize.X
-				if width < 1 then
-					width = COLLAPSED_WIDTH
-				end
-				self.Sheen.Position = UDim2.fromOffset(-60, -70)
-				Util.Tween(self.Sheen, { Position = UDim2.fromOffset(width + 60, -70) }, 1.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				task.wait(3.9)
-			else
-				task.wait(1)
-			end
-		end
-	end)
-	self.Maid:Add(sheenThread)
 
 	-- Keep the busy pill on-screen when the viewport changes.
 	local camera = workspace.CurrentCamera
@@ -637,7 +571,7 @@ function DynamicIsland:_PlayIntro()
 		self.Island.BackgroundTransparency = 0
 		self.IslandScale.Scale = 1
 		self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, targetY)
-		self.IslandStroke.Transparency = 0.8
+		self.IslandStroke.Transparency = 0.55
 		resetContent()
 		return
 	end
@@ -657,7 +591,7 @@ function DynamicIsland:_PlayIntro()
 	self.Dot.BackgroundTransparency = 1
 	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandScale, { Scale = 1 }, 0.46, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-	Util.Tween(self.IslandStroke, { Transparency = 0.8 }, 0.5)
+	Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.5)
 	task.delay(0.1, function()
 		if self.Destroyed then
 			return

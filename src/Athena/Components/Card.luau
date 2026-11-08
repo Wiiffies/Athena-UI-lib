@@ -239,9 +239,10 @@ function Card.new(tab, options)
 		local label = action.Name or action.Text or "Action"
 		local style = action.Style or "Ghost"
 		local isPrimary = style == "Primary"
+		local showIcon = action.Icon and not isPrimary
 		local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 		local textWidth = Util.Measure(label, 11.5, labelFont).X
-		local extra = isPrimary and (action.Icon and 58 or 36) or (action.Icon and 32 or 24)
+		local extra = isPrimary and 36 or (showIcon and 32 or 24)
 		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 70 or 50, 150))
 
 		local button = Util.Create("TextButton", {
@@ -259,74 +260,17 @@ function Card.new(tab, options)
 		local buttonScale = Instance.new("UIScale")
 		buttonScale.Parent = button
 
-		if isPrimary then
-			local gradient = Instance.new("UIGradient")
-			gradient.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-				ColorSequenceKeypoint.new(1, theme.Primary),
-			})
-			gradient.Rotation = 90
-			gradient.Parent = button
-		end
-
-		local shadow
-		if isPrimary then
-			shadow = Util.Create("Frame", {
-				Name = "Shadow",
-				Position = UDim2.fromOffset(0, 3),
-				Size = UDim2.fromScale(1, 1),
-				BackgroundColor3 = theme.Scrim,
-				BackgroundTransparency = 0.5,
-				BorderSizePixel = 0,
-				ZIndex = 0,
-				Parent = button,
-			})
-			Util.Corner(shadow, 16)
-			button.ZIndex = 1
-		end
-
 		local textColor = isPrimary and theme.PrimaryText or theme.TextSoft
 
 		local icon
-		local iconChip
-		local iconChipScale
-		if action.Icon then
-			if isPrimary then
-				iconChip = Util.Create("Frame", {
-					Name = "IconChip",
-					AnchorPoint = Vector2.new(0, 0.5),
-					Position = UDim2.new(0, 6, 0.5, 0),
-					Size = UDim2.fromOffset(20, 20),
-					BackgroundColor3 = theme.PrimaryText,
-					BorderSizePixel = 0,
-					ZIndex = 2,
-					Parent = button,
-				})
-				Util.Corner(iconChip, 10)
-				iconChipScale = Instance.new("UIScale")
-				iconChipScale.Parent = iconChip
-				icon = Icons.New(action.Icon, 10, theme.Primary, iconChip, 3)
-				icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-				icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-			else
-				icon = Icons.New(action.Icon, 12, textColor, button)
-				icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-				icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
-			end
+		if showIcon then
+			icon = Icons.New(action.Icon, 12, textColor, button)
+			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
+			icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
 		end
 
-		local labelX
-		local labelRight
-		if isPrimary and action.Icon then
-			labelX = 32
-			labelRight = 11
-		elseif action.Icon then
-			labelX = 25
-			labelRight = 9
-		else
-			labelX = 0
-			labelRight = 12
-		end
+		local labelX = showIcon and 25 or 0
+		local labelRight = 12
 
 		local labelLabel = Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(labelX, 0),
@@ -336,22 +280,18 @@ function Card.new(tab, options)
 			Font = labelFont,
 			TextSize = 11.5,
 			TextColor3 = textColor,
-			TextXAlignment = action.Icon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+			TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 3,
 			Parent = button,
 		})
 
+		local hovered = false
 		self.Maid:Add(button.MouseEnter:Connect(function()
+			hovered = true
 			if isPrimary then
 				Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
-				if shadow then
-					Util.Tween(shadow, { BackgroundTransparency = 0.34 }, 0.12)
-				end
-				Util.Tween(buttonScale, { Scale = 1.045 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				if iconChipScale then
-					Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-				end
+				Util.Tween(buttonScale, { Scale = 1.025 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				if icon then
 					icon:Pulse(1.12, 0.22)
 				end
@@ -362,31 +302,26 @@ function Card.new(tab, options)
 			end
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
+			hovered = false
 			if isPrimary then
 				Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
-				if shadow then
-					Util.Tween(shadow, { BackgroundTransparency = 0.5 }, 0.12)
-				end
 				Util.Tween(buttonScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				if iconChipScale then
-					Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
 				Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			end
 		end))
 		self.Maid:Add(button.MouseButton1Down:Connect(function()
-			Util.Tween(buttonScale, { Scale = 0.955 }, 0.07)
-			if iconChipScale then
-				Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
+			if isPrimary then
+				Util.Tween(button, { BackgroundColor3 = theme.PrimaryPressed }, 0.07)
 			end
+			Util.Tween(buttonScale, { Scale = 0.97 }, 0.07)
 		end))
 		self.Maid:Add(button.MouseButton1Up:Connect(function()
-			Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			if iconChipScale then
-				Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			if isPrimary then
+				Util.Tween(button, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
 			end
+			Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end))
 		self.Maid:Add(button.MouseButton1Click:Connect(function()
 			if action.Callback then

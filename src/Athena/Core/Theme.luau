@@ -58,7 +58,8 @@ Theme.Presets = {
 
 		-- Controls
 		Primary = Color3.fromRGB(238, 240, 242),
-		PrimaryHover = Color3.fromRGB(255, 255, 255),
+		PrimaryHover = Color3.fromRGB(206, 209, 214),
+		PrimaryPressed = Color3.fromRGB(188, 191, 197),
 		PrimaryText = Color3.fromRGB(14, 15, 18),
 		Track = Color3.fromRGB(48, 50, 56),
 		TrackFill = Color3.fromRGB(238, 240, 242),
@@ -120,6 +121,7 @@ Theme.Presets = {
 
 		Primary = Color3.fromRGB(22, 23, 26),
 		PrimaryHover = Color3.fromRGB(38, 40, 45),
+		PrimaryPressed = Color3.fromRGB(50, 52, 58),
 		PrimaryText = Color3.fromRGB(247, 247, 249),
 		Track = Color3.fromRGB(216, 219, 225),
 		TrackFill = Color3.fromRGB(22, 23, 26),

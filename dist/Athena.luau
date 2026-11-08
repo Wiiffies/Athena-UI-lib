@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.0.3
+	Athena UI · v1.1.0
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -216,7 +216,10 @@ function Button.new(section, options)
 	local style = options.Style or "Primary"
 	local isPrimary = style == "Primary"
 	local iconName = options.Icon
-	if iconName == nil then
+	-- Primary pills are flat white text buttons; keep icons for secondary controls.
+	if isPrimary then
+		iconName = nil
+	elseif iconName == nil then
 		local lowered = string.lower(tostring(pillLabel))
 		if lowered == "run" or lowered == "execute" then
 			iconName = "play"
@@ -266,35 +269,8 @@ function Button.new(section, options)
 	pillScale.Scale = 1
 	pillScale.Parent = pill
 
-	if isPrimary then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(1, theme.Primary),
-		})
-		gradient.Rotation = 90
-		gradient.Parent = pill
-	end
-
-	local shadow
-	if isPrimary then
-		shadow = Util.Create("Frame", {
-			Name = "Shadow",
-			Position = UDim2.fromOffset(0, 3),
-			Size = UDim2.fromScale(1, 1),
-			BackgroundColor3 = theme.Scrim,
-			BackgroundTransparency = 0.5,
-			BorderSizePixel = 0,
-			ZIndex = 0,
-			Parent = pill,
-		})
-		Util.Corner(shadow, 17)
-		pill.ZIndex = 1
-	end
-
 	self.Pill = pill
 	self.PillScale = pillScale
-	self.Shadow = shadow
 
 	local stroke
 	if style == "Secondary" then
@@ -312,45 +288,14 @@ function Button.new(section, options)
 	end
 
 	local icon
-	local iconChip
-	local iconChipScale
 	if iconName then
-		if isPrimary then
-			iconChip = Util.Create("Frame", {
-				Name = "IconChip",
-				AnchorPoint = Vector2.new(0, 0.5),
-				Position = UDim2.new(0, 7, 0.5, 0),
-				Size = UDim2.fromOffset(22, 22),
-				BackgroundColor3 = theme.PrimaryText,
-				BorderSizePixel = 0,
-				ZIndex = 2,
-				Parent = pill,
-			})
-			Util.Corner(iconChip, 11)
-			iconChipScale = Instance.new("UIScale")
-			iconChipScale.Parent = iconChip
-			icon = Icons.New(iconName, 11, theme.Primary, iconChip, 3)
-			icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-			icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-		else
-			icon = Icons.New(iconName, 11, textColor, pill, 2)
-			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-			icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
-		end
+		icon = Icons.New(iconName, 11, textColor, pill, 2)
+		icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
+		icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
 	end
 
-	local labelX
-	local labelRight
-	if isPrimary and iconName then
-		labelX = 37
-		labelRight = 12
-	elseif iconName then
-		labelX = 27
-		labelRight = 10
-	else
-		labelX = 0
-		labelRight = 12
-	end
+	local labelX = iconName and 27 or 0
+	local labelRight = 12
 
 	local label = Util.Create("TextLabel", {
 		Name = "Label",
@@ -368,8 +313,6 @@ function Button.new(section, options)
 	})
 	self.Label = label
 	self.Icon = icon
-	self.IconChip = iconChip
-	self.IconChipScale = iconChipScale
 
 	local function setBaseColor(hovered)
 		if not self.Enabled then
@@ -377,9 +320,6 @@ function Button.new(section, options)
 		end
 		if isPrimary then
 			Util.Tween(pill, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
-			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = hovered and 0.34 or 0.5 }, 0.12)
-			end
 			if label.TextColor3 ~= theme.PrimaryText then
 				label.TextColor3 = theme.PrimaryText
 			end
@@ -408,10 +348,7 @@ function Button.new(section, options)
 		if not self.Enabled then
 			return
 		end
-		Util.Tween(pillScale, { Scale = 1.035 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		if iconChipScale then
-			Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-		end
+		Util.Tween(pillScale, { Scale = 1.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		if icon then
 			icon:Pulse(1.12, 0.22)
 		end
@@ -420,23 +357,20 @@ function Button.new(section, options)
 		hovered = false
 		setBaseColor(false)
 		Util.Tween(pillScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		if iconChipScale then
-			Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		end
 	end))
 	self.Maid:Add(pill.MouseButton1Down:Connect(function()
 		if self.Enabled then
-			Util.Tween(pillScale, { Scale = 0.955 }, 0.07)
-			if iconChipScale then
-				Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
+			if isPrimary then
+				Util.Tween(pill, { BackgroundColor3 = theme.PrimaryPressed }, 0.07)
 			end
+			Util.Tween(pillScale, { Scale = 0.97 }, 0.07)
 		end
 	end))
 	self.Maid:Add(pill.MouseButton1Up:Connect(function()
-		Util.Tween(pillScale, { Scale = hovered and 1.035 or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		if iconChipScale then
-			Util.Tween(iconChipScale, { Scale = hovered and 1.1 or 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		if isPrimary then
+			Util.Tween(pill, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
 		end
+		Util.Tween(pillScale, { Scale = hovered and 1.02 or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 
 	Util.RowHover(row.Row, self.Maid, theme)
@@ -463,15 +397,9 @@ function Button.new(section, options)
 		if icon then
 			icon.Frame.Visible = enabled
 		end
-		if iconChip then
-			iconChip.Visible = enabled
-		end
 		pill.BackgroundTransparency = enabled and (style == "Ghost" and 1 or 0) or 0.55
 		if not enabled then
 			pillScale.Scale = 1
-			if iconChipScale then
-				iconChipScale.Scale = 1
-			end
 		end
 	end
 
@@ -732,9 +660,10 @@ function Card.new(tab, options)
 		local label = action.Name or action.Text or "Action"
 		local style = action.Style or "Ghost"
 		local isPrimary = style == "Primary"
+		local showIcon = action.Icon and not isPrimary
 		local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 		local textWidth = Util.Measure(label, 11.5, labelFont).X
-		local extra = isPrimary and (action.Icon and 58 or 36) or (action.Icon and 32 or 24)
+		local extra = isPrimary and 36 or (showIcon and 32 or 24)
 		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 70 or 50, 150))
 
 		local button = Util.Create("TextButton", {
@@ -752,74 +681,17 @@ function Card.new(tab, options)
 		local buttonScale = Instance.new("UIScale")
 		buttonScale.Parent = button
 
-		if isPrimary then
-			local gradient = Instance.new("UIGradient")
-			gradient.Color = ColorSequence.new({
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-				ColorSequenceKeypoint.new(1, theme.Primary),
-			})
-			gradient.Rotation = 90
-			gradient.Parent = button
-		end
-
-		local shadow
-		if isPrimary then
-			shadow = Util.Create("Frame", {
-				Name = "Shadow",
-				Position = UDim2.fromOffset(0, 3),
-				Size = UDim2.fromScale(1, 1),
-				BackgroundColor3 = theme.Scrim,
-				BackgroundTransparency = 0.5,
-				BorderSizePixel = 0,
-				ZIndex = 0,
-				Parent = button,
-			})
-			Util.Corner(shadow, 16)
-			button.ZIndex = 1
-		end
-
 		local textColor = isPrimary and theme.PrimaryText or theme.TextSoft
 
 		local icon
-		local iconChip
-		local iconChipScale
-		if action.Icon then
-			if isPrimary then
-				iconChip = Util.Create("Frame", {
-					Name = "IconChip",
-					AnchorPoint = Vector2.new(0, 0.5),
-					Position = UDim2.new(0, 6, 0.5, 0),
-					Size = UDim2.fromOffset(20, 20),
-					BackgroundColor3 = theme.PrimaryText,
-					BorderSizePixel = 0,
-					ZIndex = 2,
-					Parent = button,
-				})
-				Util.Corner(iconChip, 10)
-				iconChipScale = Instance.new("UIScale")
-				iconChipScale.Parent = iconChip
-				icon = Icons.New(action.Icon, 10, theme.Primary, iconChip, 3)
-				icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-				icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-			else
-				icon = Icons.New(action.Icon, 12, textColor, button)
-				icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-				icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
-			end
+		if showIcon then
+			icon = Icons.New(action.Icon, 12, textColor, button)
+			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
+			icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
 		end
 
-		local labelX
-		local labelRight
-		if isPrimary and action.Icon then
-			labelX = 32
-			labelRight = 11
-		elseif action.Icon then
-			labelX = 25
-			labelRight = 9
-		else
-			labelX = 0
-			labelRight = 12
-		end
+		local labelX = showIcon and 25 or 0
+		local labelRight = 12
 
 		local labelLabel = Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(labelX, 0),
@@ -829,22 +701,18 @@ function Card.new(tab, options)
 			Font = labelFont,
 			TextSize = 11.5,
 			TextColor3 = textColor,
-			TextXAlignment = action.Icon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+			TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 3,
 			Parent = button,
 		})
 
+		local hovered = false
 		self.Maid:Add(button.MouseEnter:Connect(function()
+			hovered = true
 			if isPrimary then
 				Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
-				if shadow then
-					Util.Tween(shadow, { BackgroundTransparency = 0.34 }, 0.12)
-				end
-				Util.Tween(buttonScale, { Scale = 1.045 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				if iconChipScale then
-					Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-				end
+				Util.Tween(buttonScale, { Scale = 1.025 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 				if icon then
 					icon:Pulse(1.12, 0.22)
 				end
@@ -855,31 +723,26 @@ function Card.new(tab, options)
 			end
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
+			hovered = false
 			if isPrimary then
 				Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
-				if shadow then
-					Util.Tween(shadow, { BackgroundTransparency = 0.5 }, 0.12)
-				end
 				Util.Tween(buttonScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				if iconChipScale then
-					Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
 				Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			end
 		end))
 		self.Maid:Add(button.MouseButton1Down:Connect(function()
-			Util.Tween(buttonScale, { Scale = 0.955 }, 0.07)
-			if iconChipScale then
-				Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
+			if isPrimary then
+				Util.Tween(button, { BackgroundColor3 = theme.PrimaryPressed }, 0.07)
 			end
+			Util.Tween(buttonScale, { Scale = 0.97 }, 0.07)
 		end))
 		self.Maid:Add(button.MouseButton1Up:Connect(function()
-			Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			if iconChipScale then
-				Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			if isPrimary then
+				Util.Tween(button, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
 			end
+			Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end))
 		self.Maid:Add(button.MouseButton1Click:Connect(function()
 			if action.Callback then
@@ -3724,7 +3587,8 @@ Theme.Presets = {
 
 		-- Controls
 		Primary = Color3.fromRGB(238, 240, 242),
-		PrimaryHover = Color3.fromRGB(255, 255, 255),
+		PrimaryHover = Color3.fromRGB(206, 209, 214),
+		PrimaryPressed = Color3.fromRGB(188, 191, 197),
 		PrimaryText = Color3.fromRGB(14, 15, 18),
 		Track = Color3.fromRGB(48, 50, 56),
 		TrackFill = Color3.fromRGB(238, 240, 242),
@@ -3786,6 +3650,7 @@ Theme.Presets = {
 
 		Primary = Color3.fromRGB(22, 23, 26),
 		PrimaryHover = Color3.fromRGB(38, 40, 45),
+		PrimaryPressed = Color3.fromRGB(50, 52, 58),
 		PrimaryText = Color3.fromRGB(247, 247, 249),
 		Track = Color3.fromRGB(216, 219, 225),
 		TrackFill = Color3.fromRGB(22, 23, 26),
@@ -4154,9 +4019,9 @@ end
 __modules["DynamicIsland"] = function(require)
 --[[
 	Athena · DynamicIsland
-	A small, draggable status pill that lives above the window.
-	It shows who is running the script, how long it has been running,
-	and expands into live FPS and ping readouts.
+	A small, draggable status pill pinned to the top centre.
+	It shows who is running the script, runtime, live FPS and ping,
+	and expands into memory, player count and local-time readouts.
 ]]
 
 local Players = game:GetService("Players")
@@ -4169,11 +4034,11 @@ local Dragger = require("Core.Dragger")
 local DynamicIsland = {}
 DynamicIsland.__index = DynamicIsland
 
-local COLLAPSED_WIDTH = 236
+local COLLAPSED_WIDTH = 252
 local COLLAPSED_HEIGHT = 44
 local EXPANDED_WIDTH = 312
-local EXPANDED_HEIGHT = 112
-local SAFE_TOP = 64
+local EXPANDED_HEIGHT = 154
+local SAFE_TOP = 8
 local SIDE_MARGIN = 8
 local AVATAR_POS = UDim2.fromOffset(9, 8)
 local NAME_POS = UDim2.fromOffset(46, 7)
@@ -4196,6 +4061,16 @@ local function getPing()
 	end)
 	if ok and type(value) == "number" then
 		return math.max(0, math.floor(value + 0.5))
+	end
+	return nil
+end
+
+local function getMemory()
+	local ok, value = pcall(function()
+		return Stats:GetTotalMemoryUsageMb()
+	end)
+	if ok and type(value) == "number" then
+		return math.max(0, value)
 	end
 	return nil
 end
@@ -4248,16 +4123,16 @@ function DynamicIsland.new(window, options)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromOffset(center.X, center.Y),
 		Size = UDim2.fromOffset(self.Expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH, initialHeight),
-		BackgroundColor3 = theme.Overlay,
+		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
-		ClipsDescendants = true,
+		ClipsDescendants = false,
 		Visible = true,
 		ZIndex = 1001,
 		Parent = root,
 	})
 	Util.Corner(island, 22)
-	local islandStroke = Util.Stroke(island, theme.Border, 1, 1)
+	local islandStroke = Util.Stroke(island, theme.BorderSoft, 1, 0.55)
 	local islandScale = Instance.new("UIScale")
 	islandScale.Scale = 1
 	islandScale.Parent = island
@@ -4297,31 +4172,6 @@ function DynamicIsland.new(window, options)
 		Parent = avatar,
 	})
 
-	-- A slow orbit dot and ring make the avatar feel alive without distracting from the name.
-	local orbit = Util.Create("Frame", {
-		Name = "AvatarOrbit",
-		Position = UDim2.fromOffset(7, 6),
-		Size = UDim2.fromOffset(32, 32),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Active = false,
-		ZIndex = 2,
-		Parent = island,
-	})
-	Util.Corner(orbit, 16)
-	Util.Stroke(orbit, theme.Primary, 1, 0.72)
-	local orbitDot = Util.Create("Frame", {
-		Name = "OrbitDot",
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 0),
-		Size = UDim2.fromOffset(3, 3),
-		BackgroundColor3 = theme.Primary,
-		BorderSizePixel = 0,
-		ZIndex = 3,
-		Parent = orbit,
-	})
-	Util.Corner(orbitDot, 1.5)
-
 	local nameLabel = Util.Create("TextLabel", {
 		Name = "Username",
 		Position = UDim2.fromOffset(46, 7),
@@ -4337,21 +4187,12 @@ function DynamicIsland.new(window, options)
 		ZIndex = 3,
 		Parent = island,
 	})
-	local nameGradient = Instance.new("UIGradient")
-	nameGradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, theme.TextSoft),
-		ColorSequenceKeypoint.new(0.5, theme.Text),
-		ColorSequenceKeypoint.new(1, theme.TextSoft),
-	})
-	nameGradient.Parent = nameLabel
-	self.NameGradient = nameGradient
-
 	local statusLabel = Util.Create("TextLabel", {
 		Name = "Status",
 		Position = UDim2.fromOffset(46, 22),
 		Size = UDim2.new(1, -92, 0, 13),
 		BackgroundTransparency = 1,
-		Text = "Running 00:00",
+		Text = "00:00 · 0 FPS",
 		Font = theme.Font,
 		TextSize = 9.5,
 		TextColor3 = theme.TextMuted,
@@ -4416,7 +4257,7 @@ function DynamicIsland.new(window, options)
 	local statsFrame = Util.Create("CanvasGroup", {
 		Name = "Stats",
 		Position = UDim2.fromOffset(10, 54),
-		Size = UDim2.new(1, -20, 0, 44),
+		Size = UDim2.new(1, -20, 0, 88),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		GroupTransparency = 1,
@@ -4424,8 +4265,14 @@ function DynamicIsland.new(window, options)
 		ZIndex = 2,
 		Parent = island,
 	})
-	local statsLayout = Util.RowList(statsFrame, 6)
-	statsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	local statsGrid = Instance.new("UIGridLayout")
+	statsGrid.CellSize = UDim2.fromOffset(87, 40)
+	statsGrid.CellPadding = UDim2.fromOffset(6, 6)
+	statsGrid.FillDirection = Enum.FillDirection.Horizontal
+	statsGrid.SortOrder = Enum.SortOrder.LayoutOrder
+	statsGrid.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	statsGrid.VerticalAlignment = Enum.VerticalAlignment.Top
+	statsGrid.Parent = statsFrame
 	local statsScale = Instance.new("UIScale")
 	statsScale.Parent = statsFrame
 
@@ -4477,14 +4324,15 @@ function DynamicIsland.new(window, options)
 	local uptimeTile, uptimeTileScale, uptimeValue, uptimeValueScale = makeStat("UPTIME", 1)
 	local fpsTile, fpsTileScale, fpsValue, fpsValueScale = makeStat("FPS", 2)
 	local pingTile, pingTileScale, pingValue, pingValueScale = makeStat("PING", 3)
+	local memoryTile, memoryTileScale, memoryValue, memoryValueScale = makeStat("MEMORY", 4)
+	local playersTile, playersTileScale, playersValue, playersValueScale = makeStat("PLAYERS", 5)
+	local timeTile, timeTileScale, timeValue, timeValueScale = makeStat("LOCAL TIME", 6)
 
 	self.Avatar = avatar
 	self.AvatarScale = avatarScale
 	self.AvatarLetter = avatarLetter
 	self.NameLabel = nameLabel
 	self.StatusLabel = statusLabel
-	self.Orbit = orbit
-	self.OrbitDot = orbitDot
 	self.Dot = dot
 	self.DotScale = dotScale
 	self.DotRing = dotRing
@@ -4496,16 +4344,25 @@ function DynamicIsland.new(window, options)
 		{ Frame = uptimeTile, Scale = uptimeTileScale },
 		{ Frame = fpsTile, Scale = fpsTileScale },
 		{ Frame = pingTile, Scale = pingTileScale },
+		{ Frame = memoryTile, Scale = memoryTileScale },
+		{ Frame = playersTile, Scale = playersTileScale },
+		{ Frame = timeTile, Scale = timeTileScale },
 	}
 	self.Values = {
 		Uptime = uptimeValue,
 		FPS = fpsValue,
 		Ping = pingValue,
+		Memory = memoryValue,
+		Players = playersValue,
+		Time = timeValue,
 	}
 	self.ValueScales = {
 		Uptime = uptimeValueScale,
 		FPS = fpsValueScale,
 		Ping = pingValueScale,
+		Memory = memoryValueScale,
+		Players = playersValueScale,
+		Time = timeValueScale,
 	}
 
 	-- The drag surface sits above the labels so every part of the pill drags.
@@ -4520,49 +4377,17 @@ function DynamicIsland.new(window, options)
 	})
 	self.DragSurface = dragSurface
 
-	-- A soft specular sweep across the glass, clipped to the pill.
-	local sheen = Util.Create("Frame", {
-		Name = "Sheen",
-		Position = UDim2.fromOffset(-60, -70),
-		Size = UDim2.fromOffset(50, 220),
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.82,
-		BorderSizePixel = 0,
-		Rotation = 16,
-		Active = false,
-		ZIndex = 20,
-		Parent = island,
-	})
-	local sheenGradient = Instance.new("UIGradient")
-	sheenGradient.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 1),
-		NumberSequenceKeypoint.new(0.5, 0.45),
-		NumberSequenceKeypoint.new(1, 1),
-	})
-	sheenGradient.Parent = sheen
-	self.Sheen = sheen
-
 	Dragger.Attach(island, dragSurface, self.Maid, {
 		Threshold = 4,
 		Margin = SIDE_MARGIN,
 		TopMargin = SAFE_TOP,
 		OnDragStart = function()
 			self.Dragging = true
-			self.Island.Rotation = 0
-			self.IslandScale.Scale = 1.045
-			self.IslandStroke.Transparency = 0.25
-		end,
-		OnDrag = function()
-			if not self.Dragging then
-				return
-			end
-			self.IslandScale.Scale = 1.025
+			self.IslandStroke.Transparency = 0.3
 		end,
 		OnDragEnd = function(moved)
 			self.Dragging = false
-			self.IslandScale.Scale = 1
-			self.IslandStroke.Transparency = 0.8
-			Util.Tween(self.Island, { Rotation = 0 }, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			self.IslandStroke.Transparency = 0.55
 			Dragger.Clamp(island, SIDE_MARGIN, SAFE_TOP)
 			if not moved then
 				self:_SetExpanded(not self.Expanded)
@@ -4571,43 +4396,14 @@ function DynamicIsland.new(window, options)
 	})
 
 	self.Maid:Add(dragSurface.MouseEnter:Connect(function()
-		if self.Dragging then
-			return
+		if not self.Dragging then
+			Util.Tween(self.IslandStroke, { Transparency = 0.3 }, 0.18)
 		end
-		Util.Tween(self.IslandScale, { Scale = 1.015 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Util.Tween(self.IslandStroke, { Transparency = 0.35 }, 0.18)
 	end))
 
 	self.Maid:Add(dragSurface.MouseLeave:Connect(function()
-		if self.Dragging then
-			return
-		end
-		Util.Tween(self.IslandScale, { Scale = 1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		Util.Tween(self.IslandStroke, { Transparency = 0.8 }, 0.2)
-		Util.Tween(self.Island, { Rotation = 0 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end))
-
-	-- A tiny parallax tilt follows the cursor while the pill is hovered.
-	self.Maid:Add(dragSurface.MouseMoved:Connect(function(x, y)
-		if self.Dragging or not self.Enabled then
-			return
-		end
-		local size = self.Island.AbsoluteSize
-		if size.X <= 1 or size.Y <= 1 then
-			return
-		end
-		local origin = self.Island.AbsolutePosition
-		local relativeX = ((x - origin.X) / size.X) - 0.5
-		Util.Tween(self.Island, { Rotation = relativeX * 1.1 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end))
-
-	self.Maid:Add(dragSurface.MouseButton1Down:Connect(function()
-		Util.Tween(self.IslandScale, { Scale = 0.985 }, 0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	end))
-
-	self.Maid:Add(dragSurface.MouseButton1Up:Connect(function()
 		if not self.Dragging then
-			Util.Tween(self.IslandScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.2)
 		end
 	end))
 
@@ -4644,12 +4440,6 @@ function DynamicIsland.new(window, options)
 			frameCount = 0
 			frameTime = 0
 		end
-		if self.Orbit then
-			self.Orbit.Rotation = (os.clock() * 38) % 360
-		end
-		if self.NameGradient then
-			self.NameGradient.Offset = Vector2.new(math.sin(os.clock() * 0.9) * 0.25, 0)
-		end
 	end))
 
 	local function pulseValue(scale)
@@ -4663,12 +4453,14 @@ function DynamicIsland.new(window, options)
 	local lastClock = ""
 	local lastFPS = nil
 	local lastPing = nil
+	local lastMemory = nil
+	local lastPlayers = nil
+	local lastTime = nil
 	local updateThread = task.spawn(function()
 		while not self.Destroyed do
 			local clock = formatTime(os.clock() - self.StartedAt)
 			if clock ~= lastClock then
 				lastClock = clock
-				self.StatusLabel.Text = "Running " .. clock
 				self.Values.Uptime.Text = clock
 				pulseValue(self.ValueScales.Uptime)
 			end
@@ -4683,6 +4475,30 @@ function DynamicIsland.new(window, options)
 				self.Values.Ping.Text = self.Ping and (tostring(self.Ping) .. " ms") or "—"
 				pulseValue(self.ValueScales.Ping)
 			end
+			self.StatusLabel.Text = lastClock .. " · " .. tostring(self.FPS) .. " FPS" .. (self.Ping and (" · " .. tostring(self.Ping) .. " ms") or "")
+
+			local memory = getMemory()
+			local memoryText = memory and (string.format("%.0f MB", memory)) or "—"
+			if memoryText ~= lastMemory then
+				lastMemory = memoryText
+				self.Values.Memory.Text = memoryText
+				pulseValue(self.ValueScales.Memory)
+			end
+
+			local playerCount = #Players:GetPlayers()
+			if playerCount ~= lastPlayers then
+				lastPlayers = playerCount
+				self.Values.Players.Text = tostring(playerCount)
+				pulseValue(self.ValueScales.Players)
+			end
+
+			local localTime = os.date("%H:%M")
+			if localTime ~= lastTime then
+				lastTime = localTime
+				self.Values.Time.Text = localTime
+				pulseValue(self.ValueScales.Time)
+			end
+
 			task.wait(0.25)
 		end
 	end)
@@ -4720,23 +4536,6 @@ function DynamicIsland.new(window, options)
 		end
 	end)
 	self.Maid:Add(pulseThread)
-
-	local sheenThread = task.spawn(function()
-		while not self.Destroyed do
-			if self.Enabled and self.Island.Visible then
-				local width = self.Island.AbsoluteSize.X
-				if width < 1 then
-					width = COLLAPSED_WIDTH
-				end
-				self.Sheen.Position = UDim2.fromOffset(-60, -70)
-				Util.Tween(self.Sheen, { Position = UDim2.fromOffset(width + 60, -70) }, 1.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-				task.wait(3.9)
-			else
-				task.wait(1)
-			end
-		end
-	end)
-	self.Maid:Add(sheenThread)
 
 	-- Keep the busy pill on-screen when the viewport changes.
 	local camera = workspace.CurrentCamera
@@ -4791,7 +4590,7 @@ function DynamicIsland:_PlayIntro()
 		self.Island.BackgroundTransparency = 0
 		self.IslandScale.Scale = 1
 		self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, targetY)
-		self.IslandStroke.Transparency = 0.8
+		self.IslandStroke.Transparency = 0.55
 		resetContent()
 		return
 	end
@@ -4811,7 +4610,7 @@ function DynamicIsland:_PlayIntro()
 	self.Dot.BackgroundTransparency = 1
 	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandScale, { Scale = 1 }, 0.46, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-	Util.Tween(self.IslandStroke, { Transparency = 0.8 }, 0.5)
+	Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.5)
 	task.delay(0.1, function()
 		if self.Destroyed then
 			return
@@ -5420,7 +5219,7 @@ function QuickMenu.new(window, options)
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -MARGIN, 1, -MARGIN),
 		Size = UDim2.fromOffset(PANEL_WIDTH, PANEL_HEIGHT),
-		BackgroundColor3 = theme.Overlay,
+		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
 		BorderSizePixel = 0,
 		GroupTransparency = 1,
@@ -5429,8 +5228,8 @@ function QuickMenu.new(window, options)
 		Parent = root,
 	})
 	Util.Corner(panel, 13)
-	local panelStroke = Util.Stroke(panel, theme.Border, 1, 0.05)
-	panelStroke.Transparency = 0.05
+	local panelStroke = Util.Stroke(panel, theme.BorderSoft, 1, 0.35)
+	panelStroke.Transparency = 0.35
 	local panelScale = Instance.new("UIScale")
 	panelScale.Scale = 1
 	panelScale.Parent = panel
@@ -5448,26 +5247,10 @@ function QuickMenu.new(window, options)
 		Parent = panel,
 	})
 
-	local headerIcon = Util.Create("Frame", {
-		Name = "Glyph",
-		Position = UDim2.fromOffset(0, 3),
-		Size = UDim2.fromOffset(28, 28),
-		BackgroundColor3 = theme.SurfaceAlt,
-		BorderSizePixel = 0,
-		ZIndex = 223,
-		Parent = header,
-	})
-	Util.Corner(headerIcon, 8)
-	Util.Stroke(headerIcon, theme.BorderSoft, 1, 0.4)
-	local glyph = Icons.New("grid", 13, theme.Text, headerIcon, 224)
-	glyph.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	glyph.Frame.Position = UDim2.fromScale(0.5, 0.5)
-	self.HeaderIcon = glyph
-
 	Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(38, 1),
-		Size = UDim2.new(1, -120, 0, 17),
+		Position = UDim2.fromOffset(0, 1),
+		Size = UDim2.new(1, -90, 0, 17),
 		BackgroundTransparency = 1,
 		Text = options.Title or "Quick menu",
 		Font = theme.FontBold,
@@ -5481,8 +5264,8 @@ function QuickMenu.new(window, options)
 
 	Util.Create("TextLabel", {
 		Name = "Subtitle",
-		Position = UDim2.fromOffset(38, 18),
-		Size = UDim2.new(1, -120, 0, 13),
+		Position = UDim2.fromOffset(0, 18),
+		Size = UDim2.new(1, -90, 0, 13),
 		BackgroundTransparency = 1,
 		Text = options.Subtitle or "Search or run a command",
 		Font = theme.Font,
@@ -5706,8 +5489,7 @@ function QuickMenu:Open(instant)
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
 
 	if not instant then
-		self.HeaderIcon:Pulse(1.16, 0.3)
-		Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
+		Util.Tween(self.PanelStroke, { Transparency = 0.25 }, 0.2)
 	end
 
 	if self.Search.Text ~= "" then
@@ -5720,7 +5502,7 @@ function QuickMenu:Open(instant)
 		self.Panel.GroupTransparency = 0
 		self.PanelScale.Scale = 1
 		self.Panel.Position = self.PanelBase
-		self.PanelStroke.Transparency = 0.02
+		self.PanelStroke.Transparency = 0.25
 		return
 	end
 
@@ -5742,9 +5524,9 @@ function QuickMenu:Close(instant)
 		self.Search:ReleaseFocus()
 	end
 	if instant then
-		self.PanelStroke.Transparency = 0.05
+		self.PanelStroke.Transparency = 0.35
 	else
-		Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
+		Util.Tween(self.PanelStroke, { Transparency = 0.35 }, 0.18)
 	end
 
 	if not wasOpen or instant then
@@ -5849,9 +5631,6 @@ function QuickMenu:_Run(command)
 		return
 	end
 	-- Commands do not dismiss the palette; it belongs to the window shell.
-	if self.HeaderIcon then
-		self.HeaderIcon:Pulse(1.12, 0.2)
-	end
 	Util.Safe(command.Run)
 end
 
@@ -5875,24 +5654,10 @@ function QuickMenu:_BuildRow(command, index)
 	rowScale.Scale = 0.94
 	rowScale.Parent = row
 
-	local iconTile = Util.Create("Frame", {
-		Name = "Glyph",
-		Position = UDim2.fromOffset(9, 8),
-		Size = UDim2.fromOffset(28, 28),
-		BackgroundColor3 = theme.Surface,
-		BorderSizePixel = 0,
-		ZIndex = 223,
-		Parent = row,
-	})
-	Util.Corner(iconTile, 7)
-	local icon = Icons.New(command.Icon, 12, theme.TextSoft, iconTile, 224)
-	icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-
 	Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(47, 5),
-		Size = UDim2.new(1, -82, 0, 15),
+		Position = UDim2.fromOffset(12, 5),
+		Size = UDim2.new(1, -24, 0, 15),
 		BackgroundTransparency = 1,
 		Text = command.Title,
 		Font = theme.FontMedium,
@@ -5905,8 +5670,8 @@ function QuickMenu:_BuildRow(command, index)
 	})
 	Util.Create("TextLabel", {
 		Name = "Description",
-		Position = UDim2.fromOffset(47, 20),
-		Size = UDim2.new(1, -82, 0, 13),
+		Position = UDim2.fromOffset(12, 20),
+		Size = UDim2.new(1, -24, 0, 13),
 		BackgroundTransparency = 1,
 		Text = command.Description,
 		Font = theme.Font,
@@ -5917,9 +5682,6 @@ function QuickMenu:_BuildRow(command, index)
 		ZIndex = 223,
 		Parent = row,
 	})
-	local chevron = Icons.New("chevronRight", 9, theme.TextFaint, row, 223)
-	chevron.Frame.AnchorPoint = Vector2.new(1, 0.5)
-	chevron.Frame.Position = UDim2.new(1, -10, 0.5, 0)
 
 	local rowMaid = Util.Maid.new()
 	row.Destroying:Once(function()
@@ -5929,21 +5691,13 @@ function QuickMenu:_BuildRow(command, index)
 	rowMaid:Add(row.MouseEnter:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.55 }, 0.1)
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		icon:SetColor(theme.Text)
-		chevron:SetColor(theme.TextSoft)
-		icon:Pulse(1.12, 0.2)
-		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -6, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 		Util.Tween(rowScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-		icon:SetColor(theme.TextSoft)
-		chevron:SetColor(theme.TextFaint)
-		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -10, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(rowScale, { Scale = 0.97 }, 0.06)
-		icon:Pulse(0.88, 0.1)
 	end))
 	rowMaid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -6526,9 +6280,11 @@ function Tab:AddAction(input)
 	local label = config.Name or config.Text or "Action"
 	local style = config.Style or "Secondary"
 	local isPrimary = style == "Primary"
+	local lowered = string.lower(tostring(label))
+	local showIcon = config.Icon and not (isPrimary and (lowered == "run" or lowered == "execute"))
 	local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 	local textWidth = Util.Measure(label, 11.5, labelFont).X
-	local iconSpace = config.Icon and (isPrimary and 28 or 20) or 0
+	local iconSpace = showIcon and (isPrimary and 28 or 20) or 0
 	local extra = isPrimary and 36 or 28
 	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 74 or 44, 168))
 
@@ -6545,29 +6301,6 @@ function Tab:AddAction(input)
 	Util.Corner(button, isPrimary and 17 or 9)
 	local buttonScale = Instance.new("UIScale")
 	buttonScale.Parent = button
-
-	local shadow
-	if isPrimary then
-		local gradient = Instance.new("UIGradient")
-		gradient.Color = ColorSequence.new({
-			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-			ColorSequenceKeypoint.new(1, theme.Primary),
-		})
-		gradient.Rotation = 90
-		gradient.Parent = button
-		shadow = Util.Create("Frame", {
-			Name = "Shadow",
-			Position = UDim2.fromOffset(0, 3),
-			Size = UDim2.fromScale(1, 1),
-			BackgroundColor3 = theme.Scrim,
-			BackgroundTransparency = 0.5,
-			BorderSizePixel = 0,
-			ZIndex = 0,
-			Parent = button,
-		})
-		Util.Corner(shadow, 17)
-		button.ZIndex = 1
-	end
 
 	local stroke
 	if style == "Secondary" then
@@ -6590,7 +6323,7 @@ function Tab:AddAction(input)
 	local icon
 	local iconChip
 	local iconChipScale
-	if config.Icon then
+	if showIcon then
 		if isPrimary then
 			iconChip = Util.Create("Frame", {
 				Name = "IconChip",
@@ -6617,7 +6350,7 @@ function Tab:AddAction(input)
 
 	local textX
 	local textRight
-	if config.Icon then
+	if showIcon then
 		textX = isPrimary and 32 or 25
 		textRight = isPrimary and 11 or 9
 	else
@@ -6633,19 +6366,18 @@ function Tab:AddAction(input)
 		Font = labelFont,
 		TextSize = 11.5,
 		TextColor3 = textColor,
-		TextXAlignment = config.Icon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+		TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3,
 		Parent = button,
 	})
 
+	local hovered = false
 	self.Maid:Add(button.MouseEnter:Connect(function()
+		hovered = true
 		if isPrimary then
 			Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
-			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = 0.34 }, 0.12)
-			end
-			Util.Tween(buttonScale, { Scale = 1.045 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			Util.Tween(buttonScale, { Scale = 1.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			if iconChipScale then
 				Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 			end
@@ -6666,11 +6398,9 @@ function Tab:AddAction(input)
 		end
 	end))
 	self.Maid:Add(button.MouseLeave:Connect(function()
+		hovered = false
 		if isPrimary then
 			Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
-			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = 0.5 }, 0.12)
-			end
 			Util.Tween(buttonScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			if iconChipScale then
 				Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -6688,12 +6418,18 @@ function Tab:AddAction(input)
 		end
 	end))
 	self.Maid:Add(button.MouseButton1Down:Connect(function()
-		Util.Tween(buttonScale, { Scale = 0.955 }, 0.07)
+		if isPrimary then
+			Util.Tween(button, { BackgroundColor3 = theme.PrimaryPressed }, 0.07)
+		end
+		Util.Tween(buttonScale, { Scale = 0.97 }, 0.07)
 		if iconChipScale then
 			Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
 		end
 	end))
 	self.Maid:Add(button.MouseButton1Up:Connect(function()
+		if isPrimary then
+			Util.Tween(button, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
+		end
 		Util.Tween(buttonScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		if iconChipScale then
 			Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
@@ -8616,7 +8352,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.0.3"
+Athena.Version = "1.1.0"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}
