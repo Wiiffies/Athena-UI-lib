@@ -18,7 +18,7 @@ interface library, written in Luau.
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
-- A bottom-right quick menu (open with **K**) with search, animated command rows and window actions.
+- A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated command rows and window actions.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
 
 ## Quick start
@@ -69,10 +69,10 @@ Section:CreateDropdown({
 })
 ```
 
-Press **RightShift** to hide or show the window (pass `ToggleKey = false` to disable it), and
-**K** to open the bottom-right quick menu. The window is draggable from the title bar and scales
-with the viewport. Every window also creates the quick menu automatically; pass `QuickMenu = false`
-to turn it off.
+Press **RightShift** to hide or show the window and its quick menu (pass `ToggleKey = false` to
+disable it). **K** does the same pair. The palette is visible whenever the window is visible, and
+commands leave it open. The window is draggable from the title bar and scales with the viewport.
+Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
 The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
 with the tabs. Use `Window:Center()`, `Window:SetTitle(text)` and `Window:SetToggleKey(key)` to drive
@@ -549,8 +549,9 @@ The recreation follows the reference screen closely:
 
 ## Notes
 
-- Icons are public Lucide image assets, colour-tinted at runtime. Button icons lift on hover,
-  dip on press and pulse in the quick menu, dropdowns and notifications.
+- UI icons are public Lucide image assets, colour-tinted at runtime; the Athena brand mark keeps
+  its original vector logo. Button icons lift on hover, dip on press and pulse in the quick menu,
+  dropdowns and notifications.
 - Dropdown, colour-picker, bell and search panels close on outside click, `Escape`, tab change,
   drag and viewport resize.
 - `Section:Destroy()`, `Tab:Destroy()` and `Window:Destroy()` disconnect everything they created.
@@ -558,8 +559,8 @@ The recreation follows the reference screen closely:
   breaking the interface.
 - Binding the same key with `CreateKeybind` that the window uses for `ToggleKey` (RightShift by
   default) will also toggle the window; pick another key in that case.
-- If `ToggleKey` and `QuickMenuKey` are both `K`, K controls only the quick menu. Pick another
-  `ToggleKey` when you want a separate window hide/show key.
+- If `ToggleKey` and `QuickMenuKey` are both `K`, K still hides and shows both the window and the
+  palette. The palette and window behave as one unit.
 
 ## Licence and disclaimer
 

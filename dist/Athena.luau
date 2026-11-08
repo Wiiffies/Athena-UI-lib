@@ -2786,8 +2786,8 @@ end
 __modules["Core.Icons"] = function(require)
 --[[
 	Athena · Core/Icons
-	Lucide image assets (public Roblox IDs) with a small vector fallback for
-	custom marks. Every icon is authored by Lucide, not drawn from primitives.
+	Lucide image assets (public Roblox IDs) for UI glyphs, plus the original
+	Athena vector brand mark. UI icons are authored by Lucide, not drawn here.
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -2801,7 +2801,8 @@ local ASPECT = {
 
 -- One asset per icon. These are the Lucide Roblox IDs used by Fluent/LucidIcons.
 local ASSETS = {
-	athena = "rbxassetid://10723417608", -- landmark
+	-- `athena` intentionally stays on the original vector mark; the brand logo
+	-- is not a Lucide glyph.
 	bolt = "rbxassetid://109718589733073", -- zap
 	pause = "rbxassetid://10734919336",
 	play = "rbxassetid://10734923549",
@@ -4727,7 +4728,7 @@ function QuickMenu.new(window, options)
 	end))
 
 	self.Maid:Add(closeButton.MouseButton1Click:Connect(function()
-		self:Close()
+		self.Window:Hide()
 	end))
 	self.Maid:Add(closeButton.MouseEnter:Connect(function()
 		Util.Tween(closeButton, { BackgroundTransparency = 0.45 }, 0.1)
@@ -4739,9 +4740,7 @@ function QuickMenu.new(window, options)
 		closeIcon:SetColor(theme.TextMuted)
 		Util.Tween(closeIcon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
-	self.Maid:Add(catcher.MouseButton1Click:Connect(function()
-		self:Close()
-	end))
+	-- No outside-click dismissal: the palette stays visible with the window.
 
 	local hovered = false
 	self.Maid:Add(trigger.MouseEnter:Connect(function()
@@ -4767,23 +4766,19 @@ function QuickMenu.new(window, options)
 		Util.Tween(triggerScale, { Scale = hovered and (self._open and 1 or 1.06) or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(trigger.MouseButton1Click:Connect(function()
-		self:Toggle()
+		self.Window:Toggle()
 	end))
 
 	if self.Key then
 		self.Maid:Add(UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			if input.KeyCode == self.Key and not gameProcessed and not Util.IsTyping() then
-				self:Toggle()
-			elseif input.KeyCode == Enum.KeyCode.Escape and self._open and not gameProcessed then
-				self:Close()
+				-- Hide/show the main window and the palette as one unit.
+				self.Window:Toggle()
 			end
 		end))
 	end
 
-	self:_SetTriggerOpen(false, true)
-	self.Panel.Visible = false
-	self.Panel.GroupTransparency = 1
-	self.Catcher.Visible = false
+	self:Open(true)
 
 	-- A slow halo makes the closed trigger feel alive without drawing attention away from the window.
 	self.Maid:Add(task.spawn(function()
@@ -4842,25 +4837,38 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 	end
 end
 
-function QuickMenu:Open()
+function QuickMenu:Open(instant)
 	if self.Destroyed or self._open then
 		return
 	end
 	self._open = true
 	self._animToken += 1
-	self.Catcher.Visible = true
+	-- The palette is part of the window shell, not a dismissible popup. A
+	-- full-screen catcher would block the window underneath it.
+	self.Catcher.Visible = false
 	self.Panel.Visible = true
 	self.Panel.GroupTransparency = 1
 	self.PanelScale.Scale = 0.92
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
-	self:_SetTriggerOpen(true)
-	self.HeaderIcon:Pulse(1.16, 0.3)
-	Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
+	self:_SetTriggerOpen(true, instant)
+
+	if not instant then
+		self.HeaderIcon:Pulse(1.16, 0.3)
+		Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
+	end
 
 	if self.Search.Text ~= "" then
 		self.Search.Text = ""
 	else
 		self:_Render("")
+	end
+
+	if instant then
+		self.Panel.GroupTransparency = 0
+		self.PanelScale.Scale = 1
+		self.Panel.Position = self.PanelBase
+		self.PanelStroke.Transparency = 0.02
+		return
 	end
 
 	Util.Tween(self.Panel, { GroupTransparency = 0 }, 0.18)
@@ -4880,8 +4888,12 @@ function QuickMenu:Close(instant)
 	if self.Search:IsFocused() then
 		self.Search:ReleaseFocus()
 	end
-	self:_SetTriggerOpen(false)
-	Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
+	self:_SetTriggerOpen(false, instant)
+	if instant then
+		self.PanelStroke.Transparency = 0.05
+	else
+		Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
+	end
 
 	if not wasOpen or instant then
 		self.Panel.Visible = false
@@ -4996,10 +5008,8 @@ function QuickMenu:_Run(command)
 	if not command then
 		return
 	end
-	self:Close()
-	task.delay(0.04, function()
-		self:_PulseTrigger()
-	end)
+	-- Commands do not dismiss the palette; it belongs to the window shell.
+	self:_PulseTrigger()
 	Util.Safe(command.Run)
 end
 
@@ -7335,12 +7345,24 @@ function Window:ToggleMaximize()
 	self:SetMaximized(not self.Maximized)
 end
 
+function Window:_SetQuickMenuOpen(open, instant)
+	if not self.QuickMenu or self.QuickMenu.Destroyed then
+		return
+	end
+	if open then
+		self.QuickMenu:Open(instant == true)
+	else
+		self.QuickMenu:Close(instant == true)
+	end
+end
+
 function Window:Show(instant)
 	if self.Closed then
 		return
 	end
 	self.Visible = true
 	self.Minimized = false
+	self:_SetQuickMenuOpen(true, instant == true)
 
 	if self._pill then
 		self._pill.Visible = false
@@ -7367,6 +7389,7 @@ function Window:Hide(instant)
 		return
 	end
 	self.Visible = false
+	self:_SetQuickMenuOpen(false, instant == true)
 	self:_ClosePopups(nil, true)
 
 	if instant then
@@ -7391,6 +7414,7 @@ function Window:Minimize()
 	end
 	self.Minimized = true
 	self.Visible = false
+	self:_SetQuickMenuOpen(false, true)
 	self:_ClosePopups(nil, true)
 
 	local pill = self:_EnsurePill()

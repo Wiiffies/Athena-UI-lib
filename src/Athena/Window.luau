@@ -1485,12 +1485,24 @@ function Window:ToggleMaximize()
 	self:SetMaximized(not self.Maximized)
 end
 
+function Window:_SetQuickMenuOpen(open, instant)
+	if not self.QuickMenu or self.QuickMenu.Destroyed then
+		return
+	end
+	if open then
+		self.QuickMenu:Open(instant == true)
+	else
+		self.QuickMenu:Close(instant == true)
+	end
+end
+
 function Window:Show(instant)
 	if self.Closed then
 		return
 	end
 	self.Visible = true
 	self.Minimized = false
+	self:_SetQuickMenuOpen(true, instant == true)
 
 	if self._pill then
 		self._pill.Visible = false
@@ -1517,6 +1529,7 @@ function Window:Hide(instant)
 		return
 	end
 	self.Visible = false
+	self:_SetQuickMenuOpen(false, instant == true)
 	self:_ClosePopups(nil, true)
 
 	if instant then
@@ -1541,6 +1554,7 @@ function Window:Minimize()
 	end
 	self.Minimized = true
 	self.Visible = false
+	self:_SetQuickMenuOpen(false, true)
 	self:_ClosePopups(nil, true)
 
 	local pill = self:_EnsurePill()

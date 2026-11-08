@@ -35,8 +35,8 @@ local Athena = loadstring(game:HttpGet(
 | `Accent` | Color3 | `#EEF0F2` | Shortcut for `ThemeOverrides.Accent`. |
 | `Size` | UDim2 or Vector2 | `880 × 600` | Base size; the window scales to the viewport. |
 | `ToggleKey` | Enum.KeyCode or `false` | `RightShift` | Keyboard show/hide. |
-| `QuickMenu` | boolean or table | `true` | Bottom-right command palette; `false` disables it. |
-| `QuickMenuKey` | Enum.KeyCode or `false` | `K` | Open/close the quick menu. |
+| `QuickMenu` | boolean or table | `true` | Bottom-right command palette, visible with the window; `false` disables it. |
+| `QuickMenuKey` | Enum.KeyCode or `false` | `K` | Hide/show the window and quick menu together. |
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
 
@@ -219,10 +219,11 @@ Methods: `Set(value, silent)`, `Get()`, `GetSelected()`, `SetOptions(list)`, `Op
 
 ### Quick menu
 
-Every window gets a bottom-right command palette. Click the grid button or press **K**, then type
-to filter commands. It includes centre, minimise, hide/show, test notification, clear notifications
-and a jump-to-tab command for every tab. The trigger has a breathing halo, the panel springs in, and
-command rows cascade into place.
+Every window gets a bottom-right command palette that is visible while the window is visible. Press
+**K** (or click the grid button) to hide/show the window and palette together. Type to filter
+commands; commands run without dismissing the palette. It includes centre, minimise, hide/show, test
+notification, clear notifications and a jump-to-tab command for every tab. The trigger has a breathing
+halo, the panel springs in, and command rows cascade into place.
 
 ```lua
 Window:OpenQuickMenu()
@@ -231,7 +232,7 @@ Window:CloseQuickMenu()
 ```
 
 Disable it with `QuickMenu = false`, or change the key with `QuickMenuKey = Enum.KeyCode.J`. If the
-same key is used for both `ToggleKey` and `QuickMenuKey`, the quick menu owns it.
+same key is used for both `ToggleKey` and `QuickMenuKey`, pressing it hides or shows both.
 
 ### Keybind
 
@@ -359,7 +360,8 @@ local Window = Athena:CreateWindow({
 
 ## Icons
 
-Icons use public Lucide image assets (`rbxassetid`), with a circle fallback for unknown names. Available names:
+Icons use public Lucide image assets (`rbxassetid`), with the original vector Athena brand mark and a
+circle fallback for unknown names. Available names:
 
 `athena`, `bell`, `bolt`, `check`, `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`,
 `clock`, `close`, `code`, `dot`, `gamepad`, `gear`, `grid`, `home`, `info`, `maximize`, `minus`,
@@ -383,8 +385,8 @@ hover and press automatically.
 - Errors thrown inside callbacks are caught and reported with `warn("[Athena] …")`.
 - `RightShift` toggles the window unless `ToggleKey = false` is passed. Avoid binding either
   `RightShift` or the quick-menu key (`K` by default) with `CreateKeybind`.
-- If `ToggleKey` and `QuickMenuKey` are the same, K is reserved for the quick menu; choose a
-  different window key.
+- If `ToggleKey` and `QuickMenuKey` are the same, the key hides and shows both the window and the
+  palette.
 
 ---
 

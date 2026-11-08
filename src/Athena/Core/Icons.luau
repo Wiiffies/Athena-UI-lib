@@ -1,7 +1,7 @@
 --[[
 	Athena · Core/Icons
-	Lucide image assets (public Roblox IDs) with a small vector fallback for
-	custom marks. Every icon is authored by Lucide, not drawn from primitives.
+	Lucide image assets (public Roblox IDs) for UI glyphs, plus the original
+	Athena vector brand mark. UI icons are authored by Lucide, not drawn here.
 ]]
 
 local TweenService = game:GetService("TweenService")
@@ -15,7 +15,8 @@ local ASPECT = {
 
 -- One asset per icon. These are the Lucide Roblox IDs used by Fluent/LucidIcons.
 local ASSETS = {
-	athena = "rbxassetid://10723417608", -- landmark
+	-- `athena` intentionally stays on the original vector mark; the brand logo
+	-- is not a Lucide glyph.
 	bolt = "rbxassetid://109718589733073", -- zap
 	pause = "rbxassetid://10734919336",
 	play = "rbxassetid://10734923549",
