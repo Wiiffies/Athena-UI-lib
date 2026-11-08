@@ -662,7 +662,7 @@ ApiSection:CreateButton({
 -- Settings · window controls
 --------------------------------------------------------------------------------
 
-local WindowSection = Settings:CreateSection({ Title = "Window", Icon = "settings" })
+local WindowSection = Settings:CreateSection({ Title = "Window", Icon = "gear" })
 
 WindowSection:CreateButton({
 	Name = "Go back to Home",
