@@ -14,7 +14,7 @@ interface library, written in Luau.
   sheet with an empty state and clear action.
 - Buttons, toggles, sliders, dropdowns, keybinds, textboxes, labels, separators and HSV colour
   pickers.
-- No images, fonts or third-party modules. Icons are drawn from primitives; the title bar mark
+- No third-party fonts or modules. Icons use public Lucide image assets; the title bar mark
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
@@ -512,7 +512,7 @@ Athena-UI-lib/
 │       ├── Core/
 │       │   ├── Theme.luau       design tokens and presets
 │       │   ├── Util.luau        primitives, tweens, maid, colour helpers
-│       │   ├── Icons.luau       asset-free vector icons
+│       │   ├── Icons.luau       Lucide image icons
 │       │   ├── Popup.luau       floating surfaces (dropdowns, pickers, panels)
 │       │   └── Dragger.luau     drag with viewport clamping
 │       └── Components/
@@ -541,7 +541,7 @@ The recreation follows the reference screen closely:
 - Muted status banner, grouped card rows with 1px dividers and 14px inner padding.
 - Automation cards with 50px artwork, title/subtitle, chips, status text, ghost `Edit`, light `Run`
   and a light-track switch.
-- Active tab is white with a 2px white underline that scrolls into view; counts use compact coral badges.
+- Active tab is white with a 2px white underline that scrolls into view; counts use compact white badges.
 - Sliders use an inset white rail with a centred thumb; the page stays still while you drag.
 - Motion is short and restrained (0.12–0.3s, Quint/Quad out): tab pages ease in, pills press,
   the underline glides, the bell badge pulses and popups rise, like the desktop app.
@@ -549,7 +549,8 @@ The recreation follows the reference screen closely:
 
 ## Notes
 
-- Icons are drawn from frames, so no assets need uploading and nothing is moderated.
+- Icons are public Lucide image assets, colour-tinted at runtime. Button icons lift on hover,
+  dip on press and pulse in the quick menu, dropdowns and notifications.
 - Dropdown, colour-picker, bell and search panels close on outside click, `Escape`, tab change,
   drag and viewport resize.
 - `Section:Destroy()`, `Tab:Destroy()` and `Window:Destroy()` disconnect everything they created.
@@ -557,6 +558,8 @@ The recreation follows the reference screen closely:
   breaking the interface.
 - Binding the same key with `CreateKeybind` that the window uses for `ToggleKey` (RightShift by
   default) will also toggle the window; pick another key in that case.
+- If `ToggleKey` and `QuickMenuKey` are both `K`, K controls only the quick menu. Pick another
+  `ToggleKey` when you want a separate window hide/show key.
 
 ## Licence and disclaimer
 

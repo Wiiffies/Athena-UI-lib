@@ -2786,9 +2786,11 @@ end
 __modules["Core.Icons"] = function(require)
 --[[
 	Athena · Core/Icons
-	Icons are drawn from primitives so the library needs no image assets.
-	Every icon is a normalised spec (0-1 coordinates) rendered into a square.
+	Lucide image assets (public Roblox IDs) with a small vector fallback for
+	custom marks. Every icon is authored by Lucide, not drawn from primitives.
 ]]
+
+local TweenService = game:GetService("TweenService")
 
 local Icons = {}
 
@@ -2796,6 +2798,80 @@ local Icons = {}
 local ASPECT = {
 	athena = 1.52,
 }
+
+-- One asset per icon. These are the Lucide Roblox IDs used by Fluent/LucidIcons.
+local ASSETS = {
+	athena = "rbxassetid://10723417608", -- landmark
+	bolt = "rbxassetid://109718589733073", -- zap
+	pause = "rbxassetid://10734919336",
+	play = "rbxassetid://10734923549",
+	refresh = "rbxassetid://10734933222", -- refresh-cw
+	gear = "rbxassetid://10734950309", -- settings
+	clock = "rbxassetid://10709805144",
+	dot = "rbxassetid://10709798174", -- circle
+	pulse = "rbxassetid://10709752035", -- activity
+	home = "rbxassetid://10723407389",
+	code = "rbxassetid://10709807111", -- code-2
+	grid = "rbxassetid://10723424838", -- layout-grid
+	gamepad = "rbxassetid://10723395215", -- gamepad-2
+	search = "rbxassetid://10734943674",
+	bell = "rbxassetid://10709775704",
+	close = "rbxassetid://10747384394", -- x
+	check = "rbxassetid://10709790644",
+	plus = "rbxassetid://10734924532",
+	minus = "rbxassetid://10734896206",
+	maximize = "rbxassetid://10734886496", -- maximize-2
+	minimize = "rbxassetid://10734895530", -- minimize-2
+	square = "rbxassetid://10734965702",
+	chevronDown = "rbxassetid://10709790948",
+	chevronUp = "rbxassetid://10709791523",
+	chevronRight = "rbxassetid://10709791437",
+	chevronLeft = "rbxassetid://102314312897830",
+	info = "rbxassetid://10723415903",
+	warning = "rbxassetid://10709753149", -- alert-triangle
+	trash = "rbxassetid://10747362241", -- trash-2
+	terminal = "rbxassetid://10734982144",
+	command = "rbxassetid://10709811365",
+	keyboard = "rbxassetid://10723416765",
+	sliders = "rbxassetid://10734963400", -- sliders-horizontal
+	edit = "rbxassetid://10734883598",
+	copy = "rbxassetid://10709812159",
+	eye = "rbxassetid://10723346959",
+	lock = "rbxassetid://10723434711",
+	unlock = "rbxassetid://10747366027",
+	power = "rbxassetid://10734930466",
+	download = "rbxassetid://10723344270",
+	upload = "rbxassetid://10747366434",
+	save = "rbxassetid://10734941499",
+	folder = "rbxassetid://10723387563",
+	file = "rbxassetid://10723356507", -- file-code
+	image = "rbxassetid://10723415040",
+	camera = "rbxassetid://10709789686",
+	video = "rbxassetid://10747374938",
+	music = "rbxassetid://10734905958",
+	server = "rbxassetid://10734949856",
+	database = "rbxassetid://10709818996",
+	cloud = "rbxassetid://10709806740",
+	wifi = "rbxassetid://10747382504",
+	bug = "rbxassetid://10709782845",
+	gitBranch = "rbxassetid://10723396676",
+	globe = "rbxassetid://10723404337",
+	map = "rbxassetid://10734886202",
+	compass = "rbxassetid://10709811445",
+	target = "rbxassetid://10734977012",
+	rocket = "rbxassetid://10734934585",
+	star = "rbxassetid://10734966248",
+	heart = "rbxassetid://10723406885",
+	flame = "rbxassetid://10723376114",
+	sparkles = "rbxassetid://105634041692696",
+	loader = "rbxassetid://10723434070",
+	arrowRight = "rbxassetid://10709768347",
+	arrowLeft = "rbxassetid://10709768114",
+	arrowUp = "rbxassetid://10709768939",
+	arrowDown = "rbxassetid://10709767827",
+}
+
+Icons.Assets = ASSETS
 
 -- Each part: bar = rounded rectangle, ring = stroked circle,
 -- tri = right pointing triangle built from a clipped rotated square.
@@ -2943,6 +3019,11 @@ Icons.Names = {}
 for name in pairs(SPECS) do
 	table.insert(Icons.Names, name)
 end
+for name in pairs(ASSETS) do
+	if not SPECS[name] then
+		table.insert(Icons.Names, name)
+	end
+end
 table.sort(Icons.Names)
 
 local function newPart(holder, spec, size, color, zIndex)
@@ -3006,16 +3087,38 @@ function Icons.New(name, size, color, parent, zIndex)
 	size = size or 14
 	color = color or Color3.new(1, 1, 1)
 
+	local asset = ASSETS[name]
+	local spec = SPECS[name]
+	if not asset and not spec then
+		asset = ASSETS.dot
+	end
+
 	local holder = Instance.new("Frame")
 	holder.Name = "Icon_" .. tostring(name)
 	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(size * (ASPECT[name] or 1), size)
+	holder.Size = UDim2.fromOffset(size * (asset and 1 or (ASPECT[name] or 1)), size)
 	holder.ZIndex = zIndex or 1
 	holder.Parent = parent
 
-	local spec = SPECS[name]
+	local iconScale = Instance.new("UIScale")
+	iconScale.Name = "IconScale"
+	iconScale.Scale = 1
+	iconScale.Parent = holder
+
+	local image
 	local parts = {}
-	if spec then
+	if asset then
+		image = Instance.new("ImageLabel")
+		image.Name = "Asset"
+		image.Size = UDim2.fromScale(1, 1)
+		image.BackgroundTransparency = 1
+		image.BorderSizePixel = 0
+		image.Image = asset
+		image.ImageColor3 = color
+		image.ScaleType = Enum.ScaleType.Fit
+		image.ZIndex = zIndex or 1
+		image.Parent = holder
+	elseif spec then
 		for _, partSpec in ipairs(spec) do
 			table.insert(parts, newPart(holder, partSpec, size, color, zIndex or 1))
 		end
@@ -3023,6 +3126,8 @@ function Icons.New(name, size, color, parent, zIndex)
 
 	local icon = {
 		Frame = holder,
+		Image = image,
+		Scale = iconScale,
 		Name = name,
 		Size = size,
 		Color = color,
@@ -3030,6 +3135,9 @@ function Icons.New(name, size, color, parent, zIndex)
 
 	function icon:SetColor(newColor)
 		self.Color = newColor
+		if self.Image then
+			self.Image.ImageColor3 = newColor
+		end
 		for _, part in ipairs(parts) do
 			if part:IsA("Frame") then
 				local stroke = part:FindFirstChildOfClass("UIStroke")
@@ -3048,8 +3156,83 @@ function Icons.New(name, size, color, parent, zIndex)
 		end
 	end
 
+	function icon:SetTransparency(value)
+		value = math.clamp(value or 0, 0, 1)
+		if self.Image then
+			self.Image.ImageTransparency = value
+		end
+		for _, part in ipairs(parts) do
+			if part:IsA("Frame") then
+				part.BackgroundTransparency = value
+				local stroke = part:FindFirstChildOfClass("UIStroke")
+				if stroke then
+					stroke.Transparency = value
+				end
+			end
+		end
+	end
+
+	function icon:Pulse(peak, duration)
+		if not self.Scale or not self.Scale.Parent then
+			return
+		end
+		peak = peak or 1.16
+		duration = duration or 0.22
+		self.Scale.Scale = 1
+		TweenService:Create(
+			self.Scale,
+			TweenInfo.new(duration * 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+			{ Scale = peak }
+		):Play()
+		task.delay(duration * 0.35, function()
+			if self.Scale and self.Scale.Parent then
+				TweenService:Create(
+					self.Scale,
+					TweenInfo.new(duration * 0.65, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+					{ Scale = 1 }
+				):Play()
+			end
+		end)
+	end
+
 	function icon:Destroy()
 		holder:Destroy()
+	end
+
+	-- Every icon inside a button responds to hover and press. Components keep
+	-- their own motion; this adds the fine, tactile layer on top.
+	if parent and parent:IsA("GuiButton") then
+		local function tweenScale(target, duration)
+			if not iconScale.Parent then
+				return
+			end
+			TweenService:Create(
+				iconScale,
+				TweenInfo.new(duration, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+				{ Scale = target }
+			):Play()
+		end
+
+		local connections = {
+			parent.MouseEnter:Connect(function()
+				tweenScale(1.14, 0.16)
+			end),
+			parent.MouseLeave:Connect(function()
+				tweenScale(1, 0.16)
+			end),
+			parent.MouseButton1Down:Connect(function()
+				tweenScale(0.88, 0.07)
+			end),
+			parent.MouseButton1Up:Connect(function()
+				tweenScale(1.14, 0.18)
+			end),
+		}
+
+		holder.Destroying:Once(function()
+			for _, connection in ipairs(connections) do
+				connection:Disconnect()
+			end
+		end)
 	end
 
 	return icon
@@ -4343,6 +4526,7 @@ function QuickMenu.new(window, options)
 	local glyph = Icons.New("grid", 13, theme.Text, headerIcon, 224)
 	glyph.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	glyph.Frame.Position = UDim2.fromScale(0.5, 0.5)
+	self.HeaderIcon = glyph
 
 	Util.Create("TextLabel", {
 		Name = "Title",
@@ -4469,6 +4653,9 @@ function QuickMenu.new(window, options)
 	clearIcon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	clearIcon.Frame.Position = UDim2.fromScale(0.5, 0.5)
 	self.ClearButton = clearButton
+	self.CloseIcon = closeIcon
+	self.SearchIcon = searchIcon
+	self.ClearIcon = clearIcon
 
 	Util.Create("Frame", {
 		Name = "Divider",
@@ -4505,6 +4692,9 @@ function QuickMenu.new(window, options)
 		Util.Tween(searchShell, { BackgroundColor3 = focused and theme.SurfaceHover or theme.SurfaceAlt }, 0.12)
 		Util.Tween(searchStroke, { Color = focused and theme.Primary or theme.Border }, 0.12)
 		searchIcon:SetColor(focused and theme.Text or theme.TextMuted)
+		if focused then
+			searchIcon:Pulse(1.22, 0.26)
+		end
 	end
 
 	self.Maid:Add(searchBox.Focused:Connect(function()
@@ -4528,10 +4718,12 @@ function QuickMenu.new(window, options)
 	self.Maid:Add(clearButton.MouseEnter:Connect(function()
 		Util.Tween(clearButton, { BackgroundTransparency = 0.55 }, 0.1)
 		clearIcon:SetColor(theme.Text)
+		Util.Tween(clearIcon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(clearButton.MouseLeave:Connect(function()
 		Util.Tween(clearButton, { BackgroundTransparency = 1 }, 0.1)
 		clearIcon:SetColor(theme.TextMuted)
+		Util.Tween(clearIcon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 
 	self.Maid:Add(closeButton.MouseButton1Click:Connect(function()
@@ -4540,10 +4732,12 @@ function QuickMenu.new(window, options)
 	self.Maid:Add(closeButton.MouseEnter:Connect(function()
 		Util.Tween(closeButton, { BackgroundTransparency = 0.45 }, 0.1)
 		closeIcon:SetColor(theme.Text)
+		Util.Tween(closeIcon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(closeButton.MouseLeave:Connect(function()
 		Util.Tween(closeButton, { BackgroundTransparency = 1 }, 0.1)
 		closeIcon:SetColor(theme.TextMuted)
+		Util.Tween(closeIcon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(catcher.MouseButton1Click:Connect(function()
 		self:Close()
@@ -4587,6 +4781,9 @@ function QuickMenu.new(window, options)
 	end
 
 	self:_SetTriggerOpen(false, true)
+	self.Panel.Visible = false
+	self.Panel.GroupTransparency = 1
+	self.Catcher.Visible = false
 
 	-- A slow halo makes the closed trigger feel alive without drawing attention away from the window.
 	self.Maid:Add(task.spawn(function()
@@ -4622,6 +4819,7 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 		self.TriggerScale.Scale = instant and 1 or 0.9
 		if not instant then
 			Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			self.TriggerIcon:Pulse(1.18, 0.26)
 		end
 		Util.Tween(self.TriggerIcon.Frame, { Rotation = 45 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	else
@@ -4637,6 +4835,9 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 		self.KeyLabel.TextColor3 = theme.TextMuted
 		self.TriggerScale.Scale = 1
 		self.Ring.Visible = true
+		if not instant then
+			self.TriggerIcon:Pulse(1.1, 0.2)
+		end
 		Util.Tween(self.TriggerIcon.Frame, { Rotation = 0 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
 end
@@ -4653,6 +4854,8 @@ function QuickMenu:Open()
 	self.PanelScale.Scale = 0.92
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
 	self:_SetTriggerOpen(true)
+	self.HeaderIcon:Pulse(1.16, 0.3)
+	Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
 
 	if self.Search.Text ~= "" then
 		self.Search.Text = ""
@@ -4666,9 +4869,10 @@ function QuickMenu:Open()
 end
 
 function QuickMenu:Close(instant)
-	if self.Destroyed or not self._open then
+	if self.Destroyed then
 		return
 	end
+	local wasOpen = self._open
 	self._open = false
 	self._animToken += 1
 	local token = self._animToken
@@ -4677,8 +4881,9 @@ function QuickMenu:Close(instant)
 		self.Search:ReleaseFocus()
 	end
 	self:_SetTriggerOpen(false)
+	Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
 
-	if instant then
+	if not wasOpen or instant then
 		self.Panel.Visible = false
 		self.Panel.GroupTransparency = 1
 		return
@@ -4874,15 +5079,19 @@ function QuickMenu:_BuildRow(command, index)
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		icon:SetColor(theme.Text)
 		chevron:SetColor(theme.TextSoft)
+		icon:Pulse(1.12, 0.2)
+		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -6, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 		Util.Tween(rowScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		icon:SetColor(theme.TextSoft)
 		chevron:SetColor(theme.TextFaint)
+		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -10, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(rowScale, { Scale = 0.97 }, 0.06)
+		icon:Pulse(0.88, 0.1)
 	end))
 	rowMaid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -4931,6 +5140,7 @@ function QuickMenu:_Render(query)
 		local icon = Icons.New("search", 18, self.Theme.TextFaint, empty, 223)
 		icon.Frame.AnchorPoint = Vector2.new(0.5, 0)
 		icon.Frame.Position = UDim2.new(0.5, 0, 0, 9)
+		icon:Pulse(1.14, 0.28)
 		Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(0, 34),
 			Size = UDim2.new(1, 0, 0, 16),
@@ -5960,11 +6170,17 @@ function Window.new(library, options)
 			}, 0.12)
 			Util.Tween(buttonScale, { Scale = 1.08 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(danger and theme.PrimaryText or theme.Text)
+			if danger then
+				Util.Tween(icon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			end
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
 			Util.Tween(button, { BackgroundColor3 = theme.SurfaceHover, BackgroundTransparency = 1 }, 0.12)
 			Util.Tween(buttonScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(theme.TextMuted)
+			if danger then
+				Util.Tween(icon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			end
 		end))
 		self.Maid:Add(button.MouseButton1Down:Connect(function()
 			Util.Tween(buttonScale, { Scale = 0.92 }, 0.06)
@@ -7300,6 +7516,11 @@ function Window:SetToggleKey(key)
 			return
 		end
 		if input.KeyCode == key then
+			-- The quick menu owns its key. Otherwise K would close the palette
+			-- and hide the window at the same time.
+			if self.QuickMenu and not self.QuickMenu.Destroyed and self.QuickMenu.Key == key then
+				return
+			end
 			self:Toggle()
 		end
 	end)
@@ -7367,7 +7588,7 @@ __modules["Athena"] = function(require)
 --[[
 	Athena
 	A close recreation of the Athena client interface for Roblox, written in
-	Luau with no external assets or dependencies.
+	Luau with no dependencies; icons use public Lucide image assets.
 
 	Usage:
 		local Athena = loadstring(game:HttpGet("..."))()
@@ -7427,6 +7648,15 @@ function Athena:_EnsureGui()
 	local parent = resolveParent()
 	if not parent then
 		error("[Athena] No PlayerGui available. Pass Parent = <instance> to CreateWindow.", 3)
+	end
+
+	-- Re-executing an executor script used to leave the previous Athena GUI
+	-- behind, including an open quick menu. Remove stale copies before making
+	-- this run's GUI.
+	for _, child in ipairs(parent:GetChildren()) do
+		if child:IsA("ScreenGui") and child.Name == "Athena" and child ~= self._gui then
+			child:Destroy()
+		end
 	end
 
 	local gui = Instance.new("ScreenGui")

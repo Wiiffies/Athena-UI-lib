@@ -190,6 +190,7 @@ function QuickMenu.new(window, options)
 	local glyph = Icons.New("grid", 13, theme.Text, headerIcon, 224)
 	glyph.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	glyph.Frame.Position = UDim2.fromScale(0.5, 0.5)
+	self.HeaderIcon = glyph
 
 	Util.Create("TextLabel", {
 		Name = "Title",
@@ -316,6 +317,9 @@ function QuickMenu.new(window, options)
 	clearIcon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 	clearIcon.Frame.Position = UDim2.fromScale(0.5, 0.5)
 	self.ClearButton = clearButton
+	self.CloseIcon = closeIcon
+	self.SearchIcon = searchIcon
+	self.ClearIcon = clearIcon
 
 	Util.Create("Frame", {
 		Name = "Divider",
@@ -352,6 +356,9 @@ function QuickMenu.new(window, options)
 		Util.Tween(searchShell, { BackgroundColor3 = focused and theme.SurfaceHover or theme.SurfaceAlt }, 0.12)
 		Util.Tween(searchStroke, { Color = focused and theme.Primary or theme.Border }, 0.12)
 		searchIcon:SetColor(focused and theme.Text or theme.TextMuted)
+		if focused then
+			searchIcon:Pulse(1.22, 0.26)
+		end
 	end
 
 	self.Maid:Add(searchBox.Focused:Connect(function()
@@ -375,10 +382,12 @@ function QuickMenu.new(window, options)
 	self.Maid:Add(clearButton.MouseEnter:Connect(function()
 		Util.Tween(clearButton, { BackgroundTransparency = 0.55 }, 0.1)
 		clearIcon:SetColor(theme.Text)
+		Util.Tween(clearIcon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(clearButton.MouseLeave:Connect(function()
 		Util.Tween(clearButton, { BackgroundTransparency = 1 }, 0.1)
 		clearIcon:SetColor(theme.TextMuted)
+		Util.Tween(clearIcon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 
 	self.Maid:Add(closeButton.MouseButton1Click:Connect(function()
@@ -387,10 +396,12 @@ function QuickMenu.new(window, options)
 	self.Maid:Add(closeButton.MouseEnter:Connect(function()
 		Util.Tween(closeButton, { BackgroundTransparency = 0.45 }, 0.1)
 		closeIcon:SetColor(theme.Text)
+		Util.Tween(closeIcon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(closeButton.MouseLeave:Connect(function()
 		Util.Tween(closeButton, { BackgroundTransparency = 1 }, 0.1)
 		closeIcon:SetColor(theme.TextMuted)
+		Util.Tween(closeIcon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(catcher.MouseButton1Click:Connect(function()
 		self:Close()
@@ -434,6 +445,9 @@ function QuickMenu.new(window, options)
 	end
 
 	self:_SetTriggerOpen(false, true)
+	self.Panel.Visible = false
+	self.Panel.GroupTransparency = 1
+	self.Catcher.Visible = false
 
 	-- A slow halo makes the closed trigger feel alive without drawing attention away from the window.
 	self.Maid:Add(task.spawn(function()
@@ -469,6 +483,7 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 		self.TriggerScale.Scale = instant and 1 or 0.9
 		if not instant then
 			Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+			self.TriggerIcon:Pulse(1.18, 0.26)
 		end
 		Util.Tween(self.TriggerIcon.Frame, { Rotation = 45 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	else
@@ -484,6 +499,9 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 		self.KeyLabel.TextColor3 = theme.TextMuted
 		self.TriggerScale.Scale = 1
 		self.Ring.Visible = true
+		if not instant then
+			self.TriggerIcon:Pulse(1.1, 0.2)
+		end
 		Util.Tween(self.TriggerIcon.Frame, { Rotation = 0 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
 end
@@ -500,6 +518,8 @@ function QuickMenu:Open()
 	self.PanelScale.Scale = 0.92
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
 	self:_SetTriggerOpen(true)
+	self.HeaderIcon:Pulse(1.16, 0.3)
+	Util.Tween(self.PanelStroke, { Transparency = 0.02 }, 0.2)
 
 	if self.Search.Text ~= "" then
 		self.Search.Text = ""
@@ -513,9 +533,10 @@ function QuickMenu:Open()
 end
 
 function QuickMenu:Close(instant)
-	if self.Destroyed or not self._open then
+	if self.Destroyed then
 		return
 	end
+	local wasOpen = self._open
 	self._open = false
 	self._animToken += 1
 	local token = self._animToken
@@ -524,8 +545,9 @@ function QuickMenu:Close(instant)
 		self.Search:ReleaseFocus()
 	end
 	self:_SetTriggerOpen(false)
+	Util.Tween(self.PanelStroke, { Transparency = 0.05 }, 0.18)
 
-	if instant then
+	if not wasOpen or instant then
 		self.Panel.Visible = false
 		self.Panel.GroupTransparency = 1
 		return
@@ -721,15 +743,19 @@ function QuickMenu:_BuildRow(command, index)
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		icon:SetColor(theme.Text)
 		chevron:SetColor(theme.TextSoft)
+		icon:Pulse(1.12, 0.2)
+		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -6, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 		Util.Tween(rowScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		icon:SetColor(theme.TextSoft)
 		chevron:SetColor(theme.TextFaint)
+		Util.Tween(chevron.Frame, { Position = UDim2.new(1, -10, 0.5, 0) }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	rowMaid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(rowScale, { Scale = 0.97 }, 0.06)
+		icon:Pulse(0.88, 0.1)
 	end))
 	rowMaid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(rowScale, { Scale = 1.01 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -778,6 +804,7 @@ function QuickMenu:_Render(query)
 		local icon = Icons.New("search", 18, self.Theme.TextFaint, empty, 223)
 		icon.Frame.AnchorPoint = Vector2.new(0.5, 0)
 		icon.Frame.Position = UDim2.new(0.5, 0, 0, 9)
+		icon:Pulse(1.14, 0.28)
 		Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(0, 34),
 			Size = UDim2.new(1, 0, 0, 16),

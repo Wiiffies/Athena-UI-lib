@@ -320,11 +320,17 @@ function Window.new(library, options)
 			}, 0.12)
 			Util.Tween(buttonScale, { Scale = 1.08 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(danger and theme.PrimaryText or theme.Text)
+			if danger then
+				Util.Tween(icon.Frame, { Rotation = 90 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			end
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
 			Util.Tween(button, { BackgroundColor3 = theme.SurfaceHover, BackgroundTransparency = 1 }, 0.12)
 			Util.Tween(buttonScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(theme.TextMuted)
+			if danger then
+				Util.Tween(icon.Frame, { Rotation = 0 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+			end
 		end))
 		self.Maid:Add(button.MouseButton1Down:Connect(function()
 			Util.Tween(buttonScale, { Scale = 0.92 }, 0.06)
@@ -1660,6 +1666,11 @@ function Window:SetToggleKey(key)
 			return
 		end
 		if input.KeyCode == key then
+			-- The quick menu owns its key. Otherwise K would close the palette
+			-- and hide the window at the same time.
+			if self.QuickMenu and not self.QuickMenu.Destroyed and self.QuickMenu.Key == key then
+				return
+			end
 			self:Toggle()
 		end
 	end)

@@ -1,7 +1,7 @@
 --[[
 	Athena
 	A close recreation of the Athena client interface for Roblox, written in
-	Luau with no external assets or dependencies.
+	Luau with no dependencies; icons use public Lucide image assets.
 
 	Usage:
 		local Athena = loadstring(game:HttpGet("..."))()
@@ -61,6 +61,15 @@ function Athena:_EnsureGui()
 	local parent = resolveParent()
 	if not parent then
 		error("[Athena] No PlayerGui available. Pass Parent = <instance> to CreateWindow.", 3)
+	end
+
+	-- Re-executing an executor script used to leave the previous Athena GUI
+	-- behind, including an open quick menu. Remove stale copies before making
+	-- this run's GUI.
+	for _, child in ipairs(parent:GetChildren()) do
+		if child:IsA("ScreenGui") and child.Name == "Athena" and child ~= self._gui then
+			child:Destroy()
+		end
 	end
 
 	local gui = Instance.new("ScreenGui")

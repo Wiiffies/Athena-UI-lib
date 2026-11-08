@@ -230,8 +230,8 @@ Window:ToggleQuickMenu()
 Window:CloseQuickMenu()
 ```
 
-Disable it with `QuickMenu = false`, or change the key with `QuickMenuKey = Enum.KeyCode.J`. Avoid
-binding the same key with `CreateKeybind`; both listeners will fire.
+Disable it with `QuickMenu = false`, or change the key with `QuickMenuKey = Enum.KeyCode.J`. If the
+same key is used for both `ToggleKey` and `QuickMenuKey`, the quick menu owns it.
 
 ### Keybind
 
@@ -359,14 +359,14 @@ local Window = Athena:CreateWindow({
 
 ## Icons
 
-Icons are drawn from primitives, so no assets are needed. Available names:
+Icons use public Lucide image assets (`rbxassetid`), with a circle fallback for unknown names. Available names:
 
 `athena`, `bell`, `bolt`, `check`, `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`,
 `clock`, `close`, `code`, `dot`, `gamepad`, `gear`, `grid`, `home`, `info`, `maximize`, `minus`,
 `pause`, `play`, `plus`, `pulse`, `refresh`, `search`, `trash`, `warning`.
 
-Pass the name to `Icon` anywhere an icon is accepted. `Athena.Util` exposes helpers if you want to
-draw icons yourself.
+Pass the name to `Icon` anywhere an icon is accepted. Names are colour-tinted and animate on
+hover and press automatically.
 
 ---
 
@@ -383,6 +383,8 @@ draw icons yourself.
 - Errors thrown inside callbacks are caught and reported with `warn("[Athena] …")`.
 - `RightShift` toggles the window unless `ToggleKey = false` is passed. Avoid binding either
   `RightShift` or the quick-menu key (`K` by default) with `CreateKeybind`.
+- If `ToggleKey` and `QuickMenuKey` are the same, K is reserved for the quick menu; choose a
+  different window key.
 
 ---
 
@@ -390,7 +392,7 @@ draw icons yourself.
 
 ```lua
 Athena.Util.ColorToHex(color)   --> "#EEF0F2"
-Athena.Util.HexToColor("#f2555a") --> Color3
+Athena.Util.HexToColor("#EEF0F2") --> Color3
 Athena.Util.FormatNumber(12.5)  --> "12.5"
 Athena.Util.Round(value, step)
 Athena.Util.Measure(text, size, font, width) --> Vector2
