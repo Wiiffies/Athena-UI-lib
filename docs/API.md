@@ -1,4 +1,4 @@
-# Athena UI · API reference
+# Athena · API reference
 
 Everything is optional except the objects you want to create. Callbacks are wrapped in `pcall`,
 so a mistake in your script logs a warning instead of breaking the interface.
@@ -29,6 +29,7 @@ local Athena = loadstring(game:HttpGet(
 | Option | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `Title` | string | `"Athena"` | Shown in the title bar and on the minimised pill. |
+| `Logo` | string or number | drawn mark | Image asset for the title bar mark (`rbxassetid://…` or an id). |
 | `Theme` | string or table | `"Athena"` | Preset name or a partial theme table. |
 | `ThemeOverrides` | table | – | Tokens merged over the resolved theme. |
 | `Accent` | Color3 | `#F2555A` | Shortcut for `ThemeOverrides.Accent`. |

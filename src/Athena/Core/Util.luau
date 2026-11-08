@@ -166,6 +166,17 @@ function Util.Tween(instance, properties, duration, style, direction, callback)
 	return tween
 end
 
+--- Runs a user callback, reporting mistakes without breaking the interface.
+function Util.Safe(callback, ...)
+	if type(callback) ~= "function" then
+		return
+	end
+	local ok, err = pcall(callback, ...)
+	if not ok then
+		warn("[Athena] " .. tostring(err))
+	end
+end
+
 --- Subtle row highlight used by interactive rows.
 function Util.RowHover(row, maid, theme)
 	row.BackgroundColor3 = theme.SurfaceHover
@@ -177,10 +188,10 @@ function Util.RowHover(row, maid, theme)
 	maid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 	end))
-	maid:Add(row.MouseButtonDown:Connect(function()
+	maid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.35 }, 0.06)
 	end))
-	maid:Add(row.MouseButtonUp:Connect(function()
+	maid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.55 }, 0.1)
 	end))
 end

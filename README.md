@@ -1,4 +1,6 @@
-# Athena UI
+# Athena
+
+![Athena](assets/athena-banner.png)
 
 A faithful recreation of the [Athena](https://getathena.gg/) desktop client as a reusable Roblox
 interface library, written in Luau.
@@ -10,7 +12,8 @@ interface library, written in Luau.
 - Cards, status banners, chips, grouped rows, toasts and a notification history panel.
 - Buttons, toggles, sliders, dropdowns, keybinds, textboxes, labels, separators and HSV colour
   pickers.
-- No images, fonts or third-party modules. Icons are drawn from primitives.
+- No images, fonts or third-party modules. Icons are drawn from primitives; the title bar mark
+  follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
@@ -22,7 +25,7 @@ local Athena = loadstring(game:HttpGet(
     "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau"
 ))()
 
-local Window = Athena:CreateWindow({ Title = "My Application", Theme = "Athena" })
+local Window = Athena:CreateWindow({ Title = "Athena", Theme = "Athena" })
 local Tab = Window:CreateTab("Main")
 local Section = Tab:CreateSection("General")
 
@@ -49,8 +52,8 @@ Full API reference: [`docs/API.md`](docs/API.md).
 
 ## Complete example script
 
-The script below creates two tabs, header actions, a status banner, an automation card, a settings
-section containing every component, programmatic setters and notification demos.
+The script below creates two tabs, header actions, a status banner, three automation cards, a
+settings section containing every component, programmatic setters and notification demos.
 
 Paste it into a **LocalScript** under `StarterPlayer > StarterPlayerScripts`, or run it directly in
 an executor.
@@ -65,7 +68,7 @@ local Athena = loadstring(game:HttpGet(
 ))()
 
 local Window = Athena:CreateWindow({
-    Title = "My Application",
+    Title = "Athena",
     Theme = "Athena",
     Size = UDim2.fromOffset(880, 600),
 })
@@ -120,6 +123,33 @@ Main:CreateCard({
         Callback = function(value)
             print("Card enabled:", value)
         end,
+    },
+})
+
+Main:CreateCard({
+    Name = "Jailbreak nights",
+    Description = "[Jailbreak (Roblox Event)] · Weekdays 18:00 to 23:00",
+    Tags = { "farm_01", "farm_02", "alt_main", "farm_03", "1 script" },
+    Status = "Starts today at 18:00",
+    Actions = {
+        { Name = "Edit", Style = "Ghost", Callback = function() print("Edit clicked") end },
+    },
+    Toggle = {
+        Default = true,
+        Callback = function(value)
+            print("Card enabled:", value)
+        end,
+    },
+})
+
+Main:CreateCard({
+    Name = "MM2 grind",
+    Description = "Murder Mystery 2 · Manual",
+    Tags = { "farm_01", "farm_02", "alt_main", "1 script" },
+    Status = "Ready",
+    Actions = {
+        { Name = "Edit", Style = "Ghost", Callback = function() print("Edit clicked") end },
+        { Name = "Run", Style = "Primary", Icon = "play", Callback = function() print("Run clicked") end },
     },
 })
 
@@ -378,7 +408,7 @@ Run `rojo serve` (or `rojo build -o AthenaUI.rbxm`), sync, then:
 ```lua
 local Athena = require(game.ReplicatedStorage.Athena)
 
-local Window = Athena:CreateWindow({ Title = "My Application" })
+local Window = Athena:CreateWindow({ Title = "Athena" })
 Window:CreateTab("Main"):CreateSection("General"):CreateButton({
     Name = "Example Button",
     Callback = print,
@@ -404,7 +434,7 @@ Pass a preset name, a partial table, or a full custom theme:
 
 ```lua
 local Window = Athena:CreateWindow({
-    Title = "My Application",
+    Title = "Athena",
     Accent = Color3.fromRGB(20, 224, 163), -- shortcut for ThemeOverrides.Accent
     ThemeOverrides = {
         Surface = Color3.fromRGB(24, 25, 28),
@@ -433,6 +463,9 @@ Presets live in `Athena.Themes` (`"Athena"`, `"Light"`); every token is listed i
 
 ```
 Athena-UI-lib/
+├── assets/
+│   ├── athena-logo.png          official Athena mark (branding only)
+│   └── athena-banner.png        README banner
 ├── dist/
 │   └── Athena.luau              generated single-file library (loadstring)
 ├── docs/
@@ -495,4 +528,6 @@ The recreation follows the reference screen closely:
 ## Licence and disclaimer
 
 Use it in your own projects, modify it, ship it. Athena and Roblox are trademarks of their
-respective owners; this repository is an independent, unofficial recreation of the interface.
+respective owners; this repository is an independent, unofficial recreation of the interface. The
+Athena mark in `assets/` belongs to Athena and is included only to identify the interface this
+library recreates.

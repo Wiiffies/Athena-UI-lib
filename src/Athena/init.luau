@@ -64,7 +64,7 @@ function Athena:_EnsureGui()
 	end
 
 	local gui = Instance.new("ScreenGui")
-	gui.Name = "AthenaUI"
+	gui.Name = "Athena"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling

@@ -1,5 +1,5 @@
 {
-	"name": "AthenaUI",
+	"name": "Athena",
 	"tree": {
 		"$className": "DataModel",
 		"ReplicatedStorage": {

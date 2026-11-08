@@ -2580,7 +2580,7 @@ function Dragger.Attach(frame, handle, maid, options)
 		end
 		dragging = true
 		moved = false
-		startInput = input.Position
+		startInput = Vector2.new(input.Position.X, input.Position.Y)
 		startCenter = frame.AbsolutePosition + frame.AbsoluteSize / 2
 		if options.OnDragStart then
 			options.OnDragStart()
@@ -2597,7 +2597,7 @@ function Dragger.Attach(frame, handle, maid, options)
 			return
 		end
 
-		local delta = input.Position - startInput
+		local delta = Vector2.new(input.Position.X, input.Position.Y) - startInput
 		if not moved then
 			if delta.Magnitude < threshold then
 				return
@@ -2655,6 +2655,11 @@ __modules["Core.Icons"] = function(require)
 ]]
 
 local Icons = {}
+
+-- Holders are square unless the mark needs a wider canvas.
+local ASPECT = {
+	athena = 1.52,
+}
 
 -- Each part: bar = rounded rectangle, ring = stroked circle,
 -- tri = right pointing triangle built from a clipped rotated square.
@@ -2784,9 +2789,15 @@ local SPECS = {
 		{ kind = "bar", x = 0.5, y = 0.17, w = 0.26, h = 0.1, corner = 0.2 },
 	},
 	athena = {
-		{ kind = "bar", x = 0.42, y = 0.5, w = 0.13, h = 0.78, rot = 26 },
-		{ kind = "bar", x = 0.68, y = 0.62, w = 0.13, h = 0.5, rot = -26 },
-		{ kind = "bar", x = 0.5, y = 0.64, w = 0.46, h = 0.11 },
+		-- The two legs of the A meet at the apex.
+		{ kind = "bar", x = 0.362, y = 0.5, w = 0.095, h = 1.2, rot = 30 },
+		{ kind = "bar", x = 0.638, y = 0.5, w = 0.095, h = 1.2, rot = -30 },
+		-- Wings sweeping out from the crossbar, as in getathena.gg/logo.png.
+		{ kind = "bar", x = 0.17, y = 0.395, w = 0.36, h = 0.16, rot = 23 },
+		{ kind = "bar", x = 0.83, y = 0.395, w = 0.36, h = 0.16, rot = -23 },
+		-- Lower blades that frame the counter.
+		{ kind = "bar", x = 0.305, y = 0.625, w = 0.1, h = 0.24, rot = 38 },
+		{ kind = "bar", x = 0.695, y = 0.625, w = 0.1, h = 0.24, rot = -38 },
 	},
 }
 
@@ -2860,7 +2871,7 @@ function Icons.New(name, size, color, parent, zIndex)
 	local holder = Instance.new("Frame")
 	holder.Name = "Icon_" .. tostring(name)
 	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(size, size)
+	holder.Size = UDim2.fromOffset(size * (ASPECT[name] or 1), size)
 	holder.ZIndex = zIndex or 1
 	holder.Parent = parent
 
@@ -3501,6 +3512,17 @@ function Util.Tween(instance, properties, duration, style, direction, callback)
 	return tween
 end
 
+--- Runs a user callback, reporting mistakes without breaking the interface.
+function Util.Safe(callback, ...)
+	if type(callback) ~= "function" then
+		return
+	end
+	local ok, err = pcall(callback, ...)
+	if not ok then
+		warn("[Athena] " .. tostring(err))
+	end
+end
+
 --- Subtle row highlight used by interactive rows.
 function Util.RowHover(row, maid, theme)
 	row.BackgroundColor3 = theme.SurfaceHover
@@ -3512,10 +3534,10 @@ function Util.RowHover(row, maid, theme)
 	maid:Add(row.MouseLeave:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
 	end))
-	maid:Add(row.MouseButtonDown:Connect(function()
+	maid:Add(row.MouseButton1Down:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.35 }, 0.06)
 	end))
-	maid:Add(row.MouseButtonUp:Connect(function()
+	maid:Add(row.MouseButton1Up:Connect(function()
 		Util.Tween(row, { BackgroundTransparency = 0.55 }, 0.1)
 	end))
 end
@@ -4733,7 +4755,7 @@ function Window.new(library, options)
 	--------------------------------------------------------------------------------
 
 	local frame = Util.Create("CanvasGroup", {
-		Name = "AthenaWindow",
+		Name = "Athena",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(self.BaseWidth, self.BaseHeight),
@@ -4790,14 +4812,32 @@ function Window.new(library, options)
 	})
 	logo.Active = true
 
-	local mark = Icons.New("athena", 17, theme.Text, logo)
-	mark.Frame.AnchorPoint = Vector2.new(0, 0.5)
-	mark.Frame.Position = UDim2.new(0, 0, 0.5, 0)
+	local mark
+	if options.Logo ~= nil then
+		local source = options.Logo
+		if type(source) == "number" then
+			source = "rbxassetid://" .. tostring(source)
+		end
+		mark = Util.Create("ImageLabel", {
+			Name = "Logo",
+			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.new(0, 0, 0.5, 0),
+			Size = UDim2.fromOffset(24, 18),
+			BackgroundTransparency = 1,
+			Image = tostring(source),
+			ScaleType = Enum.ScaleType.Fit,
+			Parent = logo,
+		})
+	else
+		mark = Icons.New("athena", 16, theme.Text, logo)
+		mark.Frame.AnchorPoint = Vector2.new(0, 0.5)
+		mark.Frame.Position = UDim2.new(0, 0, 0.5, 0)
+	end
 
 	local brand = Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(24, 0),
-		Size = UDim2.new(1, -24, 1, 0),
+		Position = UDim2.fromOffset(32, 0),
+		Size = UDim2.new(1, -32, 1, 0),
 		BackgroundTransparency = 1,
 		Text = self.Title,
 		Font = theme.FontBold,
@@ -4816,6 +4856,27 @@ function Window.new(library, options)
 			self:_ClosePopups(nil, true)
 		end,
 	})
+
+	local lastBrandClick = 0
+	local function registerBrandClick()
+		local now = os.clock()
+		if now - lastBrandClick <= 0.35 then
+			lastBrandClick = 0
+			self:ToggleMaximize()
+		else
+			lastBrandClick = now
+		end
+	end
+	self.Maid:Add(logo.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			registerBrandClick()
+		end
+	end))
+	self.Maid:Add(topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			registerBrandClick()
+		end
+	end))
 
 	--------------------------------------------------------------------------------
 	-- Navigation
@@ -5102,9 +5163,9 @@ function Window:_UpdateUnderline()
 	end
 
 	self.Underline.Visible = true
-	self.Underline.Size = UDim2.fromOffset(width, 2)
 	Util.Tween(self.Underline, {
 		Position = UDim2.fromOffset(math.round(tabLeft + 10), self.Theme.TopbarHeight),
+		Size = UDim2.fromOffset(width, 2),
 	}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 end
 
@@ -6069,7 +6130,7 @@ function Athena:_EnsureGui()
 	end
 
 	local gui = Instance.new("ScreenGui")
-	gui.Name = "AthenaUI"
+	gui.Name = "Athena"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = true
 	gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling

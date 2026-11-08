@@ -87,7 +87,7 @@ function Window.new(library, options)
 	--------------------------------------------------------------------------------
 
 	local frame = Util.Create("CanvasGroup", {
-		Name = "AthenaWindow",
+		Name = "Athena",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(self.BaseWidth, self.BaseHeight),
@@ -144,14 +144,32 @@ function Window.new(library, options)
 	})
 	logo.Active = true
 
-	local mark = Icons.New("athena", 17, theme.Text, logo)
-	mark.Frame.AnchorPoint = Vector2.new(0, 0.5)
-	mark.Frame.Position = UDim2.new(0, 0, 0.5, 0)
+	local mark
+	if options.Logo ~= nil then
+		local source = options.Logo
+		if type(source) == "number" then
+			source = "rbxassetid://" .. tostring(source)
+		end
+		mark = Util.Create("ImageLabel", {
+			Name = "Logo",
+			AnchorPoint = Vector2.new(0, 0.5),
+			Position = UDim2.new(0, 0, 0.5, 0),
+			Size = UDim2.fromOffset(24, 18),
+			BackgroundTransparency = 1,
+			Image = tostring(source),
+			ScaleType = Enum.ScaleType.Fit,
+			Parent = logo,
+		})
+	else
+		mark = Icons.New("athena", 16, theme.Text, logo)
+		mark.Frame.AnchorPoint = Vector2.new(0, 0.5)
+		mark.Frame.Position = UDim2.new(0, 0, 0.5, 0)
+	end
 
 	local brand = Util.Create("TextLabel", {
 		Name = "Title",
-		Position = UDim2.fromOffset(24, 0),
-		Size = UDim2.new(1, -24, 1, 0),
+		Position = UDim2.fromOffset(32, 0),
+		Size = UDim2.new(1, -32, 1, 0),
 		BackgroundTransparency = 1,
 		Text = self.Title,
 		Font = theme.FontBold,
@@ -170,6 +188,27 @@ function Window.new(library, options)
 			self:_ClosePopups(nil, true)
 		end,
 	})
+
+	local lastBrandClick = 0
+	local function registerBrandClick()
+		local now = os.clock()
+		if now - lastBrandClick <= 0.35 then
+			lastBrandClick = 0
+			self:ToggleMaximize()
+		else
+			lastBrandClick = now
+		end
+	end
+	self.Maid:Add(logo.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			registerBrandClick()
+		end
+	end))
+	self.Maid:Add(topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			registerBrandClick()
+		end
+	end))
 
 	--------------------------------------------------------------------------------
 	-- Navigation
@@ -456,9 +495,9 @@ function Window:_UpdateUnderline()
 	end
 
 	self.Underline.Visible = true
-	self.Underline.Size = UDim2.fromOffset(width, 2)
 	Util.Tween(self.Underline, {
 		Position = UDim2.fromOffset(math.round(tabLeft + 10), self.Theme.TopbarHeight),
+		Size = UDim2.fromOffset(width, 2),
 	}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 end
 

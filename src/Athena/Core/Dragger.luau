@@ -56,7 +56,7 @@ function Dragger.Attach(frame, handle, maid, options)
 		end
 		dragging = true
 		moved = false
-		startInput = input.Position
+		startInput = Vector2.new(input.Position.X, input.Position.Y)
 		startCenter = frame.AbsolutePosition + frame.AbsoluteSize / 2
 		if options.OnDragStart then
 			options.OnDragStart()
@@ -73,7 +73,7 @@ function Dragger.Attach(frame, handle, maid, options)
 			return
 		end
 
-		local delta = input.Position - startInput
+		local delta = Vector2.new(input.Position.X, input.Position.Y) - startInput
 		if not moved then
 			if delta.Magnitude < threshold then
 				return

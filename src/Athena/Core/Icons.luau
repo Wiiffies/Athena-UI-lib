@@ -6,6 +6,11 @@
 
 local Icons = {}
 
+-- Holders are square unless the mark needs a wider canvas.
+local ASPECT = {
+	athena = 1.52,
+}
+
 -- Each part: bar = rounded rectangle, ring = stroked circle,
 -- tri = right pointing triangle built from a clipped rotated square.
 local SPECS = {
@@ -134,9 +139,15 @@ local SPECS = {
 		{ kind = "bar", x = 0.5, y = 0.17, w = 0.26, h = 0.1, corner = 0.2 },
 	},
 	athena = {
-		{ kind = "bar", x = 0.42, y = 0.5, w = 0.13, h = 0.78, rot = 26 },
-		{ kind = "bar", x = 0.68, y = 0.62, w = 0.13, h = 0.5, rot = -26 },
-		{ kind = "bar", x = 0.5, y = 0.64, w = 0.46, h = 0.11 },
+		-- The two legs of the A meet at the apex.
+		{ kind = "bar", x = 0.362, y = 0.5, w = 0.095, h = 1.2, rot = 30 },
+		{ kind = "bar", x = 0.638, y = 0.5, w = 0.095, h = 1.2, rot = -30 },
+		-- Wings sweeping out from the crossbar, as in getathena.gg/logo.png.
+		{ kind = "bar", x = 0.17, y = 0.395, w = 0.36, h = 0.16, rot = 23 },
+		{ kind = "bar", x = 0.83, y = 0.395, w = 0.36, h = 0.16, rot = -23 },
+		-- Lower blades that frame the counter.
+		{ kind = "bar", x = 0.305, y = 0.625, w = 0.1, h = 0.24, rot = 38 },
+		{ kind = "bar", x = 0.695, y = 0.625, w = 0.1, h = 0.24, rot = -38 },
 	},
 }
 
@@ -210,7 +221,7 @@ function Icons.New(name, size, color, parent, zIndex)
 	local holder = Instance.new("Frame")
 	holder.Name = "Icon_" .. tostring(name)
 	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.fromOffset(size, size)
+	holder.Size = UDim2.fromOffset(size * (ASPECT[name] or 1), size)
 	holder.ZIndex = zIndex or 1
 	holder.Parent = parent
 
