@@ -1,7 +1,7 @@
 --[[
 	Athena · Components/Slider
-	A light Athena-style rail with a white fill, a floating value and a thumb
-	that stays on the rail's centre line while it is dragged.
+	A white Athena-style rail with a centred thumb, a floating value and
+	drag feedback that never moves the page or the thumb vertically.
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -47,6 +47,7 @@ function Slider.new(section, options)
 		Maid = Util.Maid.new(),
 		_dragging = false,
 		_grabOffset = 0,
+		_scroll = section.Tab and section.Tab.Scroll,
 	}, Slider)
 
 	local area = Util.Create("Frame", {
@@ -99,7 +100,8 @@ function Slider.new(section, options)
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 0, 0.5, 0),
 		Size = UDim2.new(1, 0, 0, 4),
-		BackgroundColor3 = theme.Track,
+		BackgroundColor3 = theme.TrackFill,
+		BackgroundTransparency = 0.74,
 		BorderSizePixel = 0,
 		Parent = hit,
 	})
@@ -128,14 +130,25 @@ function Slider.new(section, options)
 	Util.Corner(knob, 7)
 	Util.Stroke(knob, theme.Window, 1, 0.45)
 
-	local knobScale = Instance.new("UIScale")
-	knobScale.Scale = 1
-	knobScale.Parent = knob
-
 	self.Track = track
 	self.Fill = fill
 	self.Knob = knob
-	self.KnobScale = knobScale
+
+	local function setScrollEnabled(enabled)
+		if self._scroll then
+			self._scroll.ScrollingEnabled = enabled
+		end
+	end
+
+	local function expandKnob(expanded)
+		Util.Tween(
+			knob,
+			{ Size = UDim2.fromOffset(expanded and 16 or 14, expanded and 16 or 14) },
+			0.14,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		)
+	end
 
 	local function formatValue(value)
 		return Util.FormatNumber(value) .. suffix
@@ -199,6 +212,8 @@ function Slider.new(section, options)
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
 			self._dragging = true
+			setScrollEnabled(false)
+
 			local x = input.Position.X
 			local center = knob.AbsolutePosition.X + knob.AbsoluteSize.X / 2
 			local radius = math.max(8, knob.AbsoluteSize.X / 2 + 2)
@@ -212,8 +227,8 @@ function Slider.new(section, options)
 				setFromX(x)
 			end
 
-			Util.Tween(knobScale, { Scale = 1.18 }, 0.12)
-			Util.Tween(track, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
+			expandKnob(true)
+			Util.Tween(track, { BackgroundTransparency = 0.6 }, 0.12)
 		end
 	end))
 
@@ -232,27 +247,32 @@ function Slider.new(section, options)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
+			if not self._dragging then
+				return
+			end
 			self._dragging = false
 			self._grabOffset = 0
-			Util.Tween(knobScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.Track }, 0.16)
+			setScrollEnabled(true)
+			expandKnob(false)
+			Util.Tween(track, { BackgroundTransparency = 0.74 }, 0.16)
 		end
 	end))
 
 	self.Maid:Add(hit.MouseEnter:Connect(function()
 		if not self._dragging then
-			Util.Tween(knobScale, { Scale = 1.1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
+			expandKnob(true)
+			Util.Tween(track, { BackgroundTransparency = 0.6 }, 0.12)
 		end
 	end))
 	self.Maid:Add(hit.MouseLeave:Connect(function()
 		if not self._dragging then
-			Util.Tween(knobScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.Track }, 0.12)
+			expandKnob(false)
+			Util.Tween(track, { BackgroundTransparency = 0.74 }, 0.12)
 		end
 	end))
 
 	function self:Destroy()
+		setScrollEnabled(true)
 		self.Maid:Clean()
 		row.Row:Destroy()
 	end

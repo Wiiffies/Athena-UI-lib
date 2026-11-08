@@ -53,10 +53,11 @@ local SPECS = {
 		{ kind = "bar", x = 0.79, y = 0.79, w = 0.3, h = 0.11, rot = 45 },
 	},
 	bell = {
-		{ kind = "ring", x = 0.5, y = 0.19, w = 0.16, h = 0.14, thickness = 0.12 },
-		{ kind = "bar", x = 0.5, y = 0.47, w = 0.48, h = 0.4, corner = 0.8 },
-		{ kind = "bar", x = 0.5, y = 0.69, w = 0.78, h = 0.1, corner = 0.4 },
-		{ kind = "bar", x = 0.5, y = 0.81, w = 0.18, h = 0.16, corner = 0.5 },
+		-- Outline bell in the same thin style as the search and gear icons.
+		{ kind = "ring", x = 0.5, y = 0.12, w = 0.1, h = 0.1, thickness = 0.12 },
+		{ kind = "ring", x = 0.5, y = 0.45, w = 0.56, h = 0.6, thickness = 0.1, corner = 1 },
+		{ kind = "bar", x = 0.5, y = 0.7, w = 0.78, h = 0.1, corner = 0.5 },
+		{ kind = "bar", x = 0.5, y = 0.82, w = 0.16, h = 0.14, corner = 0.6 },
 	},
 	home = {
 		{ kind = "bar", x = 0.3, y = 0.33, w = 0.38, h = 0.11, rot = 45 },

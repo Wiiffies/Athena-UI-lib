@@ -34,7 +34,7 @@ function Card.new(tab, options)
 
 	local hasTags = #tags > 0
 	local height = options.Height or (hasTags and 100 or (options.Description and 86 or 74))
-	local rightWidth = 172
+	local rightWidth = 196
 	local left = 78
 
 	local card = Util.Create("Frame", {
@@ -216,7 +216,7 @@ function Card.new(tab, options)
 		Name = "Footer",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, 26),
+		Size = UDim2.new(1, 0, 0, 32),
 		BackgroundTransparency = 1,
 		Parent = right,
 	})
@@ -238,14 +238,14 @@ function Card.new(tab, options)
 	local function makeAction(action)
 		local label = action.Name or action.Text or "Action"
 		local style = action.Style or "Ghost"
-		local textWidth = Util.Measure(label, 11, theme.FontMedium).X
-		local iconSpace = action.Icon and 18 or 0
-		local width = math.ceil(textWidth + iconSpace + (style == "Primary" and 24 or 18))
+		local textWidth = Util.Measure(label, 11.5, theme.FontMedium).X
+		local iconSpace = action.Icon and 20 or 0
+		local width = math.ceil(textWidth + iconSpace + (style == "Primary" and 30 or 22))
 
 		local button = Util.Create("TextButton", {
 			Name = "CardAction_" .. label,
 			LayoutOrder = #self.Actions + 1,
-			Size = UDim2.fromOffset(width, 26),
+			Size = UDim2.fromOffset(width, 32),
 			BackgroundColor3 = style == "Primary" and theme.Primary or theme.SurfaceHover,
 			BackgroundTransparency = style == "Primary" and 0 or 1,
 			BorderSizePixel = 0,
@@ -253,33 +253,53 @@ function Card.new(tab, options)
 			AutoButtonColor = false,
 			Parent = footer,
 		})
-		Util.Corner(button, 7)
+		Util.Corner(button, 8)
+
+		local shadow
+		if style == "Primary" then
+			shadow = Util.Create("Frame", {
+				Name = "Shadow",
+				Position = UDim2.fromOffset(0, 2),
+				Size = UDim2.fromScale(1, 1),
+				BackgroundColor3 = theme.Scrim,
+				BackgroundTransparency = 0.55,
+				BorderSizePixel = 0,
+				ZIndex = 0,
+				Parent = button,
+			})
+			Util.Corner(shadow, 9)
+			button.ZIndex = 1
+		end
 
 		local textColor = style == "Primary" and theme.PrimaryText or theme.TextSoft
 
 		local icon
 		if action.Icon then
-			icon = Icons.New(action.Icon, 10, textColor, button)
+			icon = Icons.New(action.Icon, 12, textColor, button)
 			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-			icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
+			icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
 		end
 
 		Util.Create("TextLabel", {
-			Position = UDim2.fromOffset(iconSpace + 9, 0),
-			Size = UDim2.new(1, -(iconSpace + 18), 1, 0),
+			Position = UDim2.fromOffset(iconSpace + 11, 0),
+			Size = UDim2.new(1, -(iconSpace + 20), 1, 0),
 			BackgroundTransparency = 1,
 			Text = label,
 			Font = theme.FontMedium,
-			TextSize = 11,
+			TextSize = 11.5,
 			TextColor3 = textColor,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 2,
 			Parent = button,
 		})
 
 		self.Maid:Add(button.MouseEnter:Connect(function()
 			if style == "Primary" then
 				Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
+				if shadow then
+					Util.Tween(shadow, { BackgroundTransparency = 0.4 }, 0.12)
+				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 0.5 }, 0.12)
 			end
@@ -287,6 +307,9 @@ function Card.new(tab, options)
 		self.Maid:Add(button.MouseLeave:Connect(function()
 			if style == "Primary" then
 				Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
+				if shadow then
+					Util.Tween(shadow, { BackgroundTransparency = 0.55 }, 0.12)
+				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
 			end

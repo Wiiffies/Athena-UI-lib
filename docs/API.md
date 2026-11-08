@@ -193,9 +193,10 @@ local slider = Section:CreateSlider({
 ```
 
 Methods: `Set(value, silent)`, `Get()`, `Destroy()`. Drag or click anywhere on the track;
-the value is rounded to `Step` and clamped to `Min`/`Max`. Grabbing the thumb keeps the current
-value instead of snapping its centre to the pointer, and the thumb never leaves the rail while
-dragging. Programmatic `Set` calls animate; dragging stays immediate.
+the value is rounded to `Step` and clamped to `Min`/`Max`. The rail is white in the Athena theme.
+Grabbing the thumb keeps the current value instead of snapping its centre to the pointer, the thumb
+never leaves the rail while dragging, and the page does not scroll during a drag. Programmatic
+`Set` calls animate; dragging stays immediate.
 
 ### Dropdown
 

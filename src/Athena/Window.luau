@@ -264,7 +264,7 @@ function Window.new(library, options)
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 0, 0, theme.TopbarHeight),
 		Size = UDim2.fromOffset(20, 2),
-		BackgroundColor3 = theme.Accent,
+		BackgroundColor3 = theme.Primary,
 		BorderSizePixel = 0,
 		Visible = false,
 		ZIndex = 5,
@@ -322,7 +322,7 @@ function Window.new(library, options)
 	end
 
 	local searchButton = makeControl("search", 0)
-	local bellButton = makeControl("bell", 30)
+	local bellButton, bellIcon = makeControl("bell", 30)
 	Util.Create("Frame", {
 		Name = "ControlDivider",
 		Position = UDim2.fromOffset(68, 19),
@@ -366,6 +366,8 @@ function Window.new(library, options)
 		ZIndex = 7,
 		Parent = bellBadge,
 	})
+	self.BellButton = bellButton
+	self.BellIcon = bellIcon
 	self.BellBadge = bellBadge
 	self.BellBadgeLabel = bellBadgeLabel
 	self.BellBadgeScale = bellBadgeScale
@@ -462,8 +464,33 @@ function Window.new(library, options)
 
 	if library._notifications then
 		library._notifications.Theme = theme
+		local lastUnread = 0
+
+		local function pulseBell()
+			if not bellIcon or not bellIcon.Frame or not bellIcon.Frame.Parent then
+				return
+			end
+			local target = bellIcon.Frame
+			target.Rotation = 0
+			Util.Tween(target, { Rotation = -12 }, 0.07)
+			task.delay(0.08, function()
+				if not target.Parent then
+					return
+				end
+				Util.Tween(target, { Rotation = 9 }, 0.1)
+				task.delay(0.11, function()
+					if target.Parent then
+						Util.Tween(target, { Rotation = 0 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					end
+				end)
+			end)
+		end
+
 		local function updateDot()
 			local count = library._notifications.Unread or 0
+			local increased = count > lastUnread
+			lastUnread = count
+
 			if count <= 0 then
 				bellBadge.Visible = false
 				return
@@ -478,6 +505,10 @@ function Window.new(library, options)
 			bellBadge.Visible = true
 			bellBadgeScale.Scale = 0.7
 			Util.Tween(bellBadgeScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+			if increased then
+				pulseBell()
+			end
 		end
 		updateDot()
 		self.Maid:Add(library._notifications:OnChanged(updateDot))
@@ -499,6 +530,47 @@ end
 --------------------------------------------------------------------------------
 -- Navigation
 --------------------------------------------------------------------------------
+
+function Window:_RevealNavTab(navButton)
+	if not navButton or not self.Nav or self.Closed then
+		return
+	end
+
+	local scaleValue = self.Scale.Scale
+	if scaleValue <= 0 then
+		scaleValue = 1
+	end
+
+	local nav = self.Nav
+	local viewWidth = nav.AbsoluteSize.X / scaleValue
+	if viewWidth <= 0 then
+		return
+	end
+
+	local current = nav.CanvasPosition.X
+	local tabLeft = (navButton.AbsolutePosition.X - nav.AbsolutePosition.X) / scaleValue + current
+	local tabWidth = navButton.AbsoluteSize.X / scaleValue
+	local target = current
+	local edge = 8
+
+	if tabLeft < current + edge then
+		target = tabLeft - edge
+	elseif tabLeft + tabWidth > current + viewWidth - edge then
+		target = tabLeft + tabWidth - viewWidth + edge
+	end
+
+	local maxScroll = math.max(0, nav.AbsoluteCanvasSize.X - viewWidth)
+	target = math.clamp(target, 0, maxScroll)
+	if math.abs(target - current) > 0.5 then
+		Util.Tween(
+			nav,
+			{ CanvasPosition = Vector2.new(math.round(target), 0) },
+			0.18,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		)
+	end
+end
 
 function Window:_UpdateUnderline()
 	local active = self.ActiveTab
@@ -703,10 +775,12 @@ function Window:SelectTab(target)
 	end
 
 	self.ActiveTab = tab
+	self:_RevealNavTab(tab._nav)
 	tab:_OnSelected()
 	self:_UpdateUnderline()
 	task.defer(function()
 		if not self.Closed and self.ActiveTab == tab then
+			self:_RevealNavTab(tab._nav)
 			self:_UpdateUnderline()
 		end
 	end)

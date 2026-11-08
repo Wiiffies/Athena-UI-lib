@@ -212,13 +212,14 @@ function Button.new(section, options)
 	local iconName = options.Icon
 
 	local textWidth = Util.Measure(pillLabel, 11.5, theme.FontMedium).X
-	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 28), 58, 148))
+	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 32), 64, 156))
 
 	local row = section:_Row({
 		Name = name,
 		Description = description,
-		Height = description and 58 or 48,
+		Height = description and 58 or 52,
 		ControlWidth = pillWidth,
+		ControlHeight = 32,
 		Clickable = true,
 	})
 
@@ -245,8 +246,26 @@ function Button.new(section, options)
 	local pillScale = Instance.new("UIScale")
 	pillScale.Scale = 1
 	pillScale.Parent = pill
+
+	local shadow
+	if style == "Primary" then
+		shadow = Util.Create("Frame", {
+			Name = "Shadow",
+			Position = UDim2.fromOffset(0, 2),
+			Size = UDim2.fromScale(1, 1),
+			BackgroundColor3 = theme.Scrim,
+			BackgroundTransparency = 0.55,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = pill,
+		})
+		Util.Corner(shadow, 9)
+		pill.ZIndex = 1
+	end
+
 	self.Pill = pill
 	self.PillScale = pillScale
+	self.Shadow = shadow
 
 	local stroke
 	if style == "Secondary" then
@@ -291,6 +310,9 @@ function Button.new(section, options)
 		end
 		if style == "Primary" then
 			Util.Tween(pill, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
+			if shadow then
+				Util.Tween(shadow, { BackgroundTransparency = hovered and 0.4 or 0.55 }, 0.12)
+			end
 		elseif style == "Ghost" then
 			Util.Tween(pill, { BackgroundTransparency = hovered and 0.4 or 1 }, 0.12)
 		else
@@ -404,7 +426,7 @@ function Card.new(tab, options)
 
 	local hasTags = #tags > 0
 	local height = options.Height or (hasTags and 100 or (options.Description and 86 or 74))
-	local rightWidth = 172
+	local rightWidth = 196
 	local left = 78
 
 	local card = Util.Create("Frame", {
@@ -586,7 +608,7 @@ function Card.new(tab, options)
 		Name = "Footer",
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, 0, 1, 0),
-		Size = UDim2.new(1, 0, 0, 26),
+		Size = UDim2.new(1, 0, 0, 32),
 		BackgroundTransparency = 1,
 		Parent = right,
 	})
@@ -608,14 +630,14 @@ function Card.new(tab, options)
 	local function makeAction(action)
 		local label = action.Name or action.Text or "Action"
 		local style = action.Style or "Ghost"
-		local textWidth = Util.Measure(label, 11, theme.FontMedium).X
-		local iconSpace = action.Icon and 18 or 0
-		local width = math.ceil(textWidth + iconSpace + (style == "Primary" and 24 or 18))
+		local textWidth = Util.Measure(label, 11.5, theme.FontMedium).X
+		local iconSpace = action.Icon and 20 or 0
+		local width = math.ceil(textWidth + iconSpace + (style == "Primary" and 30 or 22))
 
 		local button = Util.Create("TextButton", {
 			Name = "CardAction_" .. label,
 			LayoutOrder = #self.Actions + 1,
-			Size = UDim2.fromOffset(width, 26),
+			Size = UDim2.fromOffset(width, 32),
 			BackgroundColor3 = style == "Primary" and theme.Primary or theme.SurfaceHover,
 			BackgroundTransparency = style == "Primary" and 0 or 1,
 			BorderSizePixel = 0,
@@ -623,33 +645,53 @@ function Card.new(tab, options)
 			AutoButtonColor = false,
 			Parent = footer,
 		})
-		Util.Corner(button, 7)
+		Util.Corner(button, 8)
+
+		local shadow
+		if style == "Primary" then
+			shadow = Util.Create("Frame", {
+				Name = "Shadow",
+				Position = UDim2.fromOffset(0, 2),
+				Size = UDim2.fromScale(1, 1),
+				BackgroundColor3 = theme.Scrim,
+				BackgroundTransparency = 0.55,
+				BorderSizePixel = 0,
+				ZIndex = 0,
+				Parent = button,
+			})
+			Util.Corner(shadow, 9)
+			button.ZIndex = 1
+		end
 
 		local textColor = style == "Primary" and theme.PrimaryText or theme.TextSoft
 
 		local icon
 		if action.Icon then
-			icon = Icons.New(action.Icon, 10, textColor, button)
+			icon = Icons.New(action.Icon, 12, textColor, button)
 			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-			icon.Frame.Position = UDim2.new(0, 9, 0.5, 0)
+			icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
 		end
 
 		Util.Create("TextLabel", {
-			Position = UDim2.fromOffset(iconSpace + 9, 0),
-			Size = UDim2.new(1, -(iconSpace + 18), 1, 0),
+			Position = UDim2.fromOffset(iconSpace + 11, 0),
+			Size = UDim2.new(1, -(iconSpace + 20), 1, 0),
 			BackgroundTransparency = 1,
 			Text = label,
 			Font = theme.FontMedium,
-			TextSize = 11,
+			TextSize = 11.5,
 			TextColor3 = textColor,
 			TextXAlignment = Enum.TextXAlignment.Left,
 			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 2,
 			Parent = button,
 		})
 
 		self.Maid:Add(button.MouseEnter:Connect(function()
 			if style == "Primary" then
 				Util.Tween(button, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
+				if shadow then
+					Util.Tween(shadow, { BackgroundTransparency = 0.4 }, 0.12)
+				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 0.5 }, 0.12)
 			end
@@ -657,6 +699,9 @@ function Card.new(tab, options)
 		self.Maid:Add(button.MouseLeave:Connect(function()
 			if style == "Primary" then
 				Util.Tween(button, { BackgroundColor3 = theme.Primary }, 0.12)
+				if shadow then
+					Util.Tween(shadow, { BackgroundTransparency = 0.55 }, 0.12)
+				end
 			else
 				Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
 			end
@@ -2043,8 +2088,8 @@ end
 __modules["Components.Slider"] = function(require)
 --[[
 	Athena · Components/Slider
-	A light Athena-style rail with a white fill, a floating value and a thumb
-	that stays on the rail's centre line while it is dragged.
+	A white Athena-style rail with a centred thumb, a floating value and
+	drag feedback that never moves the page or the thumb vertically.
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -2090,6 +2135,7 @@ function Slider.new(section, options)
 		Maid = Util.Maid.new(),
 		_dragging = false,
 		_grabOffset = 0,
+		_scroll = section.Tab and section.Tab.Scroll,
 	}, Slider)
 
 	local area = Util.Create("Frame", {
@@ -2142,7 +2188,8 @@ function Slider.new(section, options)
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 0, 0.5, 0),
 		Size = UDim2.new(1, 0, 0, 4),
-		BackgroundColor3 = theme.Track,
+		BackgroundColor3 = theme.TrackFill,
+		BackgroundTransparency = 0.74,
 		BorderSizePixel = 0,
 		Parent = hit,
 	})
@@ -2171,14 +2218,25 @@ function Slider.new(section, options)
 	Util.Corner(knob, 7)
 	Util.Stroke(knob, theme.Window, 1, 0.45)
 
-	local knobScale = Instance.new("UIScale")
-	knobScale.Scale = 1
-	knobScale.Parent = knob
-
 	self.Track = track
 	self.Fill = fill
 	self.Knob = knob
-	self.KnobScale = knobScale
+
+	local function setScrollEnabled(enabled)
+		if self._scroll then
+			self._scroll.ScrollingEnabled = enabled
+		end
+	end
+
+	local function expandKnob(expanded)
+		Util.Tween(
+			knob,
+			{ Size = UDim2.fromOffset(expanded and 16 or 14, expanded and 16 or 14) },
+			0.14,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		)
+	end
 
 	local function formatValue(value)
 		return Util.FormatNumber(value) .. suffix
@@ -2242,6 +2300,8 @@ function Slider.new(section, options)
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
 			self._dragging = true
+			setScrollEnabled(false)
+
 			local x = input.Position.X
 			local center = knob.AbsolutePosition.X + knob.AbsoluteSize.X / 2
 			local radius = math.max(8, knob.AbsoluteSize.X / 2 + 2)
@@ -2255,8 +2315,8 @@ function Slider.new(section, options)
 				setFromX(x)
 			end
 
-			Util.Tween(knobScale, { Scale = 1.18 }, 0.12)
-			Util.Tween(track, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
+			expandKnob(true)
+			Util.Tween(track, { BackgroundTransparency = 0.6 }, 0.12)
 		end
 	end))
 
@@ -2275,27 +2335,32 @@ function Slider.new(section, options)
 		if input.UserInputType == Enum.UserInputType.MouseButton1
 			or input.UserInputType == Enum.UserInputType.Touch
 		then
+			if not self._dragging then
+				return
+			end
 			self._dragging = false
 			self._grabOffset = 0
-			Util.Tween(knobScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.Track }, 0.16)
+			setScrollEnabled(true)
+			expandKnob(false)
+			Util.Tween(track, { BackgroundTransparency = 0.74 }, 0.16)
 		end
 	end))
 
 	self.Maid:Add(hit.MouseEnter:Connect(function()
 		if not self._dragging then
-			Util.Tween(knobScale, { Scale = 1.1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
+			expandKnob(true)
+			Util.Tween(track, { BackgroundTransparency = 0.6 }, 0.12)
 		end
 	end))
 	self.Maid:Add(hit.MouseLeave:Connect(function()
 		if not self._dragging then
-			Util.Tween(knobScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			Util.Tween(track, { BackgroundColor3 = theme.Track }, 0.12)
+			expandKnob(false)
+			Util.Tween(track, { BackgroundTransparency = 0.74 }, 0.12)
 		end
 	end))
 
 	function self:Destroy()
+		setScrollEnabled(true)
 		self.Maid:Clean()
 		row.Row:Destroy()
 	end
@@ -2758,10 +2823,11 @@ local SPECS = {
 		{ kind = "bar", x = 0.79, y = 0.79, w = 0.3, h = 0.11, rot = 45 },
 	},
 	bell = {
-		{ kind = "ring", x = 0.5, y = 0.19, w = 0.16, h = 0.14, thickness = 0.12 },
-		{ kind = "bar", x = 0.5, y = 0.47, w = 0.48, h = 0.4, corner = 0.8 },
-		{ kind = "bar", x = 0.5, y = 0.69, w = 0.78, h = 0.1, corner = 0.4 },
-		{ kind = "bar", x = 0.5, y = 0.81, w = 0.18, h = 0.16, corner = 0.5 },
+		-- Outline bell in the same thin style as the search and gear icons.
+		{ kind = "ring", x = 0.5, y = 0.12, w = 0.1, h = 0.1, thickness = 0.12 },
+		{ kind = "ring", x = 0.5, y = 0.45, w = 0.56, h = 0.6, thickness = 0.1, corner = 1 },
+		{ kind = "bar", x = 0.5, y = 0.7, w = 0.78, h = 0.1, corner = 0.5 },
+		{ kind = "bar", x = 0.5, y = 0.82, w = 0.16, h = 0.14, corner = 0.6 },
 	},
 	home = {
 		{ kind = "bar", x = 0.3, y = 0.33, w = 0.38, h = 0.11, rot = 45 },
@@ -4994,7 +5060,7 @@ function Window.new(library, options)
 		AnchorPoint = Vector2.new(0, 1),
 		Position = UDim2.new(0, 0, 0, theme.TopbarHeight),
 		Size = UDim2.fromOffset(20, 2),
-		BackgroundColor3 = theme.Accent,
+		BackgroundColor3 = theme.Primary,
 		BorderSizePixel = 0,
 		Visible = false,
 		ZIndex = 5,
@@ -5052,7 +5118,7 @@ function Window.new(library, options)
 	end
 
 	local searchButton = makeControl("search", 0)
-	local bellButton = makeControl("bell", 30)
+	local bellButton, bellIcon = makeControl("bell", 30)
 	Util.Create("Frame", {
 		Name = "ControlDivider",
 		Position = UDim2.fromOffset(68, 19),
@@ -5096,6 +5162,8 @@ function Window.new(library, options)
 		ZIndex = 7,
 		Parent = bellBadge,
 	})
+	self.BellButton = bellButton
+	self.BellIcon = bellIcon
 	self.BellBadge = bellBadge
 	self.BellBadgeLabel = bellBadgeLabel
 	self.BellBadgeScale = bellBadgeScale
@@ -5192,8 +5260,33 @@ function Window.new(library, options)
 
 	if library._notifications then
 		library._notifications.Theme = theme
+		local lastUnread = 0
+
+		local function pulseBell()
+			if not bellIcon or not bellIcon.Frame or not bellIcon.Frame.Parent then
+				return
+			end
+			local target = bellIcon.Frame
+			target.Rotation = 0
+			Util.Tween(target, { Rotation = -12 }, 0.07)
+			task.delay(0.08, function()
+				if not target.Parent then
+					return
+				end
+				Util.Tween(target, { Rotation = 9 }, 0.1)
+				task.delay(0.11, function()
+					if target.Parent then
+						Util.Tween(target, { Rotation = 0 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					end
+				end)
+			end)
+		end
+
 		local function updateDot()
 			local count = library._notifications.Unread or 0
+			local increased = count > lastUnread
+			lastUnread = count
+
 			if count <= 0 then
 				bellBadge.Visible = false
 				return
@@ -5208,6 +5301,10 @@ function Window.new(library, options)
 			bellBadge.Visible = true
 			bellBadgeScale.Scale = 0.7
 			Util.Tween(bellBadgeScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+
+			if increased then
+				pulseBell()
+			end
 		end
 		updateDot()
 		self.Maid:Add(library._notifications:OnChanged(updateDot))
@@ -5229,6 +5326,47 @@ end
 --------------------------------------------------------------------------------
 -- Navigation
 --------------------------------------------------------------------------------
+
+function Window:_RevealNavTab(navButton)
+	if not navButton or not self.Nav or self.Closed then
+		return
+	end
+
+	local scaleValue = self.Scale.Scale
+	if scaleValue <= 0 then
+		scaleValue = 1
+	end
+
+	local nav = self.Nav
+	local viewWidth = nav.AbsoluteSize.X / scaleValue
+	if viewWidth <= 0 then
+		return
+	end
+
+	local current = nav.CanvasPosition.X
+	local tabLeft = (navButton.AbsolutePosition.X - nav.AbsolutePosition.X) / scaleValue + current
+	local tabWidth = navButton.AbsoluteSize.X / scaleValue
+	local target = current
+	local edge = 8
+
+	if tabLeft < current + edge then
+		target = tabLeft - edge
+	elseif tabLeft + tabWidth > current + viewWidth - edge then
+		target = tabLeft + tabWidth - viewWidth + edge
+	end
+
+	local maxScroll = math.max(0, nav.AbsoluteCanvasSize.X - viewWidth)
+	target = math.clamp(target, 0, maxScroll)
+	if math.abs(target - current) > 0.5 then
+		Util.Tween(
+			nav,
+			{ CanvasPosition = Vector2.new(math.round(target), 0) },
+			0.18,
+			Enum.EasingStyle.Quint,
+			Enum.EasingDirection.Out
+		)
+	end
+end
 
 function Window:_UpdateUnderline()
 	local active = self.ActiveTab
@@ -5433,10 +5571,12 @@ function Window:SelectTab(target)
 	end
 
 	self.ActiveTab = tab
+	self:_RevealNavTab(tab._nav)
 	tab:_OnSelected()
 	self:_UpdateUnderline()
 	task.defer(function()
 		if not self.Closed and self.ActiveTab == tab then
+			self:_RevealNavTab(tab._nav)
 			self:_UpdateUnderline()
 		end
 	end)

@@ -20,13 +20,14 @@ function Button.new(section, options)
 	local iconName = options.Icon
 
 	local textWidth = Util.Measure(pillLabel, 11.5, theme.FontMedium).X
-	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 28), 58, 148))
+	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 32), 64, 156))
 
 	local row = section:_Row({
 		Name = name,
 		Description = description,
-		Height = description and 58 or 48,
+		Height = description and 58 or 52,
 		ControlWidth = pillWidth,
+		ControlHeight = 32,
 		Clickable = true,
 	})
 
@@ -53,8 +54,26 @@ function Button.new(section, options)
 	local pillScale = Instance.new("UIScale")
 	pillScale.Scale = 1
 	pillScale.Parent = pill
+
+	local shadow
+	if style == "Primary" then
+		shadow = Util.Create("Frame", {
+			Name = "Shadow",
+			Position = UDim2.fromOffset(0, 2),
+			Size = UDim2.fromScale(1, 1),
+			BackgroundColor3 = theme.Scrim,
+			BackgroundTransparency = 0.55,
+			BorderSizePixel = 0,
+			ZIndex = 0,
+			Parent = pill,
+		})
+		Util.Corner(shadow, 9)
+		pill.ZIndex = 1
+	end
+
 	self.Pill = pill
 	self.PillScale = pillScale
+	self.Shadow = shadow
 
 	local stroke
 	if style == "Secondary" then
@@ -99,6 +118,9 @@ function Button.new(section, options)
 		end
 		if style == "Primary" then
 			Util.Tween(pill, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
+			if shadow then
+				Util.Tween(shadow, { BackgroundTransparency = hovered and 0.4 or 0.55 }, 0.12)
+			end
 		elseif style == "Ghost" then
 			Util.Tween(pill, { BackgroundTransparency = hovered and 0.4 or 1 }, 0.12)
 		else

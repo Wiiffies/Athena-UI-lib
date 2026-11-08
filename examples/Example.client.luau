@@ -457,6 +457,14 @@ Automation:CreateCard({
 				toast("Adopt Me farm", "Editing the automation.", "Info")
 			end,
 		},
+		{
+			Name = "Run",
+			Style = "Primary",
+			Icon = "play",
+			Callback = function()
+				toast("Adopt Me farm", "Started, opening 1 client in Adopt Me!.", "Success")
+			end,
+		},
 	},
 	Toggle = {
 		Default = true,
@@ -510,6 +518,40 @@ Automation:CreateCard({
 			end,
 		},
 	},
+})
+
+local RunSettings = Automation:CreateSection({ Title = "Run settings", Icon = "gear" })
+
+RunSettings:CreateSlider({
+	Name = "Concurrent clients",
+	Description = "How many clients can run at the same time.",
+	Min = 1,
+	Max = 8,
+	Default = 3,
+	Step = 1,
+	Callback = function(value)
+		print("[Athena] Concurrent clients:", value)
+	end,
+})
+
+RunSettings:CreateDropdown({
+	Name = "Execution mode",
+	Description = "Choose how aggressive the scheduler should be.",
+	Options = { "Balanced", "Fast", "Safe" },
+	Default = "Balanced",
+	Callback = function(value)
+		print("[Athena] Execution mode:", value)
+	end,
+})
+
+RunSettings:CreateButton({
+	Name = "Run the selected automation",
+	Description = "Starts it with the settings above.",
+	ButtonText = "Run",
+	Icon = "play",
+	Callback = function()
+		toast("Automation", "Started with the current run settings.", "Success")
+	end,
 })
 
 local Activity = Automation:CreateSection({ Title = "Activity", Icon = "clock", Count = 1 })

@@ -516,7 +516,8 @@ The recreation follows the reference screen closely:
 - Muted status banner, grouped card rows with 1px dividers and 14px inner padding.
 - Automation cards with 50px artwork, title/subtitle, chips, status text, ghost `Edit`, light `Run`
   and a light-track switch.
-- Active tab is white with a 2px coral underline; counts use compact coral badges.
+- Active tab is white with a 2px white underline that scrolls into view; counts use compact coral badges.
+- Sliders use an inset white rail with a centred thumb; the page stays still while you drag.
 - Motion is short and restrained (0.12–0.3s, Quint/Quad out): tab pages ease in, pills press,
   the underline glides, the bell badge pulses and popups rise, like the desktop app.
 - Type uses Gotham/GothamMedium/GothamBold — the closest Roblox families to Athena's Geist/Inter.
