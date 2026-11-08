@@ -40,7 +40,13 @@ function Tab.new(window, config)
 		ZIndex = 1,
 		Parent = window.Content,
 	})
+	page.AnchorPoint = Vector2.new(0.5, 0.5)
+	page.Position = UDim2.fromScale(0.5, 0.5)
+	local pageScale = Instance.new("UIScale")
+	pageScale.Scale = 1
+	pageScale.Parent = page
 	self.Page = page
+	self.PageScale = pageScale
 
 	local headerHeight = config.Description and HEADER_HEIGHT + 16 or HEADER_HEIGHT
 

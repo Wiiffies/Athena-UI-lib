@@ -91,6 +91,19 @@ Overview:CreateButton({
 	end,
 })
 
+Overview:CreateButton({
+	Name = "Queue three notifications",
+	Description = "Fills the bell panel and pulses its unread badge.",
+	ButtonText = "Send 3",
+	Icon = "bell",
+	Style = "Secondary",
+	Callback = function()
+		toast("Queued task 1", "The first client is ready.", "Info")
+		toast("Queued task 2", "Waiting for a free slot.", "Warning")
+		toast("Queued task 3", "Everything finished successfully.", "Success")
+	end,
+})
+
 local Quick = Home:CreateSection({ Title = "Quick actions", Icon = "bolt" })
 
 Quick:CreateButton({
@@ -688,6 +701,15 @@ WindowSection:CreateButton({
 	Style = "Secondary",
 	Callback = function()
 		Window:ToggleMaximize()
+	end,
+})
+
+WindowSection:CreateButton({
+	Name = "Center the window",
+	ButtonText = "Center",
+	Style = "Secondary",
+	Callback = function()
+		Window:Center()
 	end,
 })
 

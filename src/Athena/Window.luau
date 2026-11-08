@@ -17,8 +17,9 @@ local Window = {}
 Window.__index = Window
 
 local DEFAULT_SIZE = Vector2.new(880, 600)
-local NAV_LEFT = 116
 local CONTROLS_WIDTH = 178
+local BRAND_MIN = 96
+local BRAND_MAX = 250
 
 local function sizeToVector(size)
 	if typeof(size) == "Vector2" then
@@ -52,6 +53,11 @@ end
 --------------------------------------------------------------------------------
 -- Construction
 --------------------------------------------------------------------------------
+
+local function measureBrandWidth(title, theme)
+	local textWidth = Util.Measure(title or "Athena", 15, theme.FontBold).X
+	return math.clamp(32 + textWidth + 14, BRAND_MIN, BRAND_MAX)
+end
 
 function Window.new(library, options)
 	options = options or {}
@@ -138,7 +144,7 @@ function Window.new(library, options)
 	local logo = Util.Create("Frame", {
 		Name = "Brand",
 		Position = UDim2.fromOffset(18, 0),
-		Size = UDim2.fromOffset(96, theme.TopbarHeight),
+		Size = UDim2.fromOffset(measureBrandWidth(self.Title, theme), theme.TopbarHeight),
 		BackgroundTransparency = 1,
 		Parent = topbar,
 	})
@@ -181,6 +187,7 @@ function Window.new(library, options)
 	})
 	self.BrandLabel = brand
 	self.BrandMark = mark
+	self.Brand = logo
 
 	Dragger.Attach(frame, logo, self.Maid, {
 		Threshold = 4,
@@ -214,10 +221,11 @@ function Window.new(library, options)
 	-- Navigation
 	--------------------------------------------------------------------------------
 
+	local navLeft = 18 + measureBrandWidth(self.Title, theme) + 10
 	local nav = Util.Create("ScrollingFrame", {
 		Name = "Nav",
-		Position = UDim2.fromOffset(NAV_LEFT, 0),
-		Size = UDim2.new(1, -(NAV_LEFT + CONTROLS_WIDTH + 14), 0, theme.TopbarHeight),
+		Position = UDim2.fromOffset(navLeft, 0),
+		Size = UDim2.new(1, -(navLeft + CONTROLS_WIDTH + 14), 0, theme.TopbarHeight),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -230,6 +238,7 @@ function Window.new(library, options)
 		Parent = topbar,
 	})
 	self.Nav = nav
+	self.NavLeft = navLeft
 
 	local navInner = Util.Create("Frame", {
 		Name = "NavInner",
@@ -327,19 +336,39 @@ function Window.new(library, options)
 	local maximizeButton = makeControl("maximize", 110)
 	local closeButton = makeControl("close", 142, true)
 
-	local bellDot = Util.Create("Frame", {
+	local bellBadge = Util.Create("Frame", {
 		Name = "Unread",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -5, 0, 5),
-		Size = UDim2.fromOffset(6, 6),
+		Position = UDim2.new(1, -4, 0, 4),
+		Size = UDim2.fromOffset(16, 16),
 		BackgroundColor3 = theme.Accent,
 		BorderSizePixel = 0,
 		Visible = false,
 		ZIndex = 6,
 		Parent = bellButton,
 	})
-	Util.Corner(bellDot, 3)
-	self.BellDot = bellDot
+	Util.Corner(bellBadge, 8)
+	Util.Stroke(bellBadge, theme.Window, 1, 0.15)
+
+	local bellBadgeScale = Instance.new("UIScale")
+	bellBadgeScale.Scale = 1
+	bellBadgeScale.Parent = bellBadge
+
+	local bellBadgeLabel = Util.Create("TextLabel", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		Font = theme.FontBold,
+		TextSize = 8.5,
+		TextColor3 = theme.AccentText,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 7,
+		Parent = bellBadge,
+	})
+	self.BellBadge = bellBadge
+	self.BellBadgeLabel = bellBadgeLabel
+	self.BellBadgeScale = bellBadgeScale
 
 	--------------------------------------------------------------------------------
 	-- Content
@@ -395,16 +424,7 @@ function Window.new(library, options)
 	if toggleKey == nil then
 		toggleKey = Enum.KeyCode.RightShift
 	end
-	if toggleKey ~= false then
-		self.Maid:Add(UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if gameProcessed or Util.IsTyping() then
-				return
-			end
-			if input.KeyCode == toggleKey then
-				self:Toggle()
-			end
-		end))
-	end
+	self:SetToggleKey(toggleKey)
 
 	--------------------------------------------------------------------------------
 	-- Response to viewport changes
@@ -443,7 +463,21 @@ function Window.new(library, options)
 	if library._notifications then
 		library._notifications.Theme = theme
 		local function updateDot()
-			bellDot.Visible = library._notifications.Unread > 0
+			local count = library._notifications.Unread or 0
+			if count <= 0 then
+				bellBadge.Visible = false
+				return
+			end
+
+			local text = count > 9 and "9+" or tostring(count)
+			bellBadgeLabel.Text = text
+			bellBadge.Size = UDim2.fromOffset(
+				math.max(16, math.ceil(Util.Measure(text, 8.5, theme.FontBold).X + 8)),
+				16
+			)
+			bellBadge.Visible = true
+			bellBadgeScale.Scale = 0.7
+			Util.Tween(bellBadgeScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end
 		updateDot()
 		self.Maid:Add(library._notifications:OnChanged(updateDot))
@@ -509,8 +543,9 @@ function Window:_CreateNavButton(tab, config)
 	local hasBadge = config.Badge ~= nil
 	local badgeText = hasBadge and tostring(config.Badge) or ""
 	local badgeWidth = hasBadge and math.max(17, Util.Measure(badgeText, 9, theme.FontBold).X + 9) or 0
-	local iconSpace = iconName and 21 or 0
-	local width = math.max(56, 12 + iconSpace + textWidth + (hasBadge and (badgeWidth + 6) or 0) + 12)
+	local iconSpace = iconName and 20 or 0
+	local reserve = hasBadge and (badgeWidth + 6) or 0
+	local width = math.max(54, 20 + iconSpace + textWidth + reserve)
 
 	local button = Util.Create("TextButton", {
 		Name = "Nav_" .. tab.Title,
@@ -529,13 +564,13 @@ function Window:_CreateNavButton(tab, config)
 	if iconName then
 		icon = Icons.New(iconName, 14, theme.TextMuted, button, 4)
 		icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-		icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
+		icon.Frame.Position = UDim2.new(0, 10, 0.5, 0)
 	end
 
 	local labelFrame = Util.Create("TextLabel", {
 		Name = "Label",
-		Position = UDim2.fromOffset(11 + iconSpace, 0),
-		Size = UDim2.new(1, -(iconSpace + 22), 1, 0),
+		Position = UDim2.fromOffset(10 + iconSpace, 0),
+		Size = UDim2.new(1, -(iconSpace + 20 + reserve), 1, 0),
 		BackgroundTransparency = 1,
 		Text = label,
 		Font = theme.FontMedium,
@@ -655,6 +690,10 @@ function Window:SelectTab(target)
 	for _, other in ipairs(self.Tabs) do
 		local active = other == tab
 		other.Page.Visible = active
+		if active and other.PageScale then
+			other.PageScale.Scale = 0.985
+			Util.Tween(other.PageScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		end
 		if other._navPaint then
 			other._navPaint(active)
 		end
@@ -740,8 +779,8 @@ function Window:_ToggleNotifications(anchor)
 
 	if not self._notificationPopup then
 		self._notificationPopup = self:_CreatePopup({
-			Width = 330,
-			Height = 348,
+				Width = 344,
+				Height = 386,
 			Align = "Right",
 			Name = "Notifications",
 			Padding = 0,
@@ -758,52 +797,95 @@ function Window:_FillNotifications(popup)
 	local theme = self.Theme
 	popup:ResetContent()
 	local content = popup.Content
+	local notifications = self.Library._notifications
+	local history = notifications and notifications:GetHistory() or {}
 
 	local header = Util.Create("Frame", {
-		Size = UDim2.new(1, 0, 0, 44),
+		Size = UDim2.new(1, 0, 0, 62),
 		BackgroundTransparency = 1,
 		Parent = content,
 	})
-	Util.Padding(header, 0, 14, 0, 14)
+	Util.Padding(header, 0, 12, 0, 12)
+
+	local headerIcon = Util.Create("Frame", {
+		Position = UDim2.fromOffset(12, 16),
+		Size = UDim2.fromOffset(30, 30),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Parent = header,
+	})
+	Util.Corner(headerIcon, 9)
+	Util.Stroke(headerIcon, theme.BorderSoft, 1, 0.35)
+
+	local bell = Icons.New("bell", 15, theme.TextSoft, headerIcon)
+	bell.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+	bell.Frame.Position = UDim2.fromScale(0.5, 0.5)
+
 	Util.Create("TextLabel", {
-		Position = UDim2.fromOffset(0, 0),
-		Size = UDim2.new(1, -60, 1, 0),
+		Position = UDim2.fromOffset(52, 11),
+		Size = UDim2.new(1, -122, 0, 18),
 		BackgroundTransparency = 1,
 		Text = "Notifications",
 		Font = theme.FontMedium,
-		TextSize = 12.5,
+		TextSize = 13,
 		TextColor3 = theme.Text,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = header,
 	})
 
-	local clear = Util.Create("TextButton", {
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, 0, 0.5, 0),
-		Size = UDim2.fromOffset(46, 22),
+	local countText = "You're all caught up"
+	if #history == 1 then
+		countText = "1 event"
+	elseif #history > 1 then
+		countText = tostring(#history) .. " events"
+	end
+
+	Util.Create("TextLabel", {
+		Position = UDim2.fromOffset(52, 29),
+		Size = UDim2.new(1, -122, 0, 14),
 		BackgroundTransparency = 1,
-		Text = "Clear",
-		Font = theme.FontMedium,
-		TextSize = 11,
+		Text = countText,
+		Font = theme.Font,
+		TextSize = 10.5,
 		TextColor3 = theme.TextMuted,
-		AutoButtonColor = false,
+		TextXAlignment = Enum.TextXAlignment.Left,
 		Parent = header,
 	})
+
+	local clear = Util.Create("TextButton", {
+		Name = "Clear",
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		Size = UDim2.fromOffset(52, 24),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Text = "Clear",
+		Font = theme.FontMedium,
+		TextSize = 10,
+		TextColor3 = theme.TextMuted,
+		AutoButtonColor = false,
+		Visible = #history > 0,
+		Parent = header,
+	})
+	Util.Corner(clear, 7)
+	Util.Stroke(clear, theme.BorderSoft, 1, 0.35)
 	clear.MouseEnter:Connect(function()
+		Util.Tween(clear, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
 		clear.TextColor3 = theme.Text
 	end)
 	clear.MouseLeave:Connect(function()
+		Util.Tween(clear, { BackgroundColor3 = theme.SurfaceAlt }, 0.12)
 		clear.TextColor3 = theme.TextMuted
 	end)
 	clear.MouseButton1Click:Connect(function()
-		if self.Library._notifications then
-			self.Library._notifications:Clear()
+		if notifications then
+			notifications:Clear()
 			self:_FillNotifications(popup)
 		end
 	end)
 
 	Util.Create("Frame", {
-		Position = UDim2.fromOffset(0, 44),
+		Position = UDim2.fromOffset(0, 62),
 		Size = UDim2.new(1, 0, 0, 1),
 		BackgroundColor3 = theme.BorderSoft,
 		BorderSizePixel = 0,
@@ -811,8 +893,8 @@ function Window:_FillNotifications(popup)
 	})
 
 	local scroll = Util.Create("ScrollingFrame", {
-		Position = UDim2.fromOffset(0, 45),
-		Size = UDim2.new(1, 0, 1, -45),
+		Position = UDim2.fromOffset(0, 63),
+		Size = UDim2.new(1, 0, 1, -63),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
@@ -820,61 +902,122 @@ function Window:_FillNotifications(popup)
 		ScrollingDirection = Enum.ScrollingDirection.Y,
 		ScrollBarThickness = 3,
 		ScrollBarImageColor3 = theme.Border,
+		ScrollBarImageTransparency = 0.2,
 		ClipsDescendants = true,
 		Parent = content,
 	})
 	Util.Padding(scroll, 6, 8, 10, 8)
-	Util.List(scroll, 4, Enum.HorizontalAlignment.Center)
+	Util.List(scroll, 2, Enum.HorizontalAlignment.Center)
 
-	local history = self.Library._notifications and self.Library._notifications:GetHistory() or {}
 	if #history == 0 then
-		Util.Create("TextLabel", {
-			Size = UDim2.new(1, 0, 0, 60),
+		local empty = Util.Create("Frame", {
+			Size = UDim2.new(1, 0, 0, 180),
 			BackgroundTransparency = 1,
-			Text = "No notifications yet",
+			Parent = scroll,
+		})
+
+		local tile = Util.Create("Frame", {
+			AnchorPoint = Vector2.new(0.5, 0),
+			Position = UDim2.new(0.5, 0, 0, 26),
+			Size = UDim2.fromOffset(46, 46),
+			BackgroundColor3 = theme.SurfaceAlt,
+			BorderSizePixel = 0,
+			Parent = empty,
+		})
+		Util.Corner(tile, 14)
+		Util.Stroke(tile, theme.BorderSoft, 1, 0.3)
+
+		local emptyIcon = Icons.New("bell", 18, theme.TextFaint, tile)
+		emptyIcon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+		emptyIcon.Frame.Position = UDim2.fromScale(0.5, 0.5)
+
+		Util.Create("TextLabel", {
+			Position = UDim2.fromOffset(0, 84),
+			Size = UDim2.new(1, 0, 0, 18),
+			BackgroundTransparency = 1,
+			Text = "All caught up",
+			Font = theme.FontMedium,
+			TextSize = 12,
+			TextColor3 = theme.TextSoft,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Parent = empty,
+		})
+		Util.Create("TextLabel", {
+			Position = UDim2.fromOffset(0, 103),
+			Size = UDim2.new(1, 0, 0, 16),
+			BackgroundTransparency = 1,
+			Text = "Notifications you receive will appear here.",
 			Font = theme.Font,
-			TextSize = 11.5,
+			TextSize = 10.5,
 			TextColor3 = theme.TextFaint,
 			TextXAlignment = Enum.TextXAlignment.Center,
-			TextYAlignment = Enum.TextYAlignment.Center,
-			Parent = scroll,
+			Parent = empty,
 		})
 		return
 	end
 
+	local TONE_ICONS = {
+		Info = "info",
+		Success = "check",
+		Warning = "warning",
+		Error = "close",
+		Accent = "bolt",
+	}
+
+	local function toneColor(tone)
+		if tone == "Success" then
+			return theme.Success
+		elseif tone == "Warning" then
+			return theme.Warning
+		elseif tone == "Error" then
+			return theme.Error
+		elseif tone == "Accent" then
+			return theme.Accent
+		end
+		return theme.Info
+	end
+
 	for index, entry in ipairs(history) do
+		local tone = entry.Tone or "Info"
+		local color = toneColor(tone)
+		local iconName = TONE_ICONS[tone] or "bell"
+
 		local row = Util.Create("Frame", {
 			LayoutOrder = index,
-			Size = UDim2.new(1, 0, 0, 56),
-			BackgroundColor3 = theme.Surface,
+			Size = UDim2.new(1, 0, 0, 68),
+			BackgroundColor3 = theme.SurfaceHover,
 			BackgroundTransparency = 1,
 			Parent = scroll,
 		})
-		Util.Corner(row, 8)
+		Util.Corner(row, 9)
 
-		local tone = theme.Info
-		if entry.Tone == "Success" then
-			tone = theme.Success
-		elseif entry.Tone == "Warning" then
-			tone = theme.Warning
-		elseif entry.Tone == "Error" then
-			tone = theme.Error
-		elseif entry.Tone == "Accent" then
-			tone = theme.Accent
-		end
-
-		local dot = Util.Create("Frame", {
-			Position = UDim2.fromOffset(8, 12),
-			Size = UDim2.fromOffset(6, 6),
-			BackgroundColor3 = tone,
+		local accent = Util.Create("Frame", {
+			Position = UDim2.fromOffset(6, 16),
+			Size = UDim2.fromOffset(2, 36),
+			BackgroundColor3 = color,
+			BackgroundTransparency = 0.25,
 			BorderSizePixel = 0,
 			Parent = row,
 		})
-		Util.Corner(dot, 3)
+		Util.Corner(accent, 1)
+
+		local tile = Util.Create("Frame", {
+			Position = UDim2.fromOffset(16, 12),
+			Size = UDim2.fromOffset(30, 30),
+			BackgroundColor3 = color,
+			BackgroundTransparency = 0.86,
+			BorderSizePixel = 0,
+			Parent = row,
+		})
+		Util.Corner(tile, 9)
+
+		local icon = Icons.New(iconName, 14, color, tile)
+		icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+		icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
 
 		Util.Create("TextLabel", {
-			Position = UDim2.fromOffset(22, 6),
-			Size = UDim2.new(1, -70, 0, 16),
+			Position = UDim2.fromOffset(54, 10),
+			Size = UDim2.new(1, -54 - 58, 0, 16),
 			BackgroundTransparency = 1,
 			Text = entry.Title or "Notification",
 			Font = theme.FontMedium,
@@ -886,19 +1029,19 @@ function Window:_FillNotifications(popup)
 		})
 		Util.Create("TextLabel", {
 			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, -8, 0, 7),
-			Size = UDim2.fromOffset(48, 14),
+			Position = UDim2.new(1, -10, 0, 11),
+			Size = UDim2.fromOffset(44, 14),
 			BackgroundTransparency = 1,
 			Text = entry.Time or "",
 			Font = theme.Font,
-			TextSize = 10,
+			TextSize = 9.5,
 			TextColor3 = theme.TextFaint,
 			TextXAlignment = Enum.TextXAlignment.Right,
 			Parent = row,
 		})
 		Util.Create("TextLabel", {
-			Position = UDim2.fromOffset(22, 24),
-			Size = UDim2.new(1, -30, 0, 26),
+			Position = UDim2.fromOffset(54, 28),
+			Size = UDim2.new(1, -54 - 12, 0, 30),
 			BackgroundTransparency = 1,
 			Text = entry.Text or "",
 			Font = theme.Font,
@@ -910,6 +1053,13 @@ function Window:_FillNotifications(popup)
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Parent = row,
 		})
+
+		row.MouseEnter:Connect(function()
+			Util.Tween(row, { BackgroundTransparency = 0.65 }, 0.12)
+		end)
+		row.MouseLeave:Connect(function()
+			Util.Tween(row, { BackgroundTransparency = 1 }, 0.12)
+		end)
 	end
 end
 
@@ -1327,15 +1477,67 @@ function Window:Toggle()
 	end
 end
 
+function Window:_LayoutHeader()
+	if not self.Brand or not self.Nav or not self.Underline then
+		return
+	end
+
+	local width = measureBrandWidth(self.Title, self.Theme)
+	self.Brand.Size = UDim2.fromOffset(width, self.Theme.TopbarHeight)
+
+	local navLeft = 18 + width + 10
+	self.NavLeft = navLeft
+	self.Nav.Position = UDim2.fromOffset(navLeft, 0)
+	self.Nav.Size = UDim2.new(1, -(navLeft + CONTROLS_WIDTH + 14), 0, self.Theme.TopbarHeight)
+	self:_UpdateUnderline()
+end
+
 function Window:SetTitle(title)
 	self.Title = title or self.Title
 	self.BrandLabel.Text = self.Title
+	self:_LayoutHeader()
 	if self._pill then
 		local label = self._pill:FindFirstChildOfClass("TextLabel")
 		if label then
 			label.Text = self.Title
 		end
 	end
+end
+
+function Window:Center(animated)
+	if self.Closed then
+		return
+	end
+
+	local viewport = Util.Viewport()
+	local target = UDim2.fromOffset(math.round(viewport.X / 2), math.round(viewport.Y / 2))
+	if animated == false then
+		self.Frame.Position = target
+	else
+		Util.Tween(self.Frame, { Position = target }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	end
+end
+
+function Window:SetToggleKey(key)
+	if self._toggleConnection then
+		self._toggleConnection:Disconnect()
+		self._toggleConnection = nil
+	end
+
+	self._toggleKey = key
+	if key == false or key == nil then
+		return
+	end
+
+	self._toggleConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+		if gameProcessed or Util.IsTyping() then
+			return
+		end
+		if input.KeyCode == key then
+			self:Toggle()
+		end
+	end)
+	self.Maid:Add(self._toggleConnection)
 end
 
 function Window:Notify(options)

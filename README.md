@@ -8,8 +8,10 @@ interface library, written in Luau.
 > Unofficial community project. Not affiliated with or endorsed by Athena or Roblox Corporation.
 
 - Dark neutral shell, hairline borders and light primary pills from Athena's Automation screen.
-- Top navigation with icons, counts, active underline, tab search and window controls.
-- Cards, status banners, chips, grouped rows, toasts and a notification history panel.
+- Top navigation with icons, counts, active underline, tab search and window controls. The brand
+  reserves space from its real title width, so long names are not clipped by the tabs.
+- Cards, status banners, chips, grouped rows, toasts, an unread badge and a tone-coded notification
+  sheet with an empty state and clear action.
 - Buttons, toggles, sliders, dropdowns, keybinds, textboxes, labels, separators and HSV colour
   pickers.
 - No images, fonts or third-party modules. Icons are drawn from primitives; the title bar mark
@@ -47,6 +49,10 @@ Section:CreateToggle({
 
 Press **RightShift** to hide or show the window (pass `ToggleKey = false` to disable it). The
 window is draggable from the title bar and scales with the viewport.
+
+The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
+with the tabs. Use `Window:Center()`, `Window:SetTitle(text)` and `Window:SetToggleKey(key)` to drive
+the shell at runtime.
 
 Full API reference: [`docs/API.md`](docs/API.md).
 
@@ -511,7 +517,8 @@ The recreation follows the reference screen closely:
 - Automation cards with 50px artwork, title/subtitle, chips, status text, ghost `Edit`, light `Run`
   and a light-track switch.
 - Active tab is white with a 2px coral underline; counts use compact coral badges.
-- Motion is short and restrained (0.12–0.3s, Quint/Quad out), like the desktop app.
+- Motion is short and restrained (0.12–0.3s, Quint/Quad out): tab pages ease in, pills press,
+  the underline glides, the bell badge pulses and popups rise, like the desktop app.
 - Type uses Gotham/GothamMedium/GothamBold — the closest Roblox families to Athena's Geist/Inter.
 
 ## Notes

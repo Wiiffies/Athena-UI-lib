@@ -50,7 +50,9 @@ local Athena = loadstring(game:HttpGet(
 | `Window:Show(instant)` / `Window:Hide(instant)` | Animated visibility. |
 | `Window:Minimize()` / `Window:Restore()` | Collapse to the corner pill and back. |
 | `Window:ToggleMaximize()` / `Window:SetMaximized(bool)` | Expand the window to fill the viewport and back. |
-| `Window:SetTitle(text)` | Updates the title bar. |
+| `Window:SetTitle(text)` | Updates the title bar and re-measures the space reserved for it. |
+| `Window:Center(animated)` | Tween the window to the viewport centre (`animated = false` snaps). |
+| `Window:SetToggleKey(key)` | Change the show/hide hotkey, or disable it with `false`. |
 | `Window:Close()` | Animates out and destroys the window. |
 | `Window:Destroy()` | Destroys immediately. |
 
@@ -191,7 +193,9 @@ local slider = Section:CreateSlider({
 ```
 
 Methods: `Set(value, silent)`, `Get()`, `Destroy()`. Drag or click anywhere on the track;
-the value is rounded to `Step` and clamped to `Min`/`Max`.
+the value is rounded to `Step` and clamped to `Min`/`Max`. Grabbing the thumb keeps the current
+value instead of snapping its centre to the pointer, and the thumb never leaves the rail while
+dragging. Programmatic `Set` calls animate; dragging stays immediate.
 
 ### Dropdown
 
@@ -292,7 +296,9 @@ Athena:Notify({
 ```
 
 `Window:Notify` is an alias. Toasts stack (maximum four), animate in, show a progress line and are
-stored in the clock/bell panel in the title bar. Unread notifications show a dot on the bell.
+stored in the bell panel in the title bar. Unread notifications show a count badge on the bell; opening
+the panel marks them read. The panel groups entries by tone with an icon, title, time and body, has
+an empty state and a `Clear` action.
 
 Returns `{ Close = function() end }`.
 

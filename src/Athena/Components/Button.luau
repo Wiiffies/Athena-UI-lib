@@ -50,7 +50,11 @@ function Button.new(section, options)
 		Parent = row.Control,
 	})
 	Util.Corner(pill, 8)
+	local pillScale = Instance.new("UIScale")
+	pillScale.Scale = 1
+	pillScale.Parent = pill
 	self.Pill = pill
+	self.PillScale = pillScale
 
 	local stroke
 	if style == "Secondary" then
@@ -118,6 +122,15 @@ function Button.new(section, options)
 	end))
 	self.Maid:Add(pill.MouseLeave:Connect(function()
 		setBaseColor(false)
+		Util.Tween(pillScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	end))
+	self.Maid:Add(pill.MouseButton1Down:Connect(function()
+		if self.Enabled then
+			Util.Tween(pillScale, { Scale = 0.96 }, 0.07)
+		end
+	end))
+	self.Maid:Add(pill.MouseButton1Up:Connect(function()
+		Util.Tween(pillScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 
 	Util.RowHover(row.Row, self.Maid, theme)
