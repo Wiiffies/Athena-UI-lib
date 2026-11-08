@@ -259,7 +259,7 @@ local textbox = General:CreateTextbox({
 General:CreateColorPicker({
     Name = "Accent color",
     Description = "HSV canvas, hue strip and hex field.",
-    Default = Color3.fromRGB(242, 85, 90),
+    Default = Color3.fromRGB(238, 240, 242),
     Callback = function(color)
         print("Color:", Athena.Util.ColorToHex(color))
     end,
@@ -465,7 +465,7 @@ Pass a preset name, a partial table, or a full custom theme:
 ```lua
 local Window = Athena:CreateWindow({
     Title = "Athena",
-    Accent = Color3.fromRGB(20, 224, 163), -- shortcut for ThemeOverrides.Accent
+    Accent = Color3.fromRGB(238, 240, 242), -- shortcut for ThemeOverrides.Accent
     ThemeOverrides = {
         Surface = Color3.fromRGB(24, 25, 28),
         Border = Color3.fromRGB(48, 50, 56),
@@ -481,7 +481,7 @@ local Window = Athena:CreateWindow({
         Surface = Color3.fromRGB(18, 21, 29),
         SurfaceAlt = Color3.fromRGB(26, 30, 40),
         Border = Color3.fromRGB(38, 44, 58),
-        Accent = Color3.fromRGB(20, 224, 163),
+        Accent = Color3.fromRGB(238, 240, 242),
     },
 })
 ```
@@ -535,7 +535,8 @@ Athena-UI-lib/
 
 The recreation follows the reference screen closely:
 
-- `#131416` window, `#1A1B1E` cards, `#2C2E33` hairlines, `#EDEDEE` text, `#F2555A` accent.
+- `#131416` window, `#1A1B1E` cards, `#2C2E33` hairlines, `#EDEDEE` text, `#EEF0F2` white
+  accent. The default shell is monochrome; no coral or red.
 - 30px bold page title with light pill actions on the right.
 - Muted status banner, grouped card rows with 1px dividers and 14px inner padding.
 - Automation cards with 50px artwork, title/subtitle, chips, status text, ghost `Edit`, light `Run`

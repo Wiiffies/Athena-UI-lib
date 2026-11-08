@@ -38,7 +38,7 @@ function QuickMenu.new(window, options)
 		Theme = theme,
 		Options = options,
 		Key = key,
-		Open = false,
+		_open = false,
 		Destroyed = false,
 		Maid = Util.Maid.new(),
 		_animToken = 0,
@@ -359,7 +359,7 @@ function QuickMenu.new(window, options)
 	end))
 	self.Maid:Add(searchBox.FocusLost:Connect(function(enterPressed)
 		setSearchFocused(false)
-		if enterPressed and self.Open and self._results[1] then
+		if enterPressed and self._open and self._results[1] then
 			self:_Run(self._results[1])
 		end
 	end))
@@ -399,7 +399,7 @@ function QuickMenu.new(window, options)
 	local hovered = false
 	self.Maid:Add(trigger.MouseEnter:Connect(function()
 		hovered = true
-		if not self.Open then
+		if not self._open then
 			Util.Tween(trigger, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
 			Util.Tween(triggerScale, { Scale = 1.06 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			triggerIcon:SetColor(theme.Text)
@@ -407,7 +407,7 @@ function QuickMenu.new(window, options)
 	end))
 	self.Maid:Add(trigger.MouseLeave:Connect(function()
 		hovered = false
-		if not self.Open then
+		if not self._open then
 			Util.Tween(trigger, { BackgroundColor3 = theme.Surface }, 0.12)
 			Util.Tween(triggerScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			triggerIcon:SetColor(theme.TextSoft)
@@ -417,7 +417,7 @@ function QuickMenu.new(window, options)
 		Util.Tween(triggerScale, { Scale = 0.93 }, 0.07)
 	end))
 	self.Maid:Add(trigger.MouseButton1Up:Connect(function()
-		Util.Tween(triggerScale, { Scale = hovered and (self.Open and 1 or 1.06) or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(triggerScale, { Scale = hovered and (self._open and 1 or 1.06) or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(trigger.MouseButton1Click:Connect(function()
 		self:Toggle()
@@ -427,7 +427,7 @@ function QuickMenu.new(window, options)
 		self.Maid:Add(UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			if input.KeyCode == self.Key and not gameProcessed and not Util.IsTyping() then
 				self:Toggle()
-			elseif input.KeyCode == Enum.KeyCode.Escape and self.Open and not gameProcessed then
+			elseif input.KeyCode == Enum.KeyCode.Escape and self._open and not gameProcessed then
 				self:Close()
 			end
 		end))
@@ -438,7 +438,7 @@ function QuickMenu.new(window, options)
 	-- A slow halo makes the closed trigger feel alive without drawing attention away from the window.
 	self.Maid:Add(task.spawn(function()
 		while root.Parent and not self.Destroyed do
-			if not self.Open then
+			if not self._open then
 				ring.Visible = true
 				ring.Size = UDim2.fromOffset(40, 40)
 				ringStroke.Transparency = 0.8
@@ -489,10 +489,10 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 end
 
 function QuickMenu:Open()
-	if self.Destroyed or self.Open then
+	if self.Destroyed or self._open then
 		return
 	end
-	self.Open = true
+	self._open = true
 	self._animToken += 1
 	self.Catcher.Visible = true
 	self.Panel.Visible = true
@@ -513,10 +513,10 @@ function QuickMenu:Open()
 end
 
 function QuickMenu:Close(instant)
-	if self.Destroyed or not self.Open then
+	if self.Destroyed or not self._open then
 		return
 	end
-	self.Open = false
+	self._open = false
 	self._animToken += 1
 	local token = self._animToken
 	self.Catcher.Visible = false
@@ -535,14 +535,14 @@ function QuickMenu:Close(instant)
 	Util.Tween(self.PanelScale, { Scale = 0.94 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.Panel, { Position = offsetPosition(self.PanelBase, 10) }, 0.16)
 	task.delay(0.17, function()
-		if not self.Destroyed and not self.Open and token == self._animToken then
+		if not self.Destroyed and not self._open and token == self._animToken then
 			self.Panel.Visible = false
 		end
 	end)
 end
 
 function QuickMenu:Toggle()
-	if self.Open then
+	if self._open then
 		self:Close()
 	else
 		self:Open()
@@ -561,7 +561,7 @@ function QuickMenu:_PulseTrigger()
 	self.TriggerScale.Scale = 1.1
 	Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	task.delay(0.42, function()
-		if not self.Destroyed and not self.Open then
+		if not self.Destroyed and not self._open then
 			self.Ring.Visible = true
 		end
 	end)
@@ -739,7 +739,7 @@ function QuickMenu:_BuildRow(command, index)
 	end))
 
 	task.delay((index - 1) * 0.022, function()
-		if row.Parent and self.Open then
+		if row.Parent and self._open then
 			Util.Tween(rowScale, { Scale = 1 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end
 	end)
@@ -815,7 +815,7 @@ function QuickMenu:Destroy()
 		return
 	end
 	self.Destroyed = true
-	self.Open = false
+	self._open = false
 	self.Maid:Clean()
 	if self.Root then
 		self.Root:Destroy()

@@ -631,7 +631,7 @@ local demoTextbox = General:CreateTextbox({
 General:CreateColorPicker({
 	Name = "Accent color",
 	Description = "HSV canvas, hue strip and hex field.",
-	Default = Color3.fromRGB(242, 85, 90),
+	Default = Color3.fromRGB(238, 240, 242),
 	Callback = function(color)
 		print("[Athena] Color:", Athena.Util.ColorToHex(color))
 	end,

@@ -32,7 +32,7 @@ local Athena = loadstring(game:HttpGet(
 | `Logo` | string or number | drawn mark | Image asset for the title bar mark (`rbxassetid://…` or an id). |
 | `Theme` | string or table | `"Athena"` | Preset name or a partial theme table. |
 | `ThemeOverrides` | table | – | Tokens merged over the resolved theme. |
-| `Accent` | Color3 | `#F2555A` | Shortcut for `ThemeOverrides.Accent`. |
+| `Accent` | Color3 | `#EEF0F2` | Shortcut for `ThemeOverrides.Accent`. |
 | `Size` | UDim2 or Vector2 | `880 × 600` | Base size; the window scales to the viewport. |
 | `ToggleKey` | Enum.KeyCode or `false` | `RightShift` | Keyboard show/hide. |
 | `QuickMenu` | boolean or table | `true` | Bottom-right command palette; `false` disables it. |
@@ -293,7 +293,7 @@ Method: `Destroy()`.
 ```lua
 local picker = Section:CreateColorPicker({
     Name = "Accent color",
-    Default = Color3.fromRGB(242, 85, 90),
+    Default = Color3.fromRGB(238, 240, 242),
     Callback = function(color) end,
 })
 ```
@@ -349,9 +349,9 @@ local Window = Athena:CreateWindow({
         Surface = Color3.fromRGB(18, 21, 29),
         SurfaceAlt = Color3.fromRGB(26, 30, 40),
         Border = Color3.fromRGB(38, 44, 58),
-        Accent = Color3.fromRGB(20, 224, 163),
+        Accent = Color3.fromRGB(238, 240, 242),
     },
-    ThemeOverrides = { AccentText = Color3.fromRGB(4, 19, 13) },
+    ThemeOverrides = { AccentText = Color3.fromRGB(14, 15, 18) },
 })
 ```
 
@@ -389,7 +389,7 @@ draw icons yourself.
 ## Utility helpers
 
 ```lua
-Athena.Util.ColorToHex(color)   --> "#F2555A"
+Athena.Util.ColorToHex(color)   --> "#EEF0F2"
 Athena.Util.HexToColor("#f2555a") --> Color3
 Athena.Util.FormatNumber(12.5)  --> "12.5"
 Athena.Util.Round(value, step)

@@ -1,7 +1,7 @@
 --[[
 	Athena · Core/Theme
 	Design tokens recreated from the Athena client (dark neutral surfaces,
-	hairline borders, light primary pills, coral accent).
+	hairline borders, light primary pills, monochrome accents).
 ]]
 
 local Theme = {}
@@ -47,14 +47,14 @@ Theme.Presets = {
 		TextMuted = Color3.fromRGB(122, 127, 135),
 		TextFaint = Color3.fromRGB(96, 100, 107),
 
-		-- Accents
-		Accent = Color3.fromRGB(242, 85, 90),
-		AccentText = Color3.fromRGB(255, 255, 255),
-		AccentSoft = Color3.fromRGB(58, 33, 36),
-		Success = Color3.fromRGB(20, 224, 163),
-		Warning = Color3.fromRGB(240, 207, 120),
-		Error = Color3.fromRGB(242, 85, 90),
-		Info = Color3.fromRGB(61, 123, 255),
+		-- Monochrome accents (white on dark, black on light)
+		Accent = Color3.fromRGB(238, 240, 242),
+		AccentText = Color3.fromRGB(14, 15, 18),
+		AccentSoft = Color3.fromRGB(32, 34, 38),
+		Success = Color3.fromRGB(238, 240, 242),
+		Warning = Color3.fromRGB(238, 240, 242),
+		Error = Color3.fromRGB(238, 240, 242),
+		Info = Color3.fromRGB(238, 240, 242),
 
 		-- Controls
 		Primary = Color3.fromRGB(238, 240, 242),
@@ -110,13 +110,13 @@ Theme.Presets = {
 		TextMuted = Color3.fromRGB(116, 121, 130),
 		TextFaint = Color3.fromRGB(142, 146, 154),
 
-		Accent = Color3.fromRGB(224, 62, 70),
-		AccentText = Color3.fromRGB(255, 255, 255),
-		AccentSoft = Color3.fromRGB(253, 234, 235),
-		Success = Color3.fromRGB(12, 158, 116),
-		Warning = Color3.fromRGB(176, 132, 22),
-		Error = Color3.fromRGB(212, 62, 70),
-		Info = Color3.fromRGB(45, 105, 235),
+		Accent = Color3.fromRGB(22, 23, 26),
+		AccentText = Color3.fromRGB(247, 247, 249),
+		AccentSoft = Color3.fromRGB(242, 243, 246),
+		Success = Color3.fromRGB(22, 23, 26),
+		Warning = Color3.fromRGB(22, 23, 26),
+		Error = Color3.fromRGB(22, 23, 26),
+		Info = Color3.fromRGB(22, 23, 26),
 
 		Primary = Color3.fromRGB(22, 23, 26),
 		PrimaryHover = Color3.fromRGB(38, 40, 45),

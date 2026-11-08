@@ -314,12 +314,15 @@ function Window.new(library, options)
 		icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
 
 		self.Maid:Add(button.MouseEnter:Connect(function()
-			Util.Tween(button, { BackgroundTransparency = danger and 0.1 or 0.55 }, 0.12)
+			Util.Tween(button, {
+				BackgroundColor3 = danger and theme.Primary or theme.SurfaceHover,
+				BackgroundTransparency = danger and 0 or 0.55,
+			}, 0.12)
 			Util.Tween(buttonScale, { Scale = 1.08 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			icon:SetColor(danger and theme.AccentText or theme.Text)
+			icon:SetColor(danger and theme.PrimaryText or theme.Text)
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
-			Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
+			Util.Tween(button, { BackgroundColor3 = theme.SurfaceHover, BackgroundTransparency = 1 }, 0.12)
 			Util.Tween(buttonScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(theme.TextMuted)
 		end))
