@@ -1,0 +1,9 @@
+{
+	"name": "AthenaUI",
+	"tree": {
+		"$className": "Folder",
+		"Athena": {
+			"$path": "src/Athena"
+		}
+	}
+}
