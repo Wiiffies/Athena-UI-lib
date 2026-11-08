@@ -586,7 +586,8 @@ function Window:_RevealNavTab(navButton)
 		target = tabLeft + tabWidth - viewWidth + edge
 	end
 
-	local maxScroll = math.max(0, nav.AbsoluteCanvasSize.X - viewWidth)
+	-- AbsoluteCanvasSize is in scaled screen pixels; viewWidth is topbar-local.
+	local maxScroll = math.max(0, nav.AbsoluteCanvasSize.X / scaleValue - viewWidth)
 	target = math.clamp(target, 0, maxScroll)
 	if math.abs(target - current) > 0.5 then
 		Util.Tween(
