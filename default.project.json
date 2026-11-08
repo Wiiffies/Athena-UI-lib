@@ -1,9 +1,11 @@
 {
 	"name": "AthenaUI",
 	"tree": {
-		"$className": "Folder",
-		"Athena": {
-			"$path": "src/Athena"
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"Athena": {
+				"$path": "src/Athena"
+			}
 		}
 	}
 }
