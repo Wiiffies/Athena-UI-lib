@@ -75,6 +75,9 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
+The dynamic island is created automatically at the top centre. Click it to expand its FPS and ping
+readouts, drag it anywhere, or start it hidden with `DynamicIsland = { Enabled = false }`.
+
 The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
 with the tabs. Use `Window:Center()`, `Window:SetTitle(text)` and `Window:SetToggleKey(key)` to drive
 the shell at runtime.
@@ -84,7 +87,8 @@ Full API reference: [`docs/API.md`](docs/API.md).
 ## Complete example script
 
 The script below creates two tabs, header actions, a status banner, three automation cards, a
-settings section containing every component, programmatic setters and notification demos.
+settings section containing every component, programmatic setters, notification demos and
+dynamic-island controls.
 
 Paste it into a **LocalScript** under `StarterPlayer > StarterPlayerScripts`, or run it directly in
 an executor.
@@ -102,6 +106,11 @@ local Window = Athena:CreateWindow({
     Title = "Athena",
     Theme = "Athena",
     Size = UDim2.fromOffset(880, 600),
+    DynamicIsland = {
+        Enabled = true,
+        Expanded = false,
+        Animated = true,
+    },
 })
 
 Window:Notify({
@@ -339,6 +348,28 @@ Controls:CreateButton({
             Icon = "bolt",
             Tone = "Accent",
         })
+    end,
+})
+
+Controls:CreateSeparator({ Text = "Dynamic island" })
+
+Controls:CreateButton({
+    Name = "Show or hide the island",
+    ButtonText = "Toggle",
+    Icon = "smartphone",
+    Callback = function()
+        Window:ToggleDynamicIsland()
+    end,
+})
+
+Controls:CreateButton({
+    Name = "Expand or collapse the readouts",
+    ButtonText = "Expand",
+    Style = "Secondary",
+    Callback = function()
+        if Window.DynamicIsland then
+            Window.DynamicIsland:ToggleExpanded()
+        end
     end,
 })
 

@@ -16,6 +16,11 @@ local Window = Athena:CreateWindow({
 	Theme = "Athena",
 	Size = UDim2.fromOffset(880, 600),
 	ToggleKey = Enum.KeyCode.RightShift,
+	DynamicIsland = {
+		Enabled = true,
+		Expanded = false,
+		Animated = true,
+	},
 })
 
 local function toast(title, text, tone)
@@ -714,6 +719,55 @@ ApiSection:CreateButton({
 })
 
 --------------------------------------------------------------------------------
+-- Settings · dynamic island
+--------------------------------------------------------------------------------
+
+local IslandSection = Settings:CreateSection({ Title = "Dynamic island", Icon = "smartphone" })
+
+IslandSection:CreateLabel({
+	Text = "Live session HUD",
+	Description = "Draggable top-centre pill that stays visible when the window is hidden.",
+	Value = "Top centre",
+})
+
+IslandSection:CreateButton({
+	Name = "Show or hide the island",
+	Description = "Leaves the main window exactly where it is.",
+	ButtonText = "Toggle",
+	Icon = "smartphone",
+	Callback = function()
+		Window:ToggleDynamicIsland()
+	end,
+})
+
+IslandSection:CreateButton({
+	Name = "Expand or collapse the readouts",
+	Description = "Adds uptime, FPS and ping tiles.",
+	ButtonText = "Expand",
+	Style = "Secondary",
+	Callback = function()
+		local island = Window.DynamicIsland
+		if island then
+			island:ToggleExpanded()
+		end
+	end,
+})
+
+IslandSection:CreateButton({
+	Name = "Print the current uptime",
+	Description = "Reads seconds since the island was created.",
+	ButtonText = "Print",
+	Style = "Secondary",
+	Icon = "clock",
+	Callback = function()
+		local island = Window.DynamicIsland
+		if island then
+			toast("Dynamic island", string.format("Uptime: %.1f s", island:GetUptime()), "Info")
+		end
+	end,
+})
+
+--------------------------------------------------------------------------------
 -- Settings · window controls
 --------------------------------------------------------------------------------
 
@@ -752,27 +806,6 @@ WindowSection:CreateButton({
 	Style = "Secondary",
 	Callback = function()
 		Window:Center()
-	end,
-})
-
-WindowSection:CreateButton({
-	Name = "Toggle the dynamic island",
-	ButtonText = "Toggle",
-	Style = "Secondary",
-	Icon = "smartphone",
-	Callback = function()
-		Window:ToggleDynamicIsland()
-	end,
-})
-
-WindowSection:CreateButton({
-	Name = "Expand the dynamic island readouts",
-	ButtonText = "Expand",
-	Style = "Secondary",
-	Callback = function()
-		if Window.DynamicIsland then
-			Window.DynamicIsland:ToggleExpanded()
-		end
 	end,
 })
 

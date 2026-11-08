@@ -82,7 +82,16 @@ if island then
 end
 ```
 
-Disable it at construction with `DynamicIsland = false`, or start it hidden with
+| Island method | Description |
+| --- | --- |
+| `SetVisible(bool, instant)` | Animate the island in or out (`instant = true` snaps it). |
+| `Toggle()` | Flip the current visibility. |
+| `SetExpanded(bool)` / `ToggleExpanded()` | Open or close the uptime, FPS and ping row. |
+| `GetUptime()` | Seconds since the island was created. |
+| `Destroy()` | Remove the island and disconnect its updates. |
+
+The complete example wires these controls into **Settings → Dynamic island**. Disable it at
+construction with `DynamicIsland = false`, or start it hidden with
 `DynamicIsland = { Enabled = false }`. The quick menu also contains a **Toggle dynamic island**
 command.
 
