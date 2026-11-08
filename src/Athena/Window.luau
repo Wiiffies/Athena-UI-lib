@@ -12,6 +12,7 @@ local Icons = require(script.Parent.Core.Icons)
 local Dragger = require(script.Parent.Core.Dragger)
 local Popup = require(script.Parent.Core.Popup)
 local Tab = require(script.Parent.Tab)
+local QuickMenu = require(script.Parent.QuickMenu)
 
 local Window = {}
 Window.__index = Window
@@ -305,17 +306,28 @@ function Window.new(library, options)
 			Parent = controls,
 		})
 		Util.Corner(button, 7)
+		local buttonScale = Instance.new("UIScale")
+		buttonScale.Scale = 1
+		buttonScale.Parent = button
 		local icon = Icons.New(iconName, 14, theme.TextMuted, button, 5)
 		icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 		icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
 
 		self.Maid:Add(button.MouseEnter:Connect(function()
 			Util.Tween(button, { BackgroundTransparency = danger and 0.1 or 0.55 }, 0.12)
+			Util.Tween(buttonScale, { Scale = 1.08 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(danger and theme.AccentText or theme.Text)
 		end))
 		self.Maid:Add(button.MouseLeave:Connect(function()
 			Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
+			Util.Tween(buttonScale, { Scale = 1 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 			icon:SetColor(theme.TextMuted)
+		end))
+		self.Maid:Add(button.MouseButton1Down:Connect(function()
+			Util.Tween(buttonScale, { Scale = 0.92 }, 0.06)
+		end))
+		self.Maid:Add(button.MouseButton1Up:Connect(function()
+			Util.Tween(buttonScale, { Scale = 1.03 }, 0.14, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		end))
 
 		return button, icon
@@ -524,6 +536,21 @@ function Window.new(library, options)
 		Util.Tween(uiScale, { Scale = self.BaseScale }, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
 
+	if options.QuickMenu ~= false then
+		local quickOptions = options.QuickMenuOptions
+		if type(options.QuickMenu) == "table" then
+			quickOptions = options.QuickMenu
+		end
+		if type(quickOptions) ~= "table" then
+			quickOptions = {}
+		end
+		if quickOptions.Key == nil and options.QuickMenuKey ~= nil then
+			quickOptions.Key = options.QuickMenuKey
+		end
+		self.QuickMenu = QuickMenu.new(self, quickOptions)
+		self.Maid:Add(self.QuickMenu)
+	end
+
 	return self
 end
 
@@ -588,21 +615,24 @@ function Window:_UpdateUnderline()
 	local navAbs = self.Nav.AbsolutePosition
 	local buttonAbs = navButton.AbsolutePosition
 	local topbarAbs = self.Topbar.AbsolutePosition
+
+	-- Absolute positions include UIScale. Convert back to topbar-local pixels before
+	-- positioning the underline, otherwise it drifts away from the active tab.
+	local localNavLeft = (navAbs.X - topbarAbs.X) / scaleValue
+	local localTabLeft = (buttonAbs.X - topbarAbs.X) / scaleValue
 	local width = math.max(20, navButton.AbsoluteSize.X / scaleValue - 20)
-	local navLeft = navAbs.X - topbarAbs.X
 
 	-- The nav clips its content; hide the indicator when the tab is scrolled out of view.
-	local visibleLeft = navLeft
-	local visibleRight = navLeft + self.Nav.AbsoluteSize.X
-	local tabLeft = buttonAbs.X - topbarAbs.X
-	if tabLeft + width < visibleLeft or tabLeft > visibleRight then
+	local visibleLeft = localNavLeft
+	local visibleRight = localNavLeft + self.Nav.AbsoluteSize.X / scaleValue
+	if localTabLeft + width < visibleLeft or localTabLeft > visibleRight then
 		self.Underline.Visible = false
 		return
 	end
 
 	self.Underline.Visible = true
 	Util.Tween(self.Underline, {
-		Position = UDim2.fromOffset(math.round(tabLeft + 10), self.Theme.TopbarHeight),
+		Position = UDim2.fromOffset(math.round(localTabLeft + 10), self.Theme.TopbarHeight),
 		Size = UDim2.fromOffset(width, 2),
 	}, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 end
@@ -1589,6 +1619,24 @@ function Window:Center(animated)
 		self.Frame.Position = target
 	else
 		Util.Tween(self.Frame, { Position = target }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	end
+end
+
+function Window:ToggleQuickMenu()
+	if self.QuickMenu then
+		self.QuickMenu:Toggle()
+	end
+end
+
+function Window:OpenQuickMenu()
+	if self.QuickMenu then
+		self.QuickMenu:Open()
+	end
+end
+
+function Window:CloseQuickMenu()
+	if self.QuickMenu then
+		self.QuickMenu:Close()
 	end
 end
 

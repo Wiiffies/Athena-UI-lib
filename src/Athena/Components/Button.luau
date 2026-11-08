@@ -18,6 +18,12 @@ function Button.new(section, options)
 	local pillLabel = options.ButtonText or options.Text or "Run"
 	local style = options.Style or "Primary"
 	local iconName = options.Icon
+	if iconName == nil then
+		local lowered = string.lower(tostring(pillLabel))
+		if lowered == "run" or lowered == "execute" then
+			iconName = "play"
+		end
+	end
 
 	local textWidth = Util.Measure(pillLabel, 11.5, theme.FontMedium).X
 	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 32), 64, 156))
@@ -92,7 +98,7 @@ function Button.new(section, options)
 
 	local icon
 	if iconName then
-		icon = Icons.New(iconName, 11, textColor, pill)
+		icon = Icons.New(iconName, 11, textColor, pill, 2)
 		icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
 		icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
 	end
@@ -108,6 +114,7 @@ function Button.new(section, options)
 		TextColor3 = textColor,
 		TextXAlignment = iconName and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 2,
 		Parent = pill,
 	})
 	self.Label = label
@@ -139,20 +146,26 @@ function Button.new(section, options)
 		end
 	end))
 
+	local hovered = false
 	self.Maid:Add(pill.MouseEnter:Connect(function()
+		hovered = true
 		setBaseColor(true)
+		if self.Enabled then
+			Util.Tween(pillScale, { Scale = 1.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		end
 	end))
 	self.Maid:Add(pill.MouseLeave:Connect(function()
+		hovered = false
 		setBaseColor(false)
 		Util.Tween(pillScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 	self.Maid:Add(pill.MouseButton1Down:Connect(function()
 		if self.Enabled then
-			Util.Tween(pillScale, { Scale = 0.96 }, 0.07)
+			Util.Tween(pillScale, { Scale = 0.95 }, 0.07)
 		end
 	end))
 	self.Maid:Add(pill.MouseButton1Up:Connect(function()
-		Util.Tween(pillScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(pillScale, { Scale = hovered and 1.02 or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end))
 
 	Util.RowHover(row.Row, self.Maid, theme)
@@ -180,6 +193,9 @@ function Button.new(section, options)
 			icon.Frame.Visible = enabled
 		end
 		pill.BackgroundTransparency = enabled and (style == "Ghost" and 1 or 0) or 0.55
+		if not enabled then
+			pillScale.Scale = 1
+		end
 	end
 
 	function self:Destroy()

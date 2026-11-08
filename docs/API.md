@@ -35,6 +35,8 @@ local Athena = loadstring(game:HttpGet(
 | `Accent` | Color3 | `#F2555A` | Shortcut for `ThemeOverrides.Accent`. |
 | `Size` | UDim2 or Vector2 | `880 × 600` | Base size; the window scales to the viewport. |
 | `ToggleKey` | Enum.KeyCode or `false` | `RightShift` | Keyboard show/hide. |
+| `QuickMenu` | boolean or table | `true` | Bottom-right command palette; `false` disables it. |
+| `QuickMenuKey` | Enum.KeyCode or `false` | `K` | Open/close the quick menu. |
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
 
@@ -53,6 +55,7 @@ local Athena = loadstring(game:HttpGet(
 | `Window:SetTitle(text)` | Updates the title bar and re-measures the space reserved for it. |
 | `Window:Center(animated)` | Tween the window to the viewport centre (`animated = false` snaps). |
 | `Window:SetToggleKey(key)` | Change the show/hide hotkey, or disable it with `false`. |
+| `Window:ToggleQuickMenu()` / `OpenQuickMenu()` / `CloseQuickMenu()` | Drive the quick command palette from code. |
 | `Window:Close()` | Animates out and destroys the window. |
 | `Window:Destroy()` | Destroys immediately. |
 
@@ -214,12 +217,28 @@ local dropdown = Section:CreateDropdown({
 Methods: `Set(value, silent)`, `Get()`, `GetSelected()`, `SetOptions(list)`, `Open()`, `Close()`,
 `Toggle()`, `Destroy()`. The first option is selected when `Default` is omitted.
 
+### Quick menu
+
+Every window gets a bottom-right command palette. Click the grid button or press **K**, then type
+to filter commands. It includes centre, minimise, hide/show, test notification, clear notifications
+and a jump-to-tab command for every tab. The trigger has a breathing halo, the panel springs in, and
+command rows cascade into place.
+
+```lua
+Window:OpenQuickMenu()
+Window:ToggleQuickMenu()
+Window:CloseQuickMenu()
+```
+
+Disable it with `QuickMenu = false`, or change the key with `QuickMenuKey = Enum.KeyCode.J`. Avoid
+binding the same key with `CreateKeybind`; both listeners will fire.
+
 ### Keybind
 
 ```lua
 local bind = Section:CreateKeybind({
     Name = "Quick action",
-    Default = Enum.KeyCode.K,
+    Default = Enum.KeyCode.G,
     Callback = function(key) print("pressed", key) end,
     OnChanged = function(key) print("now bound to", key) end,
 })
@@ -362,8 +381,8 @@ draw icons yourself.
   drag and viewport resize.
 - `Section:Destroy()`, `Tab:Destroy()` and `Window:Destroy()` disconnect everything they created.
 - Errors thrown inside callbacks are caught and reported with `warn("[Athena] …")`.
-- `RightShift` toggles the window unless `ToggleKey = false` is passed. Avoid binding the same key
-  with `CreateKeybind`.
+- `RightShift` toggles the window unless `ToggleKey = false` is passed. Avoid binding either
+  `RightShift` or the quick-menu key (`K` by default) with `CreateKeybind`.
 
 ---
 

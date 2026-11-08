@@ -612,7 +612,7 @@ local demoDropdown = General:CreateDropdown({
 local demoKeybind = General:CreateKeybind({
 	Name = "Quick action",
 	Description = "Click the pill and press a key. Backspace clears.",
-	Default = Enum.KeyCode.K,
+	Default = Enum.KeyCode.G,
 	Callback = function(key)
 		toast("Keybind", "Pressed " .. key.Name .. ".", "Info")
 	end,

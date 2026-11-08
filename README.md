@@ -18,6 +18,7 @@ interface library, written in Luau.
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
+- A bottom-right quick menu (open with **K**) with search, animated command rows and window actions.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
 
 ## Quick start
@@ -45,10 +46,33 @@ Section:CreateToggle({
         print(Value)
     end,
 })
+
+Section:CreateSlider({
+    Name = "Example Slider",
+    Description = "Drag the white rail or click anywhere on it.",
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Suffix = "%",
+    Callback = function(Value)
+        print(Value)
+    end,
+})
+
+Section:CreateDropdown({
+    Name = "Example Dropdown",
+    Options = { "Option A", "Option B", "Option C" },
+    Default = "Option A",
+    Callback = function(Value)
+        print(Value)
+    end,
+})
 ```
 
-Press **RightShift** to hide or show the window (pass `ToggleKey = false` to disable it). The
-window is draggable from the title bar and scales with the viewport.
+Press **RightShift** to hide or show the window (pass `ToggleKey = false` to disable it), and
+**K** to open the bottom-right quick menu. The window is draggable from the title bar and scales
+with the viewport. Every window also creates the quick menu automatically; pass `QuickMenu = false`
+to turn it off.
 
 The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
 with the tabs. Use `Window:Center()`, `Window:SetTitle(text)` and `Window:SetToggleKey(key)` to drive
@@ -216,7 +240,7 @@ local dropdown = General:CreateDropdown({
 local keybind = General:CreateKeybind({
     Name = "Quick action",
     Description = "Click, then press a key. Backspace clears.",
-    Default = Enum.KeyCode.K,
+    Default = Enum.KeyCode.G,
     Callback = function(key)
         print("Keybind pressed:", key.Name)
     end,
