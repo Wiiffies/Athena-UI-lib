@@ -443,26 +443,13 @@ function QuickMenu.new(window, options)
 
 	self:Open(true)
 
-	-- A slow halo makes the closed trigger feel alive without drawing attention away from the window.
-	self.Maid:Add(task.spawn(function()
-		while root.Parent and not self.Destroyed do
-			if not self._open then
-				ring.Visible = true
-				ring.Size = UDim2.fromOffset(40, 40)
-				ringStroke.Transparency = 0.8
-				Util.Tween(ring, { Size = UDim2.fromOffset(58, 58) }, 1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-				Util.Tween(ringStroke, { Transparency = 1 }, 1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-			end
-			task.wait(2.8)
-		end
-	end))
-
 	return self
 end
 
 function QuickMenu:_SetTriggerOpen(open, instant)
 	local theme = self.Theme
 	if open then
+		self.Trigger.Visible = true
 		self.Ring.Visible = false
 		if instant then
 			self.Trigger.BackgroundColor3 = theme.Primary
@@ -492,7 +479,9 @@ function QuickMenu:_SetTriggerOpen(open, instant)
 		self.KeyChip.BackgroundColor3 = theme.Chip
 		self.KeyLabel.TextColor3 = theme.TextMuted
 		self.TriggerScale.Scale = 1
-		self.Ring.Visible = true
+		-- K hides the whole unit: main window, panel and this trigger.
+		self.Trigger.Visible = false
+		self.Ring.Visible = false
 		if not instant then
 			self.TriggerIcon:Pulse(1.1, 0.2)
 		end
@@ -594,7 +583,7 @@ function QuickMenu:_PulseTrigger()
 	self.TriggerScale.Scale = 1.1
 	Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	task.delay(0.42, function()
-		if not self.Destroyed and not self._open then
+		if not self.Destroyed and self.Trigger.Visible then
 			self.Ring.Visible = true
 		end
 	end)
