@@ -26,7 +26,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
 ))()
 
 local Window = Athena:CreateWindow({ Title = "Athena", Theme = "Athena" })
@@ -99,7 +99,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -442,7 +442,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.0.1"
 ))()
 ```
 
@@ -576,9 +576,10 @@ The recreation follows the reference screen closely:
   and a light-track switch.
 - Active tab is white with a 2px white underline that scrolls into view; counts use compact white badges.
 - Sliders use an inset white rail with a centred thumb; the page stays still while you drag.
-- Motion is short and restrained (0.12–0.46s, Quint/Quad/Back out): tab pages ease in, pills lift
-  and press, the underline glides, the bell badge pulses, popups rise and the island slides in,
-  breathes on hover, springs open into its stats and pulses its live dot.
+- Motion is short and restrained (0.12–0.46s, Quint/Quad/Back out): tab pages fade and slide in,
+  pills lift and press, the underline glides, the bell badge pulses, popups rise, and the island
+  slides in, shimmers its username, orbits its avatar, sweeps a glass highlight, breathes on hover,
+  springs open into its stats and pulses its live dot.
 - Type uses Gotham/GothamMedium/GothamBold — the closest Roblox families to Athena's Geist/Inter.
 
 ## Notes

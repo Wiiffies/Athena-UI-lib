@@ -19,7 +19,7 @@ local COLLAPSED_WIDTH = 236
 local COLLAPSED_HEIGHT = 44
 local EXPANDED_WIDTH = 312
 local EXPANDED_HEIGHT = 112
-local SAFE_TOP = 44
+local SAFE_TOP = 64
 local SIDE_MARGIN = 8
 local AVATAR_POS = UDim2.fromOffset(9, 8)
 local NAME_POS = UDim2.fromOffset(46, 7)
@@ -83,7 +83,7 @@ function DynamicIsland.new(window, options)
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ZIndex = 240,
+		ZIndex = 1000,
 		Parent = window.Gui,
 	})
 	root.Active = false
@@ -99,7 +99,8 @@ function DynamicIsland.new(window, options)
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		GroupTransparency = options.Animated == false and 0 or 1,
-		ZIndex = 250,
+		Visible = true,
+		ZIndex = 1001,
 		Parent = root,
 	})
 	Util.Corner(island, 22)
@@ -183,6 +184,14 @@ function DynamicIsland.new(window, options)
 		ZIndex = 3,
 		Parent = island,
 	})
+	local nameGradient = Instance.new("UIGradient")
+	nameGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, theme.TextSoft),
+		ColorSequenceKeypoint.new(0.5, theme.Text),
+		ColorSequenceKeypoint.new(1, theme.TextSoft),
+	})
+	nameGradient.Parent = nameLabel
+	self.NameGradient = nameGradient
 
 	local statusLabel = Util.Create("TextLabel", {
 		Name = "Status",
@@ -485,6 +494,9 @@ function DynamicIsland.new(window, options)
 		if self.Orbit then
 			self.Orbit.Rotation = (os.clock() * 38) % 360
 		end
+		if self.NameGradient then
+			self.NameGradient.Offset = Vector2.new(math.sin(os.clock() * 0.9) * 0.25, 0)
+		end
 	end))
 
 	local function pulseValue(scale)
@@ -587,6 +599,17 @@ function DynamicIsland.new(window, options)
 
 	if self.Enabled then
 		self:_PlayIntro()
+		-- If a tween is interrupted before the island becomes opaque, snap it on.
+		task.delay(0.55, function()
+			if self.Destroyed or not self.Enabled then
+				return
+			end
+			self.Island.Visible = true
+			if self.Island.GroupTransparency > 0.99 then
+				self.Island.GroupTransparency = 0
+				self.IslandScale.Scale = 1
+			end
+		end)
 	else
 		island.Visible = false
 	end

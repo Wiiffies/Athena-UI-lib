@@ -810,12 +810,24 @@ function Window:SelectTab(target)
 
 	self:_ClosePopups(nil, true)
 
+	local animated = self.Options.Animated ~= false
 	for _, other in ipairs(self.Tabs) do
 		local active = other == tab
-		other.Page.Visible = active
-		if active and other.PageScale then
-			other.PageScale.Scale = 0.985
-			Util.Tween(other.PageScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if active then
+			other.Page.Visible = true
+			other.Page.GroupTransparency = animated and 1 or 0
+			other.Page.Position = animated and UDim2.new(0.5, 0, 0.5, 8) or UDim2.fromScale(0.5, 0.5)
+			if other.PageScale then
+				other.PageScale.Scale = animated and 0.985 or 1
+				if animated then
+					Util.Tween(other.Page, { GroupTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Util.Tween(other.Page, { Position = UDim2.fromScale(0.5, 0.5) }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Util.Tween(other.PageScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				end
+			end
+		else
+			other.Page.Visible = false
+			other.Page.GroupTransparency = 0
 		end
 		if other._navPaint then
 			other._navPaint(active)

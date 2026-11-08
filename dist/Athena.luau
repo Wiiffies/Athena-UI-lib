@@ -4168,7 +4168,7 @@ local COLLAPSED_WIDTH = 236
 local COLLAPSED_HEIGHT = 44
 local EXPANDED_WIDTH = 312
 local EXPANDED_HEIGHT = 112
-local SAFE_TOP = 44
+local SAFE_TOP = 64
 local SIDE_MARGIN = 8
 local AVATAR_POS = UDim2.fromOffset(9, 8)
 local NAME_POS = UDim2.fromOffset(46, 7)
@@ -4232,7 +4232,7 @@ function DynamicIsland.new(window, options)
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
-		ZIndex = 240,
+		ZIndex = 1000,
 		Parent = window.Gui,
 	})
 	root.Active = false
@@ -4248,7 +4248,8 @@ function DynamicIsland.new(window, options)
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		GroupTransparency = options.Animated == false and 0 or 1,
-		ZIndex = 250,
+		Visible = true,
+		ZIndex = 1001,
 		Parent = root,
 	})
 	Util.Corner(island, 22)
@@ -4332,6 +4333,14 @@ function DynamicIsland.new(window, options)
 		ZIndex = 3,
 		Parent = island,
 	})
+	local nameGradient = Instance.new("UIGradient")
+	nameGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, theme.TextSoft),
+		ColorSequenceKeypoint.new(0.5, theme.Text),
+		ColorSequenceKeypoint.new(1, theme.TextSoft),
+	})
+	nameGradient.Parent = nameLabel
+	self.NameGradient = nameGradient
 
 	local statusLabel = Util.Create("TextLabel", {
 		Name = "Status",
@@ -4634,6 +4643,9 @@ function DynamicIsland.new(window, options)
 		if self.Orbit then
 			self.Orbit.Rotation = (os.clock() * 38) % 360
 		end
+		if self.NameGradient then
+			self.NameGradient.Offset = Vector2.new(math.sin(os.clock() * 0.9) * 0.25, 0)
+		end
 	end))
 
 	local function pulseValue(scale)
@@ -4736,6 +4748,17 @@ function DynamicIsland.new(window, options)
 
 	if self.Enabled then
 		self:_PlayIntro()
+		-- If a tween is interrupted before the island becomes opaque, snap it on.
+		task.delay(0.55, function()
+			if self.Destroyed or not self.Enabled then
+				return
+			end
+			self.Island.Visible = true
+			if self.Island.GroupTransparency > 0.99 then
+				self.Island.GroupTransparency = 0
+				self.IslandScale.Scale = 1
+			end
+		end)
 	else
 		island.Visible = false
 	end
@@ -5328,7 +5351,6 @@ QuickMenu.__index = QuickMenu
 local MARGIN = 20
 local PANEL_WIDTH = 344
 local PANEL_HEIGHT = 356
-local TRIGGER_SIZE = 44
 
 local function lower(value)
 	return string.lower(tostring(value or ""))
@@ -5341,6 +5363,14 @@ end
 function QuickMenu.new(window, options)
 	options = options or {}
 	local theme = window.Theme
+
+	-- Remove a legacy floating trigger if an older Athena build left one behind.
+	for _, stale in ipairs(window.Gui:GetDescendants()) do
+		if stale.Name == "QuickMenuButton" or stale.Name == "TriggerPulse" then
+			stale:Destroy()
+		end
+	end
+
 	local key = options.Key
 	if key == nil then
 		key = Enum.KeyCode.K
@@ -5382,80 +5412,10 @@ function QuickMenu.new(window, options)
 	})
 	self.Catcher = catcher
 
-	local ring = Util.Create("Frame", {
-		Name = "TriggerPulse",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(1, -(MARGIN + TRIGGER_SIZE / 2), 1, -(MARGIN + TRIGGER_SIZE / 2)),
-		Size = UDim2.fromOffset(TRIGGER_SIZE, TRIGGER_SIZE),
-		BackgroundTransparency = 1,
-		BorderSizePixel = 0,
-		Visible = false,
-		ZIndex = 209,
-		Parent = root,
-	})
-	Util.Corner(ring, 14)
-	local ringStroke = Util.Stroke(ring, theme.Primary, 1, 1)
-	self.Ring = ring
-	self.RingStroke = ringStroke
-
-	local trigger = Util.Create("TextButton", {
-		Name = "QuickMenuButton",
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -MARGIN, 1, -MARGIN),
-		Size = UDim2.fromOffset(TRIGGER_SIZE, TRIGGER_SIZE),
-		BackgroundColor3 = theme.Surface,
-		BorderSizePixel = 0,
-		Text = "",
-		AutoButtonColor = false,
-		Visible = false,
-		ZIndex = 211,
-		Parent = root,
-	})
-	Util.Corner(trigger, 14)
-	local triggerStroke = Util.Stroke(trigger, theme.Border, 1)
-	local triggerScale = Instance.new("UIScale")
-	triggerScale.Scale = 1
-	triggerScale.Parent = trigger
-
-	local triggerIcon = Icons.New("grid", 16, theme.TextSoft, trigger, 213)
-	triggerIcon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-	triggerIcon.Frame.Position = UDim2.fromScale(0.5, 0.5)
-
 	local keyName = ""
 	if self.Key then
 		keyName = tostring(self.Key.Name or self.Key)
 	end
-	local keyChip = Util.Create("Frame", {
-		Name = "KeyHint",
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -5, 0, 5),
-		Size = UDim2.fromOffset(15, 15),
-		BackgroundColor3 = theme.Chip,
-		BorderSizePixel = 0,
-		Visible = self.Key ~= false and keyName ~= "",
-		ZIndex = 214,
-		Parent = trigger,
-	})
-	Util.Corner(keyChip, 4)
-	local keyLabel = Util.Create("TextLabel", {
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		Text = keyName,
-		Font = theme.FontBold,
-		TextSize = 8,
-		TextColor3 = theme.TextMuted,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextYAlignment = Enum.TextYAlignment.Center,
-		ZIndex = 215,
-		Parent = keyChip,
-	})
-
-	self.Trigger = trigger
-	self.TriggerScale = triggerScale
-	self.TriggerIcon = triggerIcon
-	self.TriggerStroke = triggerStroke
-	self.KeyChip = keyChip
-	self.KeyLabel = keyLabel
 
 	-- The menu itself.
 	local panel = Util.Create("CanvasGroup", {
@@ -5720,33 +5680,6 @@ function QuickMenu.new(window, options)
 	end))
 	-- No outside-click dismissal: the palette stays visible with the window.
 
-	local hovered = false
-	self.Maid:Add(trigger.MouseEnter:Connect(function()
-		hovered = true
-		if not self._open then
-			Util.Tween(trigger, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
-			Util.Tween(triggerScale, { Scale = 1.06 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			triggerIcon:SetColor(theme.Text)
-		end
-	end))
-	self.Maid:Add(trigger.MouseLeave:Connect(function()
-		hovered = false
-		if not self._open then
-			Util.Tween(trigger, { BackgroundColor3 = theme.Surface }, 0.12)
-			Util.Tween(triggerScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-			triggerIcon:SetColor(theme.TextSoft)
-		end
-	end))
-	self.Maid:Add(trigger.MouseButton1Down:Connect(function()
-		Util.Tween(triggerScale, { Scale = 0.93 }, 0.07)
-	end))
-	self.Maid:Add(trigger.MouseButton1Up:Connect(function()
-		Util.Tween(triggerScale, { Scale = hovered and (self._open and 1 or 1.06) or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end))
-	self.Maid:Add(trigger.MouseButton1Click:Connect(function()
-		self.Window:Toggle()
-	end))
-
 	if self.Key then
 		self.Maid:Add(UserInputService.InputBegan:Connect(function(input, gameProcessed)
 			if input.KeyCode == self.Key and not gameProcessed and not Util.IsTyping() then
@@ -5759,49 +5692,6 @@ function QuickMenu.new(window, options)
 	self:Open(true)
 
 	return self
-end
-
-function QuickMenu:_SetTriggerOpen(open, instant)
-	local theme = self.Theme
-	if open then
-		self.Trigger.Visible = true
-		self.Ring.Visible = false
-		if instant then
-			self.Trigger.BackgroundColor3 = theme.Primary
-			self.TriggerStroke.Transparency = 1
-		else
-			Util.Tween(self.Trigger, { BackgroundColor3 = theme.Primary }, 0.16)
-			Util.Tween(self.TriggerStroke, { Transparency = 1 }, 0.16)
-		end
-		self.TriggerIcon:SetColor(theme.PrimaryText)
-		self.KeyChip.BackgroundColor3 = theme.SurfaceAlt
-		self.KeyLabel.TextColor3 = theme.TextSoft
-		self.TriggerScale.Scale = instant and 1 or 0.9
-		if not instant then
-			Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-			self.TriggerIcon:Pulse(1.18, 0.26)
-		end
-		Util.Tween(self.TriggerIcon.Frame, { Rotation = 45 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	else
-		if instant then
-			self.Trigger.BackgroundColor3 = theme.Surface
-			self.TriggerStroke.Transparency = 0
-		else
-			Util.Tween(self.Trigger, { BackgroundColor3 = theme.Surface }, 0.16)
-			Util.Tween(self.TriggerStroke, { Transparency = 0 }, 0.16)
-		end
-		self.TriggerIcon:SetColor(theme.TextSoft)
-		self.KeyChip.BackgroundColor3 = theme.Chip
-		self.KeyLabel.TextColor3 = theme.TextMuted
-		self.TriggerScale.Scale = 1
-		-- K hides the whole unit: main window, panel and this trigger.
-		self.Trigger.Visible = false
-		self.Ring.Visible = false
-		if not instant then
-			self.TriggerIcon:Pulse(1.1, 0.2)
-		end
-		Util.Tween(self.TriggerIcon.Frame, { Rotation = 0 }, 0.22, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	end
 end
 
 function QuickMenu:Open(instant)
@@ -5882,24 +5772,6 @@ function QuickMenu:Toggle()
 	else
 		self:Open()
 	end
-end
-
-function QuickMenu:_PulseTrigger()
-	if self.Destroyed then
-		return
-	end
-	self.Ring.Visible = true
-	self.Ring.Size = UDim2.fromOffset(TRIGGER_SIZE, TRIGGER_SIZE)
-	self.RingStroke.Transparency = 0.65
-	Util.Tween(self.Ring, { Size = UDim2.fromOffset(64, 64) }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	Util.Tween(self.RingStroke, { Transparency = 1 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	self.TriggerScale.Scale = 1.1
-	Util.Tween(self.TriggerScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-	task.delay(0.42, function()
-		if not self.Destroyed and self.Trigger.Visible then
-			self.Ring.Visible = true
-		end
-	end)
 end
 
 function QuickMenu:_Commands()
@@ -6519,10 +6391,11 @@ function Tab.new(window, config)
 		Config = config,
 	}, Tab)
 
-	local page = Util.Create("Frame", {
+	local page = Util.Create("CanvasGroup", {
 		Name = "Page_" .. tostring(config.Title),
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
+		GroupTransparency = 0,
 		Visible = false,
 		ZIndex = 1,
 		Parent = window.Content,
@@ -7737,12 +7610,24 @@ function Window:SelectTab(target)
 
 	self:_ClosePopups(nil, true)
 
+	local animated = self.Options.Animated ~= false
 	for _, other in ipairs(self.Tabs) do
 		local active = other == tab
-		other.Page.Visible = active
-		if active and other.PageScale then
-			other.PageScale.Scale = 0.985
-			Util.Tween(other.PageScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if active then
+			other.Page.Visible = true
+			other.Page.GroupTransparency = animated and 1 or 0
+			other.Page.Position = animated and UDim2.new(0.5, 0, 0.5, 8) or UDim2.fromScale(0.5, 0.5)
+			if other.PageScale then
+				other.PageScale.Scale = animated and 0.985 or 1
+				if animated then
+					Util.Tween(other.Page, { GroupTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+					Util.Tween(other.Page, { Position = UDim2.fromScale(0.5, 0.5) }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+					Util.Tween(other.PageScale, { Scale = 1 }, 0.24, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				end
+			end
+		else
+			other.Page.Visible = false
+			other.Page.GroupTransparency = 0
 		end
 		if other._navPaint then
 			other._navPaint(active)
@@ -8730,7 +8615,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.0.0"
+Athena.Version = "1.0.1"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}

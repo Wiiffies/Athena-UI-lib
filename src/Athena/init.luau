@@ -19,7 +19,7 @@ local Window = require(script.Window)
 
 local Athena = {}
 
-Athena.Version = "1.0.0"
+Athena.Version = "1.0.1"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}

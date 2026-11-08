@@ -32,10 +32,11 @@ function Tab.new(window, config)
 		Config = config,
 	}, Tab)
 
-	local page = Util.Create("Frame", {
+	local page = Util.Create("CanvasGroup", {
 		Name = "Page_" .. tostring(config.Title),
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,
+		GroupTransparency = 0,
 		Visible = false,
 		ZIndex = 1,
 		Parent = window.Content,
