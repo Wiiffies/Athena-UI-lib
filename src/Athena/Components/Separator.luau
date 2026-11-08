@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Separator
+	Athena · Components/Separator
 	A hairline with an optional caption.
 ]]
 

@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Dropdown
+	Athena · Components/Dropdown
 	A compact selector with a floating option list.
 ]]
 

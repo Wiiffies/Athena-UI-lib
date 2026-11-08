@@ -1,5 +1,5 @@
 --[[
-	Athena UI
+	Athena
 	A close recreation of the Athena client interface for Roblox, written in
 	Luau with no external assets or dependencies.
 

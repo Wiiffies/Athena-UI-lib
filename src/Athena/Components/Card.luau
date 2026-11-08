@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Card
+	Athena · Components/Card
 	The automation card from Athena: artwork, title, subtitle, chips,
 	status line, ghost/primary actions and an inline switch.
 ]]

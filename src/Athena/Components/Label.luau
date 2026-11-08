@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Label
+	Athena · Components/Label
 	Supports a two-column value row or a wrapped paragraph, both measured
 	so the card height stays exact at any width.
 ]]

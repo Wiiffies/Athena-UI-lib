@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Notifications
+	Athena · Notifications
 	Stacked toasts (top right) plus the history used by the bell panel.
 ]]
 

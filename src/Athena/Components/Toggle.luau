@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Toggle
+	Athena · Components/Toggle
 	Light track switch with a dark knob, animated with a Quint ease.
 ]]
 

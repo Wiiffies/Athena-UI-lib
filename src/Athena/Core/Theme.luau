@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Core/Theme
+	Athena · Core/Theme
 	Design tokens recreated from the Athena client (dark neutral surfaces,
 	hairline borders, light primary pills, coral accent).
 ]]

@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Window
+	Athena · Window
 	The shell: title bar, tab navigation, page host, window controls,
 	notification panel, tab search and the popup layer.
 ]]

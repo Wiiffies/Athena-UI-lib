@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Section
+	Athena · Section
 	A titled card that groups rows. Every component is built from the same
 	deterministic row so spacing stays consistent at any width.
 ]]

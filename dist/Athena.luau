@@ -44,7 +44,7 @@ end
 
 __modules["Components.Banner"] = function(require)
 --[[
-	Athena UI · Components/Banner
+	Athena · Components/Banner
 	Full width status strip used for "1 automation is running." style notes.
 ]]
 
@@ -191,7 +191,7 @@ end
 
 __modules["Components.Button"] = function(require)
 --[[
-	Athena UI · Components/Button
+	Athena · Components/Button
 	A row with a light pill action, matching Athena's "Run" / "Edit" controls.
 ]]
 
@@ -356,7 +356,7 @@ end
 
 __modules["Components.Card"] = function(require)
 --[[
-	Athena UI · Components/Card
+	Athena · Components/Card
 	The automation card from Athena: artwork, title, subtitle, chips,
 	status line, ghost/primary actions and an inline switch.
 ]]
@@ -776,7 +776,7 @@ end
 
 __modules["Components.ColorPicker"] = function(require)
 --[[
-	Athena UI · Components/ColorPicker
+	Athena · Components/ColorPicker
 	HSV canvas, hue strip, hex field and live swatch.
 ]]
 
@@ -1191,7 +1191,7 @@ end
 
 __modules["Components.Dropdown"] = function(require)
 --[[
-	Athena UI · Components/Dropdown
+	Athena · Components/Dropdown
 	A compact selector with a floating option list.
 ]]
 
@@ -1543,7 +1543,7 @@ end
 
 __modules["Components.Keybind"] = function(require)
 --[[
-	Athena UI · Components/Keybind
+	Athena · Components/Keybind
 	Click to listen, then press a key or mouse button. Backspace clears.
 ]]
 
@@ -1778,7 +1778,7 @@ end
 
 __modules["Components.Label"] = function(require)
 --[[
-	Athena UI · Components/Label
+	Athena · Components/Label
 	Supports a two-column value row or a wrapped paragraph, both measured
 	so the card height stays exact at any width.
 ]]
@@ -1954,7 +1954,7 @@ end
 
 __modules["Components.Separator"] = function(require)
 --[[
-	Athena UI · Components/Separator
+	Athena · Components/Separator
 	A hairline with an optional caption.
 ]]
 
@@ -2029,7 +2029,7 @@ end
 
 __modules["Components.Slider"] = function(require)
 --[[
-	Athena UI · Components/Slider
+	Athena · Components/Slider
 	Thin track with a white fill, a live value pill and smooth dragging.
 ]]
 
@@ -2259,7 +2259,7 @@ end
 
 __modules["Components.Textbox"] = function(require)
 --[[
-	Athena UI · Components/Textbox
+	Athena · Components/Textbox
 	Inline text input with a commit callback on Enter or focus loss.
 ]]
 
@@ -2381,7 +2381,7 @@ end
 
 __modules["Components.Toggle"] = function(require)
 --[[
-	Athena UI · Components/Toggle
+	Athena · Components/Toggle
 	Light track switch with a dark knob, animated with a Quint ease.
 ]]
 
@@ -2523,7 +2523,7 @@ end
 
 __modules["Core.Dragger"] = function(require)
 --[[
-	Athena UI · Core/Dragger
+	Athena · Core/Dragger
 	Mouse and touch dragging with viewport clamping, aware of UIScale.
 ]]
 
@@ -2649,7 +2649,7 @@ end
 
 __modules["Core.Icons"] = function(require)
 --[[
-	Athena UI · Core/Icons
+	Athena · Core/Icons
 	Icons are drawn from primitives so the library needs no image assets.
 	Every icon is a normalised spec (0-1 coordinates) rendered into a square.
 ]]
@@ -2790,8 +2790,8 @@ local SPECS = {
 	},
 	athena = {
 		-- The two legs of the A meet at the apex.
-		{ kind = "bar", x = 0.362, y = 0.5, w = 0.095, h = 1.2, rot = 30 },
-		{ kind = "bar", x = 0.638, y = 0.5, w = 0.095, h = 1.2, rot = -30 },
+		{ kind = "bar", x = 0.362, y = 0.505, w = 0.095, h = 1.12, rot = 30 },
+		{ kind = "bar", x = 0.638, y = 0.505, w = 0.095, h = 1.12, rot = -30 },
 		-- Wings sweeping out from the crossbar, as in getathena.gg/logo.png.
 		{ kind = "bar", x = 0.17, y = 0.395, w = 0.36, h = 0.16, rot = 23 },
 		{ kind = "bar", x = 0.83, y = 0.395, w = 0.36, h = 0.16, rot = -23 },
@@ -2922,7 +2922,7 @@ end
 
 __modules["Core.Popup"] = function(require)
 --[[
-	Athena UI · Core/Popup
+	Athena · Core/Popup
 	Shared floating surface used by dropdowns, colour pickers and panels.
 	Handles positioning, clamping, fade/scale animation and outside clicks.
 ]]
@@ -3181,7 +3181,7 @@ end
 
 __modules["Core.Theme"] = function(require)
 --[[
-	Athena UI · Core/Theme
+	Athena · Core/Theme
 	Design tokens recreated from the Athena client (dark neutral surfaces,
 	hairline borders, light primary pills, coral accent).
 ]]
@@ -3345,7 +3345,7 @@ end
 
 __modules["Core.Util"] = function(require)
 --[[
-	Athena UI · Core/Util
+	Athena · Core/Util
 	Small, dependency free helpers shared by every component.
 ]]
 
@@ -3669,7 +3669,7 @@ end
 
 __modules["Notifications"] = function(require)
 --[[
-	Athena UI · Notifications
+	Athena · Notifications
 	Stacked toasts (top right) plus the history used by the bell panel.
 ]]
 
@@ -4014,7 +4014,7 @@ end
 
 __modules["Section"] = function(require)
 --[[
-	Athena UI · Section
+	Athena · Section
 	A titled card that groups rows. Every component is built from the same
 	deterministic row so spacing stays consistent at any width.
 ]]
@@ -4327,7 +4327,7 @@ end
 
 __modules["Tab"] = function(require)
 --[[
-	Athena UI · Tab
+	Athena · Tab
 	A page inside the window: large title, header actions, scrolling content.
 ]]
 
@@ -4667,7 +4667,7 @@ end
 
 __modules["Window"] = function(require)
 --[[
-	Athena UI · Window
+	Athena · Window
 	The shell: title bar, tab navigation, page host, window controls,
 	notification panel, tab search and the popup layer.
 ]]
@@ -6065,7 +6065,7 @@ end
 
 __modules["Athena"] = function(require)
 --[[
-	Athena UI
+	Athena
 	A close recreation of the Athena client interface for Roblox, written in
 	Luau with no external assets or dependencies.
 

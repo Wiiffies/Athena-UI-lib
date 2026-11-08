@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Slider
+	Athena · Components/Slider
 	Thin track with a white fill, a live value pill and smooth dragging.
 ]]
 

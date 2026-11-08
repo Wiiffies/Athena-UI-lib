@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/ColorPicker
+	Athena · Components/ColorPicker
 	HSV canvas, hue strip, hex field and live swatch.
 ]]
 

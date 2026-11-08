@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Button
+	Athena · Components/Button
 	A row with a light pill action, matching Athena's "Run" / "Edit" controls.
 ]]
 

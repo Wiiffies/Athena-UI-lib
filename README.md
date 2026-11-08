@@ -60,7 +60,7 @@ an executor.
 
 ```lua
 --!nolint
--- Athena UI · complete example
+-- Athena · complete example
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
@@ -74,7 +74,7 @@ local Window = Athena:CreateWindow({
 })
 
 Window:Notify({
-    Title = "Athena UI",
+    Title = "Athena",
     Text = "Press RightShift to hide or show the window.",
     Tone = "Accent",
     Duration = 6,
@@ -238,7 +238,7 @@ General:CreateColorPicker({
 General:CreateSeparator({ Text = "Read only" })
 
 General:CreateLabel({
-    Text = "Athena UI v" .. Athena.Version,
+    Text = "Athena v" .. Athena.Version,
     Description = "Labels wrap automatically and can also show a right-hand value.",
 })
 
@@ -393,7 +393,7 @@ ModuleScript instead.
 
 ```json
 {
-  "name": "AthenaUI",
+  "name": "Athena",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -403,7 +403,7 @@ ModuleScript instead.
 }
 ```
 
-Run `rojo serve` (or `rojo build -o AthenaUI.rbxm`), sync, then:
+Run `rojo serve` (or `rojo build -o Athena.rbxm`), sync, then:
 
 ```lua
 local Athena = require(game.ReplicatedStorage.Athena)

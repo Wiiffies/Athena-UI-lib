@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Textbox
+	Athena · Components/Textbox
 	Inline text input with a commit callback on Enter or focus loss.
 ]]
 

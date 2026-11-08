@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Tab
+	Athena · Tab
 	A page inside the window: large title, header actions, scrolling content.
 ]]
 

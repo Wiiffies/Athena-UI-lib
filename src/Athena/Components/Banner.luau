@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Banner
+	Athena · Components/Banner
 	Full width status strip used for "1 automation is running." style notes.
 ]]
 

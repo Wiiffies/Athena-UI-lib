@@ -246,7 +246,7 @@ Methods: `Set(text, silent)`, `Get()`, `Destroy()`. `Callback` fires on Enter or
 Section:CreateLabel("A single line of text")
 
 Section:CreateLabel({
-    Text = "Athena UI",
+    Text = "Athena",
     Description = "Long paragraphs wrap automatically to the card width.",
 })
 

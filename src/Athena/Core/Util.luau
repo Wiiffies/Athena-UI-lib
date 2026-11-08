@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Core/Util
+	Athena · Core/Util
 	Small, dependency free helpers shared by every component.
 ]]
 

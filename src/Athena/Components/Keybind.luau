@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Components/Keybind
+	Athena · Components/Keybind
 	Click to listen, then press a key or mouse button. Backspace clears.
 ]]
 

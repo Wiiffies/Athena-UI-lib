@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Core/Dragger
+	Athena · Core/Dragger
 	Mouse and touch dragging with viewport clamping, aware of UIScale.
 ]]
 

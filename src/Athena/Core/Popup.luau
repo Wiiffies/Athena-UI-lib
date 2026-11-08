@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Core/Popup
+	Athena · Core/Popup
 	Shared floating surface used by dropdowns, colour pickers and panels.
 	Handles positioning, clamping, fade/scale animation and outside clicks.
 ]]

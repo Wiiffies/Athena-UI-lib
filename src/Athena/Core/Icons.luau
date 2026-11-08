@@ -1,5 +1,5 @@
 --[[
-	Athena UI · Core/Icons
+	Athena · Core/Icons
 	Icons are drawn from primitives so the library needs no image assets.
 	Every icon is a normalised spec (0-1 coordinates) rendered into a square.
 ]]
@@ -140,8 +140,8 @@ local SPECS = {
 	},
 	athena = {
 		-- The two legs of the A meet at the apex.
-		{ kind = "bar", x = 0.362, y = 0.5, w = 0.095, h = 1.2, rot = 30 },
-		{ kind = "bar", x = 0.638, y = 0.5, w = 0.095, h = 1.2, rot = -30 },
+		{ kind = "bar", x = 0.362, y = 0.505, w = 0.095, h = 1.12, rot = 30 },
+		{ kind = "bar", x = 0.638, y = 0.505, w = 0.095, h = 1.12, rot = -30 },
 		-- Wings sweeping out from the crossbar, as in getathena.gg/logo.png.
 		{ kind = "bar", x = 0.17, y = 0.395, w = 0.36, h = 0.16, rot = 23 },
 		{ kind = "bar", x = 0.83, y = 0.395, w = 0.36, h = 0.16, rot = -23 },
