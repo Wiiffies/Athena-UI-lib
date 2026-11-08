@@ -7,7 +7,7 @@
 	Press RightShift to hide or show the window.
 ]]
 
-local LIBRARY_VERSION = "1.0.2"
+local LIBRARY_VERSION = "1.0.3"
 local LIBRARY_URL = "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=" .. LIBRARY_VERSION
 
 local Athena = loadstring(game:HttpGet(LIBRARY_URL))()
@@ -23,6 +23,9 @@ local Window = Athena:CreateWindow({
 		Animated = true,
 	},
 })
+
+-- The island is automatic; this call also restores it if something hid it.
+Window:SetDynamicIslandEnabled(true)
 
 local function toast(title, text, tone)
 	Window:Notify({ Title = title, Text = text, Tone = tone or "Info" })

@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.0.2
+	Athena UI · v1.0.3
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -8,7 +8,12 @@
 			"https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau"
 		))()
 
-		local Window = Athena:CreateWindow({ Title = "My Application", Theme = "Athena" })
+		local Window = Athena:CreateWindow({
+			Title = "My Application",
+			Theme = "Athena",
+			DynamicIsland = { Enabled = true },
+		})
+		Window:SetDynamicIslandEnabled(true)
 		local Tab = Window:CreateTab("Main")
 		local Section = Tab:CreateSection("General")
 
@@ -8593,7 +8598,11 @@ __modules["Athena"] = function(require)
 
 	Usage:
 		local Athena = loadstring(game:HttpGet("..."))()
-		local Window = Athena:CreateWindow({ Title = "My Application" })
+		local Window = Athena:CreateWindow({
+			Title = "My Application",
+			DynamicIsland = { Enabled = true },
+		})
+		Window:SetDynamicIslandEnabled(true)
 		local Tab = Window:CreateTab("Main")
 		Tab:CreateSection("General"):CreateButton({ Name = "Example", Callback = print })
 ]]
@@ -8607,7 +8616,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.0.2"
+Athena.Version = "1.0.3"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}
