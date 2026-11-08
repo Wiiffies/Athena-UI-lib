@@ -13,6 +13,7 @@ local Dragger = require(script.Parent.Core.Dragger)
 local Popup = require(script.Parent.Core.Popup)
 local Tab = require(script.Parent.Tab)
 local QuickMenu = require(script.Parent.QuickMenu)
+local DynamicIsland = require(script.Parent.DynamicIsland)
 
 local Window = {}
 Window.__index = Window
@@ -192,6 +193,8 @@ function Window.new(library, options)
 
 	Dragger.Attach(frame, logo, self.Maid, {
 		Threshold = 4,
+		Margin = 8,
+		TopMargin = 44,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
 		end,
@@ -422,6 +425,8 @@ function Window.new(library, options)
 
 	Dragger.Attach(frame, topbar, self.Maid, {
 		Threshold = 4,
+		Margin = 8,
+		TopMargin = 44,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
 		end,
@@ -460,7 +465,7 @@ function Window.new(library, options)
 		self.BaseScale = Util.ComputeScale()
 		if self.Visible then
 			uiScale.Scale = self:_TargetScale()
-			Dragger.Clamp(frame, 6)
+			Dragger.Clamp(frame, 8, self.Maximized and 8 or 44)
 			self:_UpdateUnderline()
 			self:_ClosePopups(nil, true)
 		end
@@ -543,6 +548,12 @@ function Window.new(library, options)
 		uiScale.Scale = self.BaseScale * 0.965
 		Util.Tween(frame, { GroupTransparency = 0 }, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 		Util.Tween(uiScale, { Scale = self.BaseScale }, 0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	end
+
+	if options.DynamicIsland ~= false then
+		local islandOptions = type(options.DynamicIsland) == "table" and options.DynamicIsland or {}
+		self.DynamicIsland = DynamicIsland.new(self, islandOptions)
+		self.Maid:Add(self.DynamicIsland)
 	end
 
 	if options.QuickMenu ~= false then
@@ -1481,7 +1492,7 @@ function Window:SetMaximized(value)
 	Util.Tween(self.Scale, { Scale = self:_TargetScale() }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	task.delay(0.3, function()
 		if not self.Closed then
-			Dragger.Clamp(self.Frame, 6)
+			Dragger.Clamp(self.Frame, 8, self.Maximized and 8 or 44)
 			self:_UpdateUnderline()
 		end
 	end)
@@ -1650,6 +1661,22 @@ function Window:Center(animated)
 	else
 		Util.Tween(self.Frame, { Position = target }, 0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	end
+end
+
+function Window:ToggleDynamicIsland()
+	if self.DynamicIsland then
+		self.DynamicIsland:Toggle()
+	end
+end
+
+function Window:SetDynamicIslandEnabled(enabled)
+	if self.DynamicIsland then
+		self.DynamicIsland:SetVisible(enabled)
+	end
+end
+
+function Window:IsDynamicIslandEnabled()
+	return self.DynamicIsland ~= nil and self.DynamicIsland.Enabled == true
 end
 
 function Window:ToggleQuickMenu()

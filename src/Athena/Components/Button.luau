@@ -17,6 +17,7 @@ function Button.new(section, options)
 	local description = options.Description
 	local pillLabel = options.ButtonText or options.Text or "Run"
 	local style = options.Style or "Primary"
+	local isPrimary = style == "Primary"
 	local iconName = options.Icon
 	if iconName == nil then
 		local lowered = string.lower(tostring(pillLabel))
@@ -25,15 +26,22 @@ function Button.new(section, options)
 		end
 	end
 
-	local textWidth = Util.Measure(pillLabel, 11.5, theme.FontMedium).X
-	local pillWidth = math.ceil(math.clamp(textWidth + (iconName and 44 or 32), 64, 156))
+	local labelFont = isPrimary and theme.FontBold or theme.FontMedium
+	local textWidth = Util.Measure(pillLabel, 11.5, labelFont).X
+	local horizontalPadding
+	if isPrimary then
+		horizontalPadding = iconName and 58 or 36
+	else
+		horizontalPadding = iconName and 44 or 32
+	end
+	local pillWidth = math.ceil(math.clamp(textWidth + horizontalPadding, 70, 176))
 
 	local row = section:_Row({
 		Name = name,
 		Description = description,
 		Height = description and 58 or 52,
 		ControlWidth = pillWidth,
-		ControlHeight = 32,
+		ControlHeight = 34,
 		Clickable = true,
 	})
 
@@ -49,31 +57,41 @@ function Button.new(section, options)
 	local pill = Util.Create("TextButton", {
 		Name = "Action",
 		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = style == "Primary" and theme.Primary or theme.SurfaceAlt,
+		BackgroundColor3 = isPrimary and theme.Primary or theme.SurfaceAlt,
 		BackgroundTransparency = style == "Ghost" and 1 or 0,
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
 		Parent = row.Control,
 	})
-	Util.Corner(pill, 8)
+	Util.Corner(pill, 17)
 	local pillScale = Instance.new("UIScale")
 	pillScale.Scale = 1
 	pillScale.Parent = pill
 
+	if isPrimary then
+		local gradient = Instance.new("UIGradient")
+		gradient.Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+			ColorSequenceKeypoint.new(1, theme.Primary),
+		})
+		gradient.Rotation = 90
+		gradient.Parent = pill
+	end
+
 	local shadow
-	if style == "Primary" then
+	if isPrimary then
 		shadow = Util.Create("Frame", {
 			Name = "Shadow",
-			Position = UDim2.fromOffset(0, 2),
+			Position = UDim2.fromOffset(0, 3),
 			Size = UDim2.fromScale(1, 1),
 			BackgroundColor3 = theme.Scrim,
-			BackgroundTransparency = 0.55,
+			BackgroundTransparency = 0.5,
 			BorderSizePixel = 0,
 			ZIndex = 0,
 			Parent = pill,
 		})
-		Util.Corner(shadow, 9)
+		Util.Corner(shadow, 17)
 		pill.ZIndex = 1
 	end
 
@@ -97,36 +115,76 @@ function Button.new(section, options)
 	end
 
 	local icon
+	local iconChip
+	local iconChipScale
 	if iconName then
-		icon = Icons.New(iconName, 11, textColor, pill, 2)
-		icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
-		icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
+		if isPrimary then
+			iconChip = Util.Create("Frame", {
+				Name = "IconChip",
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, 7, 0.5, 0),
+				Size = UDim2.fromOffset(22, 22),
+				BackgroundColor3 = theme.PrimaryText,
+				BorderSizePixel = 0,
+				ZIndex = 2,
+				Parent = pill,
+			})
+			Util.Corner(iconChip, 11)
+			iconChipScale = Instance.new("UIScale")
+			iconChipScale.Parent = iconChip
+			icon = Icons.New(iconName, 11, theme.Primary, iconChip, 3)
+			icon.Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+			icon.Frame.Position = UDim2.fromScale(0.5, 0.5)
+		else
+			icon = Icons.New(iconName, 11, textColor, pill, 2)
+			icon.Frame.AnchorPoint = Vector2.new(0, 0.5)
+			icon.Frame.Position = UDim2.new(0, 11, 0.5, 0)
+		end
+	end
+
+	local labelX
+	local labelRight
+	if isPrimary and iconName then
+		labelX = 37
+		labelRight = 12
+	elseif iconName then
+		labelX = 27
+		labelRight = 10
+	else
+		labelX = 0
+		labelRight = 12
 	end
 
 	local label = Util.Create("TextLabel", {
 		Name = "Label",
-		Position = UDim2.fromOffset(iconName and 27 or 0, 0),
-		Size = UDim2.new(1, iconName and -34 or -12, 1, 0),
+		Position = UDim2.fromOffset(labelX, 0),
+		Size = UDim2.new(1, -(labelX + labelRight), 1, 0),
 		BackgroundTransparency = 1,
 		Text = pillLabel,
-		Font = theme.FontMedium,
+		Font = labelFont,
 		TextSize = 11.5,
 		TextColor3 = textColor,
 		TextXAlignment = iconName and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
-		ZIndex = 2,
+		ZIndex = 3,
 		Parent = pill,
 	})
 	self.Label = label
+	self.Icon = icon
+	self.IconChip = iconChip
+	self.IconChipScale = iconChipScale
 
 	local function setBaseColor(hovered)
 		if not self.Enabled then
 			return
 		end
-		if style == "Primary" then
+		if isPrimary then
 			Util.Tween(pill, { BackgroundColor3 = hovered and theme.PrimaryHover or theme.Primary }, 0.12)
 			if shadow then
-				Util.Tween(shadow, { BackgroundTransparency = hovered and 0.4 or 0.55 }, 0.12)
+				Util.Tween(shadow, { BackgroundTransparency = hovered and 0.34 or 0.5 }, 0.12)
+			end
+			if label.TextColor3 ~= theme.PrimaryText then
+				label.TextColor3 = theme.PrimaryText
 			end
 		elseif style == "Ghost" then
 			Util.Tween(pill, { BackgroundTransparency = hovered and 0.4 or 1 }, 0.12)
@@ -150,22 +208,38 @@ function Button.new(section, options)
 	self.Maid:Add(pill.MouseEnter:Connect(function()
 		hovered = true
 		setBaseColor(true)
-		if self.Enabled then
-			Util.Tween(pillScale, { Scale = 1.02 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if not self.Enabled then
+			return
+		end
+		Util.Tween(pillScale, { Scale = 1.035 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if iconChipScale then
+			Util.Tween(iconChipScale, { Scale = 1.1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		end
+		if icon then
+			icon:Pulse(1.12, 0.22)
 		end
 	end))
 	self.Maid:Add(pill.MouseLeave:Connect(function()
 		hovered = false
 		setBaseColor(false)
-		Util.Tween(pillScale, { Scale = 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(pillScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if iconChipScale then
+			Util.Tween(iconChipScale, { Scale = 1 }, 0.18, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		end
 	end))
 	self.Maid:Add(pill.MouseButton1Down:Connect(function()
 		if self.Enabled then
-			Util.Tween(pillScale, { Scale = 0.95 }, 0.07)
+			Util.Tween(pillScale, { Scale = 0.955 }, 0.07)
+			if iconChipScale then
+				Util.Tween(iconChipScale, { Scale = 0.9 }, 0.07)
+			end
 		end
 	end))
 	self.Maid:Add(pill.MouseButton1Up:Connect(function()
-		Util.Tween(pillScale, { Scale = hovered and 1.02 or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(pillScale, { Scale = hovered and 1.035 or 1 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		if iconChipScale then
+			Util.Tween(iconChipScale, { Scale = hovered and 1.1 or 1 }, 0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		end
 	end))
 
 	Util.RowHover(row.Row, self.Maid, theme)
@@ -192,9 +266,15 @@ function Button.new(section, options)
 		if icon then
 			icon.Frame.Visible = enabled
 		end
+		if iconChip then
+			iconChip.Visible = enabled
+		end
 		pill.BackgroundTransparency = enabled and (style == "Ghost" and 1 or 0) or 0.55
 		if not enabled then
 			pillScale.Scale = 1
+			if iconChipScale then
+				iconChipScale.Scale = 1
+			end
 		end
 	end
 

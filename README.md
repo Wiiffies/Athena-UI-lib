@@ -18,7 +18,8 @@ interface library, written in Luau.
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
-- A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated command rows and window actions.
+- A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated command rows and window actions. The old floating grid trigger is gone.
+- A draggable dynamic island above the window with the player's avatar, username, live uptime and expandable FPS/ping readouts. Click it to expand, drag it to reposition it, and toggle it from the quick menu or `Window:ToggleDynamicIsland()`.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
 
 ## Quick start
@@ -506,6 +507,7 @@ Athena-UI-lib/
 │   └── Athena/
 │       ├── init.luau            library entry point
 │       ├── Window.luau          shell, navigation, panels, minimise pill
+│       ├── DynamicIsland.luau   draggable live session HUD
 │       ├── Tab.luau             page header, actions and scrolling content
 │       ├── Section.luau         grouped card of rows
 │       ├── Notifications.luau   toasts and history
@@ -543,8 +545,9 @@ The recreation follows the reference screen closely:
   and a light-track switch.
 - Active tab is white with a 2px white underline that scrolls into view; counts use compact white badges.
 - Sliders use an inset white rail with a centred thumb; the page stays still while you drag.
-- Motion is short and restrained (0.12–0.3s, Quint/Quad out): tab pages ease in, pills press,
-  the underline glides, the bell badge pulses and popups rise, like the desktop app.
+- Motion is short and restrained (0.12–0.46s, Quint/Quad/Back out): tab pages ease in, pills lift
+  and press, the underline glides, the bell badge pulses, popups rise and the island slides in,
+  breathes on hover, springs open into its stats and pulses its live dot.
 - Type uses Gotham/GothamMedium/GothamBold — the closest Roblox families to Athena's Geist/Inter.
 
 ## Notes
@@ -552,6 +555,9 @@ The recreation follows the reference screen closely:
 - UI icons are public Lucide image assets, colour-tinted at runtime; the Athena brand mark keeps
   its original vector logo. Button icons lift on hover, dip on press and pulse in the quick menu,
   dropdowns and notifications.
+- Window and island drags keep a 44px top safe area so neither can slide under Roblox's top bar.
+- The dynamic island's avatar, uptime, FPS and ping refresh live; clicking toggles its stat row and
+  dragging it never moves the main window.
 - Dropdown, colour-picker, bell and search panels close on outside click, `Escape`, tab change,
   drag and viewport resize.
 - `Section:Destroy()`, `Tab:Destroy()` and `Window:Destroy()` disconnect everything they created.

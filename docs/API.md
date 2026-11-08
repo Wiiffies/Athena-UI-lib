@@ -37,6 +37,7 @@ local Athena = loadstring(game:HttpGet(
 | `ToggleKey` | Enum.KeyCode or `false` | `RightShift` | Keyboard show/hide. |
 | `QuickMenu` | boolean or table | `true` | Bottom-right command palette, visible with the window; `false` disables it. |
 | `QuickMenuKey` | Enum.KeyCode or `false` | `K` | Hide/show the window and quick menu together. |
+| `DynamicIsland` | boolean or table | `true` | Draggable live session HUD. `false` disables it; table accepts `Enabled`, `Expanded`, `Animated`. |
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
 
@@ -55,9 +56,35 @@ local Athena = loadstring(game:HttpGet(
 | `Window:SetTitle(text)` | Updates the title bar and re-measures the space reserved for it. |
 | `Window:Center(animated)` | Tween the window to the viewport centre (`animated = false` snaps). |
 | `Window:SetToggleKey(key)` | Change the show/hide hotkey, or disable it with `false`. |
+| `Window:ToggleDynamicIsland()` | Show or hide the dynamic island. |
+| `Window:SetDynamicIslandEnabled(bool)` / `Window:IsDynamicIslandEnabled()` | Set or read island visibility. |
 | `Window:ToggleQuickMenu()` / `OpenQuickMenu()` / `CloseQuickMenu()` | Drive the quick command palette from code. |
 | `Window:Close()` | Animates out and destroys the window. |
 | `Window:Destroy()` | Destroys immediately. |
+
+### Dynamic island
+
+Every window creates a small draggable HUD at the top centre by default. It shows the local
+player's avatar, `@username` and a live running clock. Click it to expand FPS and ping readouts;
+drag it anywhere to move it. It is independent of the main window, so **K** can hide the window
+while the island stays visible.
+
+```lua
+Window:ToggleDynamicIsland()
+Window:SetDynamicIslandEnabled(false)
+
+local island = Window.DynamicIsland
+if island then
+    island:ToggleExpanded()
+    island:SetExpanded(true)
+    island:SetVisible(true)
+    print(island:GetUptime())
+end
+```
+
+Disable it at construction with `DynamicIsland = false`, or start it hidden with
+`DynamicIsland = { Enabled = false }`. The quick menu also contains a **Toggle dynamic island**
+command.
 
 ---
 
@@ -220,10 +247,10 @@ Methods: `Set(value, silent)`, `Get()`, `GetSelected()`, `SetOptions(list)`, `Op
 ### Quick menu
 
 Every window gets a bottom-right command palette that is visible while the window is visible. Press
-**K** (or click the grid button) to hide/show the window and palette together. Type to filter
-commands; commands run without dismissing the palette. It includes centre, minimise, hide/show, test
-notification, clear notifications and a jump-to-tab command for every tab. The trigger has a breathing
-halo, the panel springs in, and command rows cascade into place.
+**K** to hide/show the window and palette together. Type to filter commands; commands run without
+dismissing the palette. It includes centre, minimise, hide/show, test notification, clear
+notifications, dynamic-island toggle and a jump-to-tab command for every tab. The panel springs in
+and command rows cascade into place.
 
 ```lua
 Window:OpenQuickMenu()
@@ -365,7 +392,7 @@ circle fallback for unknown names. Available names:
 
 `athena`, `bell`, `bolt`, `check`, `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`,
 `clock`, `close`, `code`, `dot`, `gamepad`, `gear`, `grid`, `home`, `info`, `maximize`, `minus`,
-`pause`, `play`, `plus`, `pulse`, `refresh`, `search`, `trash`, `warning`.
+`pause`, `play`, `plus`, `pulse`, `refresh`, `search`, `smartphone`, `trash`, `warning`.
 
 Pass the name to `Icon` anywhere an icon is accepted. Names are colour-tinted and animate on
 hover and press automatically.
@@ -374,7 +401,8 @@ hover and press automatically.
 
 ## Behaviour and cleanup
 
-- The window is draggable from the top bar and clamped to the viewport.
+- The window is draggable from the top bar and clamped to the viewport, with a 44px top safe
+  area so it cannot slide under Roblox's top bar.
 - Title bar controls: tab search, notification panel, minimise, expand and close (hovering close
   tints it with the accent colour).
 - `UIScale` keeps the layout proportional on small and large screens; the base size never changes,

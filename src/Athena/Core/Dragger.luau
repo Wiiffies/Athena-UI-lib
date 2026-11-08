@@ -20,6 +20,7 @@ function Dragger.Attach(frame, handle, maid, options)
 	options = options or {}
 	local threshold = options.Threshold or 4
 	local margin = options.Margin or 0
+	local topMargin = options.TopMargin or margin
 
 	local dragging = false
 	local moved = false
@@ -42,7 +43,7 @@ function Dragger.Attach(frame, handle, maid, options)
 		local view = viewport()
 		local half = frame.AbsoluteSize / 2
 		local x = math.clamp(center.X, half.X + margin, math.max(half.X + margin, view.X - half.X - margin))
-		local y = math.clamp(center.Y, half.Y + margin, math.max(half.Y + margin, view.Y - half.Y - margin))
+		local y = math.clamp(center.Y, half.Y + topMargin, math.max(half.Y + topMargin, view.Y - half.Y - margin))
 		return Vector2.new(x, y)
 	end
 
@@ -104,15 +105,16 @@ function Dragger.Attach(frame, handle, maid, options)
 end
 
 --- Re-clamps a frame's centre into the viewport (used after resizing).
-function Dragger.Clamp(frame, margin)
+function Dragger.Clamp(frame, margin, topMargin)
 	margin = margin or 0
+	topMargin = topMargin or margin
 	local view = Util.Viewport()
 	local half = frame.AbsoluteSize / 2
 	local origin = parentOrigin(frame)
 	local center = frame.AbsolutePosition + half
 
 	local x = math.clamp(center.X, half.X + margin, math.max(half.X + margin, view.X - half.X - margin))
-	local y = math.clamp(center.Y, half.Y + margin, math.max(half.Y + margin, view.Y - half.Y - margin))
+	local y = math.clamp(center.Y, half.Y + topMargin, math.max(half.Y + topMargin, view.Y - half.Y - margin))
 
 	frame.Position = UDim2.fromOffset(
 		math.round(x - origin.X),

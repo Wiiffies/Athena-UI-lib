@@ -756,6 +756,27 @@ WindowSection:CreateButton({
 })
 
 WindowSection:CreateButton({
+	Name = "Toggle the dynamic island",
+	ButtonText = "Toggle",
+	Style = "Secondary",
+	Icon = "smartphone",
+	Callback = function()
+		Window:ToggleDynamicIsland()
+	end,
+})
+
+WindowSection:CreateButton({
+	Name = "Expand the dynamic island readouts",
+	ButtonText = "Expand",
+	Style = "Secondary",
+	Callback = function()
+		if Window.DynamicIsland then
+			Window.DynamicIsland:ToggleExpanded()
+		end
+	end,
+})
+
+WindowSection:CreateButton({
 	Name = "Close the interface",
 	ButtonText = "Close",
 	Callback = function()

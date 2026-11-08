@@ -64,6 +64,7 @@ local ASSETS = {
 	camera = "rbxassetid://10709789686",
 	video = "rbxassetid://10747374938",
 	music = "rbxassetid://10734905958",
+	smartphone = "rbxassetid://10734963940",
 	server = "rbxassetid://10734949856",
 	database = "rbxassetid://10709818996",
 	cloud = "rbxassetid://10709806740",

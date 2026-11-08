@@ -1,7 +1,7 @@
 --[[
 	Athena · QuickMenu
 	A small bottom-right command palette inspired by executor command bars.
-	Press K (or click the grid button) to open it, then search for an action.
+	It stays visible with the window; K hides/shows the whole shell.
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -76,6 +76,7 @@ function QuickMenu.new(window, options)
 		Size = UDim2.fromOffset(TRIGGER_SIZE, TRIGGER_SIZE),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
+		Visible = false,
 		ZIndex = 209,
 		Parent = root,
 	})
@@ -93,6 +94,7 @@ function QuickMenu.new(window, options)
 		BorderSizePixel = 0,
 		Text = "",
 		AutoButtonColor = false,
+		Visible = false,
 		ZIndex = 211,
 		Parent = root,
 	})
@@ -146,7 +148,7 @@ function QuickMenu.new(window, options)
 	local panel = Util.Create("CanvasGroup", {
 		Name = "Panel",
 		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -MARGIN, 1, -(MARGIN + 52)),
+		Position = UDim2.new(1, -MARGIN, 1, -MARGIN),
 		Size = UDim2.fromOffset(PANEL_WIDTH, PANEL_HEIGHT),
 		BackgroundColor3 = theme.Overlay,
 		BackgroundTransparency = 0,
@@ -502,7 +504,6 @@ function QuickMenu:Open(instant)
 	self.Panel.GroupTransparency = 1
 	self.PanelScale.Scale = 0.92
 	self.Panel.Position = offsetPosition(self.PanelBase, 12)
-	self:_SetTriggerOpen(true, instant)
 
 	if not instant then
 		self.HeaderIcon:Pulse(1.16, 0.3)
@@ -540,7 +541,6 @@ function QuickMenu:Close(instant)
 	if self.Search:IsFocused() then
 		self.Search:ReleaseFocus()
 	end
-	self:_SetTriggerOpen(false, instant)
 	if instant then
 		self.PanelStroke.Transparency = 0.05
 	else
@@ -641,6 +641,12 @@ function QuickMenu:_Commands()
 		end
 	end)
 
+	if window.DynamicIsland then
+		add("Toggle dynamic island", "Show or hide the live session HUD.", "smartphone", function()
+			window:ToggleDynamicIsland()
+		end, "island hud user uptime fps ping status")
+	end
+
 	for _, tab in ipairs(window.Tabs or {}) do
 		local icon = tab._navConfig and tab._navConfig.Icon or "chevronRight"
 		add("Open " .. tostring(tab.Title), "Jump to the " .. tostring(tab.Title) .. " tab.", icon, function()
@@ -661,7 +667,9 @@ function QuickMenu:_Run(command)
 		return
 	end
 	-- Commands do not dismiss the palette; it belongs to the window shell.
-	self:_PulseTrigger()
+	if self.HeaderIcon then
+		self.HeaderIcon:Pulse(1.12, 0.2)
+	end
 	Util.Safe(command.Run)
 end
 
