@@ -6695,6 +6695,12 @@ function Window:CreateTab(input, extra)
 	table.insert(self.Tabs, tab)
 	self:_CreateNavButton(tab, config)
 
+	-- The palette starts open, before the user has created tabs. Refresh it so
+	-- the new jump-to-tab commands appear immediately.
+	if self.QuickMenu and not self.QuickMenu.Destroyed then
+		self.QuickMenu:_Render(self.QuickMenu.Search.Text)
+	end
+
 	if #self.Tabs == 1 or config.Selected then
 		self:SelectTab(tab)
 	elseif self.ActiveTab == tab then
