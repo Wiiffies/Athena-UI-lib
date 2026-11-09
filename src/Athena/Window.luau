@@ -150,7 +150,12 @@ function Window.new(library, options)
 			if self._buttonFadeStates then
 				return
 			end
-			self._buttonFadeStates = Util.CaptureButtonFade(self.Frame, { WindowDrag = true })
+			self._buttonFadeStates = {}
+			for _, root in ipairs({ self.Content, self.Nav, self.Controls, self.Underline }) do
+				for _, state in ipairs(Util.CaptureFade(root, { WindowDrag = true })) do
+					table.insert(self._buttonFadeStates, state)
+				end
+			end
 			Util.FadeButtonStates(self._buttonFadeStates, true, 0.14)
 		elseif self._buttonFadeStates then
 			Util.FadeButtonStates(self._buttonFadeStates, false, 0.18)

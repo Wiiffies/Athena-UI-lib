@@ -17,7 +17,7 @@ interface library, written in Luau.
 - No third-party fonts or modules. Icons use public Lucide image assets; the title bar mark
   follows `getathena.gg/logo.png` and can be replaced with your own asset via `Logo`.
 - Proportional scaling across resolutions, a window you can drag from any blank or card area,
-  minimise-to-pill and keyboard show/hide. Buttons fade out while dragging and return on release.
+  minimise-to-pill and keyboard show/hide. Buttons and page content fade out while dragging and return on release.
 - A draggable bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated text-only command rows and window actions. The old floating grid trigger is gone.
 - A draggable dynamic island pinned to the top centre. It expands downward without moving its top edge. The collapsed pill shows the avatar, username, runtime, FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. It clamps to every edge while dragging without clipping.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
@@ -26,7 +26,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -109,7 +109,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -451,7 +451,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
 ))()
 ```
 
@@ -596,7 +596,7 @@ The recreation follows the reference screen closely:
 - UI icons are public Lucide image assets, colour-tinted at runtime; the Athena brand mark keeps
   its original vector logo. Secondary and ghost button icons lift on hover and dip on press.
 - Window drags keep a 44px top safe area. Drag the shell from any blank or card area below it;
-  real controls keep their normal clicks, and buttons fade away until the drag ends. The island is pinned 8px from the top edge and clamps to the viewport on every side while dragging.
+  real controls keep their normal clicks, and buttons plus page content fade away until the drag ends. The island is pinned 8px from the top edge and clamps to the viewport on every side while dragging.
 - The island's runtime, FPS, ping, memory, player count and local time refresh live; clicking
   toggles its stat panel and dragging it never moves the main window.
 - Dropdown, colour-picker, bell and search panels close on outside click, `Escape`, tab change,

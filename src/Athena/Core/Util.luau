@@ -219,6 +219,62 @@ function Util.CaptureButtonFade(root, skipNames)
 	return states
 end
 
+--- Captures every visual element beneath a root, including labels and panel chrome.
+function Util.CaptureFade(root, skipNames)
+	local states = {}
+	local seen = {}
+
+	local function add(object, property)
+		if seen[object] and seen[object][property] then
+			return
+		end
+		local ok, value = pcall(function()
+			return object[property]
+		end)
+		if not ok or type(value) ~= "number" then
+			return
+		end
+		seen[object] = seen[object] or {}
+		seen[object][property] = true
+		table.insert(states, { Object = object, Property = property, Value = value })
+	end
+
+	local function capture(object)
+		if object:IsA("GuiObject") then
+			add(object, "BackgroundTransparency")
+		end
+		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+			add(object, "TextTransparency")
+			add(object, "TextStrokeTransparency")
+		end
+		if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+			add(object, "ImageTransparency")
+		end
+		if object:IsA("CanvasGroup") then
+			add(object, "GroupTransparency")
+		end
+		if object:IsA("ScrollingFrame") then
+			add(object, "ScrollBarImageTransparency")
+		end
+		if object:IsA("UIStroke") then
+			add(object, "Transparency")
+		end
+	end
+
+	if not root then
+		return states
+	end
+	if not (skipNames and skipNames[root.Name]) then
+		capture(root)
+	end
+	for _, object in ipairs(root:GetDescendants()) do
+		if not (skipNames and skipNames[object.Name]) then
+			capture(object)
+		end
+	end
+	return states
+end
+
 --- Fades captured button properties out or restores them.
 function Util.FadeButtonStates(states, hidden, duration)
 	for _, state in ipairs(states or {}) do
