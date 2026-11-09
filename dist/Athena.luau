@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.2.6
+	Athena UI · v1.2.7
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -6790,11 +6790,15 @@ end
 -- Construction
 --------------------------------------------------------------------------------
 
-local function measureBrand(title, theme, version)
+local function measureBrand(title, theme, version, plan)
 	local titleWidth = Util.Measure(title or "Athena", 15, theme.FontBold).X
 	local versionText = ""
 	if version ~= nil and tostring(version) ~= "" then
 		versionText = "v" .. tostring(version)
+	end
+	if plan ~= nil and tostring(plan) ~= "" then
+		local planText = tostring(plan)
+		versionText = versionText ~= "" and (versionText .. " · " .. planText) or planText
 	end
 	local versionWidth = versionText ~= "" and Util.Measure(versionText, VERSION_TEXT_SIZE, theme.Font).X or 0
 	local versionGap = versionWidth > 0 and VERSION_GAP or 0
@@ -6922,7 +6926,7 @@ function Window.new(library, options)
 	--------------------------------------------------------------------------------
 
 	local brandWidth, brandTitleWidth, versionText, versionWidth, versionGap =
-		measureBrand(self.Title, theme, library.Version)
+		measureBrand(self.Title, theme, library.Version, options.Plan)
 
 	local logo = Util.Create("Frame", {
 		Name = "Brand",
@@ -8598,7 +8602,7 @@ function Window:_LayoutHeader()
 	end
 
 	local width, titleWidth, versionText, versionWidth, versionGap =
-		measureBrand(self.Title, self.Theme, self.Library and self.Library.Version)
+		measureBrand(self.Title, self.Theme, self.Library and self.Library.Version, self.Options and self.Options.Plan)
 	self.Brand.Size = UDim2.fromOffset(width, self.Theme.TopbarHeight)
 	self.BrandLabel.Size = UDim2.new(0, titleWidth, 1, 0)
 	if self.BrandVersion then
@@ -8790,7 +8794,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.2.6"
+Athena.Version = "1.2.7"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}

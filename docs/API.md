@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.6"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.7"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -47,6 +47,7 @@ Window:SetDynamicIslandEnabled(true)
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
 | `Footer` | string | – | Faint centered credit line near the bottom of the window. |
+| `Plan` | string | – | Optional label appended to the version tag, e.g. `"Freemium"`. |
 
 ### Window methods
 
