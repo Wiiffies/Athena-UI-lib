@@ -1,0 +1,454 @@
+--[[
+	Athena · KeySystem
+	A small local key gate with copyable provider links.
+]]
+
+local Util = require(script.Parent.Core.Util)
+
+local KeySystem = {}
+KeySystem.__index = KeySystem
+
+local function normalizeKeys(value)
+	local keys = {}
+	if type(value) == "string" then
+		if value ~= "" then
+			table.insert(keys, value)
+		end
+	elseif type(value) == "table" then
+		for _, key in ipairs(value) do
+			if type(key) == "string" and key ~= "" then
+				table.insert(keys, key)
+			end
+		end
+	end
+	return keys
+end
+
+local function normalizeProvider(value)
+	if type(value) == "string" then
+		return { Name = "Get key", Link = value }
+	end
+	if type(value) == "table" then
+		local link = value.Link or value.Url or value.URL
+		if type(link) == "string" and link ~= "" then
+			return { Name = tostring(value.Name or "Get key"), Link = link }
+		end
+	end
+	return nil
+end
+
+local function normalizeProviders(value)
+	local providers = {}
+	if type(value) == "table" then
+		for _, provider in ipairs(value) do
+			local normalized = normalizeProvider(provider)
+			if normalized then
+				table.insert(providers, normalized)
+			end
+		end
+	end
+	return providers
+end
+
+local function getEnvironment()
+	local ok, env = pcall(function()
+		return getfenv(0)
+	end)
+	if ok and type(env) == "table" then
+		return env
+	end
+	return _G
+end
+
+local function copyText(text)
+	local env = getEnvironment()
+	for _, name in ipairs({ "setclipboard", "toclipboard", "copy" }) do
+		local fn = env and env[name]
+		if type(fn) == "function" then
+			local ok = pcall(fn, text)
+			if ok then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function trimmed(text)
+	return (string.gsub(tostring(text or ""), "^%s+", ""):gsub("%s+$", ""))
+end
+
+function KeySystem.new(athena, options)
+	options = options or {}
+	local theme = athena._theme
+	local self = setmetatable({
+		Athena = athena,
+		Theme = theme,
+		Options = options,
+		Keys = normalizeKeys(options.Keys or options.Key),
+		Providers = normalizeProviders(options.Providers),
+		Unlocked = false,
+		Visible = false,
+		Destroyed = false,
+		Maid = Util.Maid.new(),
+		ProviderMaid = Util.Maid.new(),
+	}, KeySystem)
+
+	local gui = athena:_EnsureGui()
+	local overlay = Util.Create("TextButton", {
+		Name = "KeySystem",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
+		Visible = false,
+		ZIndex = 300,
+		Parent = gui,
+	})
+
+	local card = Util.Create("Frame", {
+		Name = "Card",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(460, 380),
+		BackgroundColor3 = theme.Window,
+		BorderSizePixel = 0,
+		ZIndex = 301,
+		Parent = overlay,
+	})
+	Util.Corner(card, 18)
+	Util.Stroke(card, theme.Border, 1, 0.05)
+
+	local cardScale = Instance.new("UIScale")
+	cardScale.Scale = 0.92
+	cardScale.Parent = card
+
+	local title = Util.Create("TextLabel", {
+		Name = "Title",
+		Position = UDim2.fromOffset(24, 22),
+		Size = UDim2.new(1, -48, 0, 24),
+		BackgroundTransparency = 1,
+		Text = options.Title or "Key system",
+		Font = theme.FontBold,
+		TextSize = 19,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 302,
+		Parent = card,
+	})
+
+	local subtitle = Util.Create("TextLabel", {
+		Name = "Subtitle",
+		Position = UDim2.fromOffset(24, 50),
+		Size = UDim2.new(1, -48, 0, 20),
+		BackgroundTransparency = 1,
+		Text = options.Subtitle or "Enter your key to continue.",
+		Font = theme.Font,
+		TextSize = 11,
+		TextColor3 = theme.TextMuted,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextWrapped = true,
+		ZIndex = 302,
+		Parent = card,
+	})
+
+	local input = Util.Create("TextBox", {
+		Name = "KeyInput",
+		Position = UDim2.fromOffset(24, 84),
+		Size = UDim2.new(1, -48, 0, 38),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Text = "",
+		PlaceholderText = options.Placeholder or "Enter key",
+		PlaceholderColor3 = theme.TextFaint,
+		Font = theme.Font,
+		TextSize = 12,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ClearTextOnFocus = false,
+		ZIndex = 302,
+		Parent = card,
+	})
+	Util.Corner(input, 8)
+	local inputStroke = Util.Stroke(input, theme.Border, 1, 0.1)
+	Util.Padding(input, 0, 12, 0, 12)
+
+	local submit = Util.Create("TextButton", {
+		Name = "Submit",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -24, 0, 132),
+		Size = UDim2.fromOffset(92, 34),
+		BackgroundColor3 = theme.Primary,
+		BorderSizePixel = 0,
+		Text = "Unlock",
+		Font = theme.FontBold,
+		TextSize = 11.5,
+		TextColor3 = theme.PrimaryText,
+		AutoButtonColor = false,
+		ZIndex = 302,
+		Parent = card,
+	})
+	Util.Corner(submit, 17)
+
+	local status = Util.Create("TextLabel", {
+		Name = "Status",
+		Position = UDim2.fromOffset(24, 174),
+		Size = UDim2.new(1, -48, 0, 28),
+		BackgroundTransparency = 1,
+		Text = "",
+		Font = theme.Font,
+		TextSize = 10.5,
+		TextColor3 = theme.TextMuted,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		TextWrapped = true,
+		ZIndex = 302,
+		Parent = card,
+	})
+
+	local providerLabel = Util.Create("TextLabel", {
+		Name = "ProviderLabel",
+		Position = UDim2.fromOffset(24, 214),
+		Size = UDim2.new(1, -48, 0, 16),
+		BackgroundTransparency = 1,
+		Text = "Get a key",
+		Font = theme.FontBold,
+		TextSize = 10.5,
+		TextColor3 = theme.TextMuted,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 302,
+		Parent = card,
+	})
+
+	local providerList = Util.Create("ScrollingFrame", {
+		Name = "Providers",
+		Position = UDim2.fromOffset(24, 236),
+		Size = UDim2.new(1, -48, 0, 112),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
+		ScrollBarThickness = 3,
+		ScrollBarImageColor3 = theme.Border,
+		ScrollBarImageTransparency = 0.2,
+		ZIndex = 302,
+		Parent = card,
+	})
+	Util.List(providerList, 4, Enum.HorizontalAlignment.Center)
+
+	self.Overlay = overlay
+	self.Card = card
+	self.CardScale = cardScale
+	self.TitleLabel = title
+	self.SubtitleLabel = subtitle
+	self.Input = input
+	self.InputStroke = inputStroke
+	self.Submit = submit
+	self.Status = status
+	self.ProviderList = providerList
+
+	function self:_SetStatus(text, isError)
+		status.Text = text or ""
+		status.TextColor3 = isError and Color3.fromRGB(255, 116, 116) or theme.TextMuted
+	end
+
+	function self:_RefreshProviders()
+		self.ProviderMaid:Clean()
+		self.ProviderMaid = Util.Maid.new()
+		for _, child in ipairs(providerList:GetChildren()) do
+			if child:IsA("TextButton") or child:IsA("TextLabel") then
+				child:Destroy()
+			end
+		end
+
+		if #self.Providers == 0 then
+			Util.Create("TextLabel", {
+				Size = UDim2.new(1, 0, 0, 34),
+				BackgroundTransparency = 1,
+				Text = "No get-key links configured.",
+				Font = theme.Font,
+				TextSize = 10.5,
+				TextColor3 = theme.TextFaint,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Center,
+				ZIndex = 303,
+				Parent = providerList,
+			})
+			return
+		end
+
+		for index, provider in ipairs(self.Providers) do
+			local button = Util.Create("TextButton", {
+				Name = "Provider_" .. tostring(index),
+				LayoutOrder = index,
+				Size = UDim2.new(1, 0, 0, 30),
+				BackgroundColor3 = theme.SurfaceAlt,
+				BorderSizePixel = 0,
+				Text = "Get key — " .. provider.Name,
+				Font = theme.FontMedium,
+				TextSize = 10.5,
+				TextColor3 = theme.TextSoft,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				AutoButtonColor = false,
+				ZIndex = 303,
+				Parent = providerList,
+			})
+			Util.Corner(button, 7)
+			Util.Padding(button, 0, 10, 0, 10)
+
+			self.ProviderMaid:Add(button.MouseEnter:Connect(function()
+				Util.Tween(button, { BackgroundColor3 = theme.SurfaceHover }, 0.1)
+			end))
+			self.ProviderMaid:Add(button.MouseLeave:Connect(function()
+				Util.Tween(button, { BackgroundColor3 = theme.SurfaceAlt }, 0.1)
+			end))
+			self.ProviderMaid:Add(button.MouseButton1Click:Connect(function()
+				if copyText(provider.Link) then
+					self:_SetStatus("Copied " .. provider.Name .. " link to the clipboard.")
+				else
+					self:_SetStatus("Clipboard unavailable. Link: " .. provider.Link, true)
+				end
+			end))
+		end
+	end
+
+	function self:Submit()
+		if self.Unlocked or self.Destroyed then
+			return
+		end
+
+		local entered = trimmed(input.Text)
+		if entered == "" then
+			self:_SetStatus("Enter a key first.", true)
+			return
+		end
+		if #self.Keys == 0 then
+			self:_SetStatus("No key has been configured.", true)
+			return
+		end
+
+		for _, key in ipairs(self.Keys) do
+			if entered == key then
+				self:Unlock()
+				return
+			end
+		end
+		self:_SetStatus("Incorrect key.", true)
+	end
+
+	function self:Unlock()
+		if self.Unlocked or self.Destroyed then
+			return
+		end
+		self.Unlocked = true
+		self:Hide()
+		if self.Options.OnSuccess then
+			Util.Safe(self.Options.OnSuccess)
+		end
+	end
+
+	function self:Show()
+		if self.Destroyed then
+			return
+		end
+		self.Visible = true
+		overlay.Visible = true
+		overlay.BackgroundTransparency = 0.7
+		cardScale.Scale = 0.92
+		input.Text = ""
+		self:_SetStatus("")
+		Util.Tween(overlay, { BackgroundTransparency = 0.45 }, 0.2)
+		Util.Tween(cardScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		task.defer(function()
+			if self.Visible and not self.Destroyed then
+				input:CaptureFocus()
+			end
+		end)
+	end
+
+	function self:Hide()
+		if not self.Visible then
+			return
+		end
+		self.Visible = false
+		Util.Tween(overlay, { BackgroundTransparency = 1 }, 0.16)
+		Util.Tween(cardScale, { Scale = 0.94 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		task.delay(0.18, function()
+			if not self.Visible and not self.Destroyed then
+				overlay.Visible = false
+			end
+		end)
+	end
+
+	function self:SetKeys(keys)
+		self.Keys = normalizeKeys(keys)
+	end
+
+	function self:AddKey(key)
+		if type(key) == "string" and key ~= "" then
+			table.insert(self.Keys, key)
+		end
+	end
+
+	function self:SetProviders(providers)
+		self.Providers = normalizeProviders(providers)
+		self:_RefreshProviders()
+	end
+
+	function self:AddProvider(provider)
+		local normalized = normalizeProvider(provider)
+		if not normalized then
+			return
+		end
+		table.insert(self.Providers, normalized)
+		self:_RefreshProviders()
+	end
+
+	function self:IsUnlocked()
+		return self.Unlocked
+	end
+
+	function self:Destroy()
+		if self.Destroyed then
+			return
+		end
+		self.Destroyed = true
+		self.Maid:Clean()
+		self.ProviderMaid:Clean()
+		if self.Athena and self.Athena._RemoveKeySystem then
+			self.Athena:_RemoveKeySystem(self)
+		end
+		overlay:Destroy()
+	end
+
+	self.Maid:Add(input.Focused:Connect(function()
+		Util.Tween(inputStroke, { Color = theme.Primary, Transparency = 0.15 }, 0.12)
+	end))
+	self.Maid:Add(input.FocusLost:Connect(function(enterPressed)
+		Util.Tween(inputStroke, { Color = theme.Border, Transparency = 0.1 }, 0.12)
+		if enterPressed then
+			self:Submit()
+		end
+	end))
+	self.Maid:Add(submit.MouseEnter:Connect(function()
+		Util.Tween(submit, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
+	end))
+	self.Maid:Add(submit.MouseLeave:Connect(function()
+		Util.Tween(submit, { BackgroundColor3 = theme.Primary }, 0.12)
+	end))
+	self.Maid:Add(submit.MouseButton1Click:Connect(function()
+		self:Submit()
+	end))
+
+	self:_RefreshProviders()
+	return self
+end
+
+return KeySystem

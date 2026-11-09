@@ -19,12 +19,13 @@ local Players = game:GetService("Players")
 local Theme = require(script.Core.Theme)
 local Util = require(script.Core.Util)
 local Executor = require(script.Core.Executor)
+local KeySystem = require(script.KeySystem)
 local Notifications = require(script.Notifications)
 local Window = require(script.Window)
 
 local Athena = {}
 
-Athena.Version = "1.3.0"
+Athena.Version = "1.4.0"
 Athena.Themes = Theme.Presets
 Athena.Executor = Executor.Detect()
 Athena.FeatureRequirements = {
@@ -38,6 +39,7 @@ Athena.FeatureRequirements = {
 Athena._featureOverrides = {}
 
 Athena._windows = {}
+Athena._keySystems = {}
 Athena._gui = nil
 Athena._parent = nil
 Athena._theme = Theme.Resolve("Athena")
@@ -106,6 +108,22 @@ function Athena:_EnsureGui()
 end
 
 --- Creates a new window. All options are optional.
+function Athena:CreateKeySystem(options)
+	self:_EnsureGui()
+	local keySystem = KeySystem.new(self, options)
+	table.insert(self._keySystems, keySystem)
+	return keySystem
+end
+
+function Athena:_RemoveKeySystem(keySystem)
+	for index, item in ipairs(self._keySystems) do
+		if item == keySystem then
+			table.remove(self._keySystems, index)
+			break
+		end
+	end
+end
+
 function Athena:CreateWindow(options)
 	options = options or {}
 	if options.Parent then
@@ -218,6 +236,17 @@ end
 
 --- Removes every window, notification and the ScreenGui.
 function Athena:Destroy()
+	local keySystems = {}
+	for _, keySystem in ipairs(self._keySystems) do
+		table.insert(keySystems, keySystem)
+	end
+	for _, keySystem in ipairs(keySystems) do
+		pcall(function()
+			keySystem:Destroy()
+		end)
+	end
+	self._keySystems = {}
+
 	local windows = {}
 	for window in pairs(self._windows) do
 		table.insert(windows, window)

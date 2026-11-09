@@ -27,7 +27,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -39,6 +39,20 @@ local Window = Athena:CreateWindow({
 
 -- Force the draggable top-centre island on (it is enabled by default).
 Window:SetDynamicIslandEnabled(true)
+
+-- Local key gate. Change the demo key and provider links for your own build.
+local KeySystem = Athena:CreateKeySystem({
+    Keys = { "athena" },
+    Subtitle = "Demo key: athena",
+    Providers = {
+        { Name = "GitHub", Link = "https://github.com/Wiiffies/Athena-UI-lib" },
+    },
+    OnSuccess = function()
+        Window:Show()
+    end,
+})
+Window:Hide(true)
+KeySystem:Show()
 
 local Tab = Window:CreateTab("Skid")
 local Section = Tab:CreateSection("General")
@@ -140,7 +154,7 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The small `v1.3.0` tag beside the Athena brand confirms which bundle an executor actually loaded.
+The small `v1.4.0` tag beside the Athena brand confirms which bundle an executor actually loaded.
 Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
@@ -169,7 +183,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -511,7 +525,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
 ))()
 ```
 
@@ -606,6 +620,7 @@ Athena-UI-lib/
 ├── src/
 │   └── Athena/
 │       ├── init.luau            library entry point
+│       ├── KeySystem.luau       configurable local key gate
 │       ├── Window.luau          shell, navigation, panels, minimise pill
 │       ├── DynamicIsland.luau   draggable live session HUD
 │       ├── Tab.luau             page header, actions and scrolling content

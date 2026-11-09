@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -26,6 +26,7 @@ Window:SetDynamicIslandEnabled(true)
 | `Athena.Executor` | Detected executor profile: `Name`, `Known`, `Profile`, `Capabilities` and `DetectedAt`. |
 | `Athena.FeatureRequirements` | Feature-name to required-capability map used by the feature gates. |
 | `Athena:CreateWindow(options)` | Creates a window and returns it. |
+| `Athena:CreateKeySystem(options)` | Creates a local key gate with key input and copyable provider links. |
 | `Athena:GetExecutor()` | Returns the detected executor profile. |
 | `Athena:RefreshExecutor()` | Re-runs detection, then returns the updated profile. |
 | `Athena:IsExecutor(name)` | Checks the detected executor name, ignoring case and extra whitespace. |
@@ -77,6 +78,48 @@ else
     print("Unavailable; missing:", table.concat(feature.Missing, ", "))
 end
 ```
+
+### Key systems
+
+`Athena:CreateKeySystem` creates a local UI gate. It does not validate keys on a server, so treat
+it as a presentation/access gate rather than secure authorization.
+
+```lua
+local KeySystem = Athena:CreateKeySystem({
+    Keys = { "my-key" },
+    Subtitle = "Enter your key to continue.",
+    Providers = {
+        { Name = "Main provider", Link = "https://example.com/get-key" },
+    },
+    OnSuccess = function()
+        Window:Show()
+    end,
+})
+KeySystem:Show()
+```
+
+Each provider creates a **Get key** button that copies its `Link` with `setclipboard` (or the
+equivalent executor function). If copying is unavailable, the link is shown in the status line.
+Add more keys or providers after creation with:
+
+```lua
+KeySystem:SetKeys({ "my-key", "backup-key" })
+KeySystem:AddKey("another-key")
+KeySystem:AddProvider({ Name = "Mirror", Link = "https://example.com/mirror" })
+KeySystem:SetProviders({
+    { Name = "Main provider", Link = "https://example.com/get-key" },
+})
+```
+
+| Method | Description |
+| --- | --- |
+| `KeySystem:Show()` / `KeySystem:Hide()` | Show or dismiss the gate. |
+| `KeySystem:Submit()` | Validate the current input. |
+| `KeySystem:Unlock()` | Mark the gate unlocked and run `OnSuccess`. |
+| `KeySystem:SetKeys(keys)` / `AddKey(key)` | Replace or extend the accepted keys. |
+| `KeySystem:SetProviders(list)` / `AddProvider(provider)` | Replace or add copyable provider links. |
+| `KeySystem:IsUnlocked()` | Whether the gate has been passed. |
+| `KeySystem:Destroy()` | Remove the key-system overlay. |
 
 ### `Athena:CreateWindow(options)`
 
