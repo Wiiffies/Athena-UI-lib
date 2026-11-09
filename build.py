@@ -100,7 +100,7 @@ def main() -> int:
             raise SystemExit(f"Unknown module referenced in bundle: {name}")
 
     header = """--[[
-	Athena UI · v1.1.1
+	Athena UI · v1.2.0
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:

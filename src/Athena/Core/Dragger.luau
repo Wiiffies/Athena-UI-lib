@@ -93,6 +93,9 @@ function Dragger.Attach(frame, handle, maid, options)
 				return
 			end
 			moved = true
+			if options.OnDragBegin then
+				options.OnDragBegin()
+			end
 		end
 
 		local target = clampTopLeft(

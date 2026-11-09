@@ -8,6 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Util = require(script.Parent.Core.Util)
 local Icons = require(script.Parent.Core.Icons)
+local Dragger = require(script.Parent.Core.Dragger)
 
 local QuickMenu = {}
 QuickMenu.__index = QuickMenu
@@ -105,6 +106,33 @@ function QuickMenu.new(window, options)
 	self.PanelScale = panelScale
 	self.PanelStroke = panelStroke
 	self.PanelBase = panel.Position
+
+	local dragSurface = Util.Create("TextButton", {
+		Name = "QuickMenuDrag",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		ZIndex = 221,
+		Parent = panel,
+	})
+	self.DragSurface = dragSurface
+
+	Dragger.Attach(panel, dragSurface, self.Maid, {
+		Threshold = 4,
+		Margin = 8,
+		TopMargin = 8,
+		OnDragBegin = function()
+			self:SetDragState(true)
+		end,
+		OnDragEnd = function(moved)
+			self:SetDragState(false)
+			if moved then
+				self.PanelBase = panel.Position
+			end
+		end,
+	})
 
 	local header = Util.Create("Frame", {
 		Name = "Header",
@@ -342,6 +370,25 @@ function QuickMenu.new(window, options)
 	return self
 end
 
+function QuickMenu:SetDragState(active)
+	if self.Destroyed or not self.Panel then
+		return
+	end
+
+	if active then
+		if self._buttonFadeStates then
+			return
+		end
+		self._buttonFadeStates = Util.CaptureButtonFade(self.Panel, { QuickMenuDrag = true })
+		Util.FadeButtonStates(self._buttonFadeStates, true, 0.12)
+		Util.Tween(self.PanelStroke, { Transparency = 0.15 }, 0.14)
+	elseif self._buttonFadeStates then
+		Util.FadeButtonStates(self._buttonFadeStates, false, 0.18)
+		self._buttonFadeStates = nil
+		Util.Tween(self.PanelStroke, { Transparency = 0.25 }, 0.14)
+	end
+end
+
 function QuickMenu:Open(instant)
 	if self.Destroyed or self._open then
 		return
@@ -385,6 +432,7 @@ function QuickMenu:Close(instant)
 	end
 	local wasOpen = self._open
 	self._open = false
+	self:SetDragState(false)
 	self._animToken += 1
 	local token = self._animToken
 	self.Catcher.Visible = false

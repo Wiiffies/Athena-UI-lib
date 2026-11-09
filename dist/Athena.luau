@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.1.1
+	Athena UI · v1.2.0
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -2775,6 +2775,9 @@ function Dragger.Attach(frame, handle, maid, options)
 				return
 			end
 			moved = true
+			if options.OnDragBegin then
+				options.OnDragBegin()
+			end
 		end
 
 		local target = clampTopLeft(
@@ -3871,6 +3874,71 @@ function Util.Tween(instance, properties, duration, style, direction, callback)
 	end
 	tween:Play()
 	return tween
+end
+
+--- Captures the visual properties of every button beneath a root so they can be faded in and out.
+function Util.CaptureButtonFade(root, skipNames)
+	local states = {}
+	local seen = {}
+
+	local function add(object, property)
+		if seen[object] and seen[object][property] then
+			return
+		end
+		local ok, value = pcall(function()
+			return object[property]
+		end)
+		if not ok or type(value) ~= "number" then
+			return
+		end
+		seen[object] = seen[object] or {}
+		seen[object][property] = true
+		table.insert(states, { Object = object, Property = property, Value = value })
+	end
+
+	local function capture(object)
+		if object:IsA("GuiObject") then
+			add(object, "BackgroundTransparency")
+		end
+		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+			add(object, "TextTransparency")
+			add(object, "TextStrokeTransparency")
+		end
+		if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+			add(object, "ImageTransparency")
+		end
+		if object:IsA("CanvasGroup") then
+			add(object, "GroupTransparency")
+		end
+		if object:IsA("UIStroke") then
+			add(object, "Transparency")
+		end
+	end
+
+	if not root then
+		return states
+	end
+	for _, object in ipairs(root:GetDescendants()) do
+		if object:IsA("GuiButton") and not (skipNames and skipNames[object.Name]) then
+			capture(object)
+			for _, child in ipairs(object:GetDescendants()) do
+				capture(child)
+			end
+		end
+	end
+	return states
+end
+
+--- Fades captured button properties out or restores them.
+function Util.FadeButtonStates(states, hidden, duration)
+	for _, state in ipairs(states or {}) do
+		local object = state.Object
+		if object and object.Parent then
+			local properties = {}
+			properties[state.Property] = hidden and 1 or state.Value
+			Util.Tween(object, properties, duration or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		end
+	end
 end
 
 --- Runs a user callback, reporting mistakes without breaking the interface.
@@ -5162,6 +5230,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local Util = require("Core.Util")
 local Icons = require("Core.Icons")
+local Dragger = require("Core.Dragger")
 
 local QuickMenu = {}
 QuickMenu.__index = QuickMenu
@@ -5259,6 +5328,33 @@ function QuickMenu.new(window, options)
 	self.PanelScale = panelScale
 	self.PanelStroke = panelStroke
 	self.PanelBase = panel.Position
+
+	local dragSurface = Util.Create("TextButton", {
+		Name = "QuickMenuDrag",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		ZIndex = 221,
+		Parent = panel,
+	})
+	self.DragSurface = dragSurface
+
+	Dragger.Attach(panel, dragSurface, self.Maid, {
+		Threshold = 4,
+		Margin = 8,
+		TopMargin = 8,
+		OnDragBegin = function()
+			self:SetDragState(true)
+		end,
+		OnDragEnd = function(moved)
+			self:SetDragState(false)
+			if moved then
+				self.PanelBase = panel.Position
+			end
+		end,
+	})
 
 	local header = Util.Create("Frame", {
 		Name = "Header",
@@ -5496,6 +5592,25 @@ function QuickMenu.new(window, options)
 	return self
 end
 
+function QuickMenu:SetDragState(active)
+	if self.Destroyed or not self.Panel then
+		return
+	end
+
+	if active then
+		if self._buttonFadeStates then
+			return
+		end
+		self._buttonFadeStates = Util.CaptureButtonFade(self.Panel, { QuickMenuDrag = true })
+		Util.FadeButtonStates(self._buttonFadeStates, true, 0.12)
+		Util.Tween(self.PanelStroke, { Transparency = 0.15 }, 0.14)
+	elseif self._buttonFadeStates then
+		Util.FadeButtonStates(self._buttonFadeStates, false, 0.18)
+		self._buttonFadeStates = nil
+		Util.Tween(self.PanelStroke, { Transparency = 0.25 }, 0.14)
+	end
+end
+
 function QuickMenu:Open(instant)
 	if self.Destroyed or self._open then
 		return
@@ -5539,6 +5654,7 @@ function QuickMenu:Close(instant)
 	end
 	local wasOpen = self._open
 	self._open = false
+	self:SetDragState(false)
 	self._animToken += 1
 	local token = self._animToken
 	self.Catcher.Visible = false
@@ -6672,6 +6788,20 @@ function Window.new(library, options)
 	self.Frame = frame
 	self.Scale = uiScale
 
+	-- Sits below the content but above the shell, so blank space, cards and
+	-- labels drag the window while real controls keep their normal clicks.
+	local dragSurface = Util.Create("TextButton", {
+		Name = "WindowDrag",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		ZIndex = 0,
+		Parent = frame,
+	})
+	self.WindowDragSurface = dragSurface
+
 	local topbar = Util.Create("Frame", {
 		Name = "Topbar",
 		Size = UDim2.new(1, 0, 0, theme.TopbarHeight),
@@ -6686,6 +6816,17 @@ function Window.new(library, options)
 	local function setWindowDragState(active)
 		Util.Tween(topbar, { BackgroundTransparency = active and 0.72 or 1 }, 0.14)
 		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
+
+		if active then
+			if self._buttonFadeStates then
+				return
+			end
+			self._buttonFadeStates = Util.CaptureButtonFade(self.Frame, { WindowDrag = true })
+			Util.FadeButtonStates(self._buttonFadeStates, true, 0.14)
+		elseif self._buttonFadeStates then
+			Util.FadeButtonStates(self._buttonFadeStates, false, 0.18)
+			self._buttonFadeStates = nil
+		end
 	end
 
 	Util.Create("Frame", {
@@ -6755,7 +6896,7 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
-		OnDragStart = function()
+		OnDragBegin = function()
 			setWindowDragState(true)
 		end,
 		OnDrag = function()
@@ -6989,11 +7130,26 @@ function Window.new(library, options)
 	-- Interaction wiring
 	--------------------------------------------------------------------------------
 
+	Dragger.Attach(frame, dragSurface, self.Maid, {
+		Threshold = 4,
+		Margin = 8,
+		TopMargin = 44,
+		OnDragBegin = function()
+			setWindowDragState(true)
+		end,
+		OnDrag = function()
+			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
+		end,
+	})
+
 	Dragger.Attach(frame, topbar, self.Maid, {
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
-		OnDragStart = function()
+		OnDragBegin = function()
 			setWindowDragState(true)
 		end,
 		OnDrag = function()
@@ -8318,6 +8474,11 @@ function Window:Close()
 	end
 	self.Closed = true
 
+	if self._buttonFadeStates then
+		Util.FadeButtonStates(self._buttonFadeStates, false, 0.08)
+		self._buttonFadeStates = nil
+	end
+
 	if self._pill then
 		self._pill.Visible = false
 	end
@@ -8391,7 +8552,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.1.1"
+Athena.Version = "1.2.0"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}

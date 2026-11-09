@@ -117,6 +117,20 @@ function Window.new(library, options)
 	self.Frame = frame
 	self.Scale = uiScale
 
+	-- Sits below the content but above the shell, so blank space, cards and
+	-- labels drag the window while real controls keep their normal clicks.
+	local dragSurface = Util.Create("TextButton", {
+		Name = "WindowDrag",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Active = true,
+		ZIndex = 0,
+		Parent = frame,
+	})
+	self.WindowDragSurface = dragSurface
+
 	local topbar = Util.Create("Frame", {
 		Name = "Topbar",
 		Size = UDim2.new(1, 0, 0, theme.TopbarHeight),
@@ -131,6 +145,17 @@ function Window.new(library, options)
 	local function setWindowDragState(active)
 		Util.Tween(topbar, { BackgroundTransparency = active and 0.72 or 1 }, 0.14)
 		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
+
+		if active then
+			if self._buttonFadeStates then
+				return
+			end
+			self._buttonFadeStates = Util.CaptureButtonFade(self.Frame, { WindowDrag = true })
+			Util.FadeButtonStates(self._buttonFadeStates, true, 0.14)
+		elseif self._buttonFadeStates then
+			Util.FadeButtonStates(self._buttonFadeStates, false, 0.18)
+			self._buttonFadeStates = nil
+		end
 	end
 
 	Util.Create("Frame", {
@@ -200,7 +225,7 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
-		OnDragStart = function()
+		OnDragBegin = function()
 			setWindowDragState(true)
 		end,
 		OnDrag = function()
@@ -434,11 +459,26 @@ function Window.new(library, options)
 	-- Interaction wiring
 	--------------------------------------------------------------------------------
 
+	Dragger.Attach(frame, dragSurface, self.Maid, {
+		Threshold = 4,
+		Margin = 8,
+		TopMargin = 44,
+		OnDragBegin = function()
+			setWindowDragState(true)
+		end,
+		OnDrag = function()
+			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
+		end,
+	})
+
 	Dragger.Attach(frame, topbar, self.Maid, {
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
-		OnDragStart = function()
+		OnDragBegin = function()
 			setWindowDragState(true)
 		end,
 		OnDrag = function()
@@ -1762,6 +1802,11 @@ function Window:Close()
 		return
 	end
 	self.Closed = true
+
+	if self._buttonFadeStates then
+		Util.FadeButtonStates(self._buttonFadeStates, false, 0.08)
+		self._buttonFadeStates = nil
+	end
 
 	if self._pill then
 		self._pill.Visible = false

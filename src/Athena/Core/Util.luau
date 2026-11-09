@@ -166,6 +166,71 @@ function Util.Tween(instance, properties, duration, style, direction, callback)
 	return tween
 end
 
+--- Captures the visual properties of every button beneath a root so they can be faded in and out.
+function Util.CaptureButtonFade(root, skipNames)
+	local states = {}
+	local seen = {}
+
+	local function add(object, property)
+		if seen[object] and seen[object][property] then
+			return
+		end
+		local ok, value = pcall(function()
+			return object[property]
+		end)
+		if not ok or type(value) ~= "number" then
+			return
+		end
+		seen[object] = seen[object] or {}
+		seen[object][property] = true
+		table.insert(states, { Object = object, Property = property, Value = value })
+	end
+
+	local function capture(object)
+		if object:IsA("GuiObject") then
+			add(object, "BackgroundTransparency")
+		end
+		if object:IsA("TextLabel") or object:IsA("TextButton") or object:IsA("TextBox") then
+			add(object, "TextTransparency")
+			add(object, "TextStrokeTransparency")
+		end
+		if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+			add(object, "ImageTransparency")
+		end
+		if object:IsA("CanvasGroup") then
+			add(object, "GroupTransparency")
+		end
+		if object:IsA("UIStroke") then
+			add(object, "Transparency")
+		end
+	end
+
+	if not root then
+		return states
+	end
+	for _, object in ipairs(root:GetDescendants()) do
+		if object:IsA("GuiButton") and not (skipNames and skipNames[object.Name]) then
+			capture(object)
+			for _, child in ipairs(object:GetDescendants()) do
+				capture(child)
+			end
+		end
+	end
+	return states
+end
+
+--- Fades captured button properties out or restores them.
+function Util.FadeButtonStates(states, hidden, duration)
+	for _, state in ipairs(states or {}) do
+		local object = state.Object
+		if object and object.Parent then
+			local properties = {}
+			properties[state.Property] = hidden and 1 or state.Value
+			Util.Tween(object, properties, duration or 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+		end
+	end
+end
+
 --- Runs a user callback, reporting mistakes without breaking the interface.
 function Util.Safe(callback, ...)
 	if type(callback) ~= "function" then

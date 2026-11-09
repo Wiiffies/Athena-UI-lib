@@ -7,7 +7,7 @@
 	Press RightShift to hide or show the window.
 ]]
 
-local LIBRARY_VERSION = "1.1.1"
+local LIBRARY_VERSION = "1.2.0"
 local LIBRARY_URL = "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=" .. LIBRARY_VERSION
 
 local Athena = loadstring(game:HttpGet(LIBRARY_URL))()
