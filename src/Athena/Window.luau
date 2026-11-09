@@ -22,6 +22,9 @@ local DEFAULT_SIZE = Vector2.new(880, 600)
 local CONTROLS_WIDTH = 178
 local BRAND_MIN = 96
 local BRAND_MAX = 250
+local VERSION_TEXT_SIZE = 9.5
+local VERSION_GAP = 5
+local BRAND_RIGHT_PAD = 12
 
 local function sizeToVector(size)
 	if typeof(size) == "Vector2" then
@@ -56,9 +59,17 @@ end
 -- Construction
 --------------------------------------------------------------------------------
 
-local function measureBrandWidth(title, theme)
-	local textWidth = Util.Measure(title or "Athena", 15, theme.FontBold).X
-	return math.clamp(32 + textWidth + 14, BRAND_MIN, BRAND_MAX)
+local function measureBrand(title, theme, version)
+	local titleWidth = Util.Measure(title or "Athena", 15, theme.FontBold).X
+	local versionText = ""
+	if version ~= nil and tostring(version) ~= "" then
+		versionText = "v" .. tostring(version)
+	end
+	local versionWidth = versionText ~= "" and Util.Measure(versionText, VERSION_TEXT_SIZE, theme.Font).X or 0
+	local versionGap = versionWidth > 0 and VERSION_GAP or 0
+	local width = math.clamp(32 + titleWidth + versionGap + versionWidth + BRAND_RIGHT_PAD, BRAND_MIN, BRAND_MAX)
+	local titleSpace = math.max(0, width - 32 - versionGap - versionWidth - BRAND_RIGHT_PAD)
+	return width, math.min(titleWidth, titleSpace), versionText, versionWidth, versionGap
 end
 
 function Window.new(library, options)
@@ -178,10 +189,13 @@ function Window.new(library, options)
 	-- Brand
 	--------------------------------------------------------------------------------
 
+	local brandWidth, brandTitleWidth, versionText, versionWidth, versionGap =
+		measureBrand(self.Title, theme, library.Version)
+
 	local logo = Util.Create("Frame", {
 		Name = "Brand",
 		Position = UDim2.fromOffset(18, 0),
-		Size = UDim2.fromOffset(measureBrandWidth(self.Title, theme), theme.TopbarHeight),
+		Size = UDim2.fromOffset(brandWidth, theme.TopbarHeight),
 		BackgroundTransparency = 1,
 		Parent = topbar,
 	})
@@ -212,7 +226,7 @@ function Window.new(library, options)
 	local brand = Util.Create("TextLabel", {
 		Name = "Title",
 		Position = UDim2.fromOffset(32, 0),
-		Size = UDim2.new(1, -32, 1, 0),
+		Size = UDim2.new(0, brandTitleWidth, 1, 0),
 		BackgroundTransparency = 1,
 		Text = self.Title,
 		Font = theme.FontBold,
@@ -222,7 +236,26 @@ function Window.new(library, options)
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		Parent = logo,
 	})
+	local versionLabel
+	if versionText ~= "" then
+		versionLabel = Util.Create("TextLabel", {
+			Name = "Version",
+			Position = UDim2.fromOffset(32 + brandTitleWidth + versionGap, 0),
+			Size = UDim2.new(0, versionWidth, 1, 0),
+			BackgroundTransparency = 1,
+			Text = versionText,
+			Font = theme.Font,
+			TextSize = VERSION_TEXT_SIZE,
+			TextColor3 = theme.TextMuted,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			Parent = logo,
+		})
+	end
+
 	self.BrandLabel = brand
+	self.BrandVersion = versionLabel
 	self.BrandMark = mark
 	self.Brand = logo
 
@@ -266,7 +299,7 @@ function Window.new(library, options)
 	-- Navigation
 	--------------------------------------------------------------------------------
 
-	local navLeft = 18 + measureBrandWidth(self.Title, theme) + 10
+	local navLeft = 18 + brandWidth + 10
 	local nav = Util.Create("ScrollingFrame", {
 		Name = "Nav",
 		Position = UDim2.fromOffset(navLeft, 0),
@@ -1701,8 +1734,16 @@ function Window:_LayoutHeader()
 		return
 	end
 
-	local width = measureBrandWidth(self.Title, self.Theme)
+	local width, titleWidth, versionText, versionWidth, versionGap =
+		measureBrand(self.Title, self.Theme, self.Library and self.Library.Version)
 	self.Brand.Size = UDim2.fromOffset(width, self.Theme.TopbarHeight)
+	self.BrandLabel.Size = UDim2.new(0, titleWidth, 1, 0)
+	if self.BrandVersion then
+		self.BrandVersion.Position = UDim2.fromOffset(32 + titleWidth + versionGap, 0)
+		self.BrandVersion.Size = UDim2.new(0, versionWidth, 1, 0)
+		self.BrandVersion.Text = versionText
+		self.BrandVersion.Visible = versionText ~= ""
+	end
 
 	local navLeft = 18 + width + 10
 	self.NavLeft = navLeft

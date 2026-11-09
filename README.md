@@ -9,7 +9,8 @@ interface library, written in Luau.
 
 - Dark neutral shell, hairline borders and light primary pills from Athena's Automation screen.
 - Top navigation with icons, counts, active underline, tab search and window controls. The brand
-  reserves space from its real title width, so long names are not clipped by the tabs.
+  reserves space from its real title width and shows the loaded build as a small version tag, so
+  long names are not clipped by the tabs.
 - Cards, status banners, chips, grouped rows, toasts, an unread badge and a tone-coded notification
   sheet with an empty state and clear action.
 - Buttons, toggles, sliders, dropdowns, keybinds, textboxes, labels, separators and HSV colour
@@ -26,7 +27,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -38,18 +39,18 @@ local Window = Athena:CreateWindow({
 -- Force the draggable top-centre island on (it is enabled by default).
 Window:SetDynamicIslandEnabled(true)
 
-local Tab = Window:CreateTab("Main")
+local Tab = Window:CreateTab("Skid")
 local Section = Tab:CreateSection("General")
 
 Section:CreateButton({
-    Name = "Example Button",
+    Name = "Run script",
     Callback = function()
         print("Clicked!")
     end,
 })
 
 Section:CreateToggle({
-    Name = "Example Toggle",
+    Name = "Enable feature",
     Default = false,
     Callback = function(Value)
         print(Value)
@@ -57,7 +58,7 @@ Section:CreateToggle({
 })
 
 Section:CreateSlider({
-    Name = "Example Slider",
+    Name = "Strength",
     Description = "Drag the white rail or click anywhere on it.",
     Min = 0,
     Max = 100,
@@ -69,7 +70,7 @@ Section:CreateSlider({
 })
 
 Section:CreateDropdown({
-    Name = "Example Dropdown",
+    Name = "Method",
     Options = { "Option A", "Option B", "Option C" },
     Default = "Option A",
     Callback = function(Value)
@@ -82,6 +83,9 @@ Press **RightShift** to hide or show the window and its quick menu (pass `Toggle
 disable it). **K** does the same pair. The palette is visible whenever the window is visible, and
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
+
+The small `v1.2.2` tag beside the Athena brand confirms which bundle an executor actually loaded.
+Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
 edge. The collapsed pill shows runtime, FPS and ping; click it for uptime, FPS, ping, memory,
@@ -109,7 +113,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -451,7 +455,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.1"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
 ))()
 ```
 

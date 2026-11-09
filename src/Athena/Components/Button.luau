@@ -98,7 +98,7 @@ function Button.new(section, options)
 	end
 
 	local labelX = iconName and 27 or 0
-	local labelRight = 12
+	local labelRight = iconName and 12 or 0
 
 	local label = Util.Create("TextLabel", {
 		Name = "Label",
@@ -110,6 +110,7 @@ function Button.new(section, options)
 		TextSize = 11.5,
 		TextColor3 = textColor,
 		TextXAlignment = iconName and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3,
 		Parent = pill,
