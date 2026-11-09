@@ -175,8 +175,8 @@ function Tab:AddAction(input)
 	local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 	local textWidth = Util.Measure(label, 11.5, labelFont).X
 	local iconSpace = showIcon and (isPrimary and 28 or 20) or 0
-	local extra = isPrimary and 36 or 28
-	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 74 or 44, 168))
+	local extra = isPrimary and 24 or 28
+	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 56 or 44, 168))
 
 	local button = Util.Create("TextButton", {
 		Name = "Action_" .. label,
@@ -245,7 +245,7 @@ function Tab:AddAction(input)
 		textRight = isPrimary and 11 or 9
 	else
 		textX = 0
-		textRight = 12
+		textRight = 0
 	end
 
 	local text = Util.Create("TextLabel", {
@@ -257,6 +257,7 @@ function Tab:AddAction(input)
 		TextSize = 11.5,
 		TextColor3 = textColor,
 		TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3,
 		Parent = button,

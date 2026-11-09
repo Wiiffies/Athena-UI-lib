@@ -242,8 +242,8 @@ function Card.new(tab, options)
 		local showIcon = action.Icon and not isPrimary
 		local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 		local textWidth = Util.Measure(label, 11.5, labelFont).X
-		local extra = isPrimary and 36 or (showIcon and 32 or 24)
-		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 70 or 50, 150))
+		local extra = isPrimary and 24 or (showIcon and 32 or 24)
+		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 52 or 48, 150))
 
 		local button = Util.Create("TextButton", {
 			Name = "CardAction_" .. label,
@@ -270,7 +270,7 @@ function Card.new(tab, options)
 		end
 
 		local labelX = showIcon and 25 or 0
-		local labelRight = 12
+		local labelRight = showIcon and 12 or 0
 
 		local labelLabel = Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(labelX, 0),
@@ -281,6 +281,7 @@ function Card.new(tab, options)
 			TextSize = 11.5,
 			TextColor3 = textColor,
 			TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 3,
 			Parent = button,

@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -46,6 +46,7 @@ Window:SetDynamicIslandEnabled(true)
 | `DynamicIsland` | boolean or table | `true` | Draggable live session HUD pinned to the top centre that expands downward without moving its top edge. `false` disables it; table accepts `Enabled`, `Expanded`, `Animated`. |
 | `Parent` | Instance | `PlayerGui` | Where the ScreenGui is parented. |
 | `Animated` | boolean | `true` | Fade/scale intro animation. |
+| `Footer` | string | – | Small info tab pinned to the bottom of the window. |
 
 ### Window methods
 
@@ -201,6 +202,7 @@ Section:CreateButton({
     Name = "Example Button",
     Description = "Runs the callback.",
     ButtonText = "Run",        -- text shown on the pill (default "Run")
+    Tooltip = "Runs the example callback.", -- shown while hovering the pill
     Style = "Primary",         -- Primary | Secondary | Ghost; primary is flat white with no icon
     Enabled = true,
     Callback = function() end,

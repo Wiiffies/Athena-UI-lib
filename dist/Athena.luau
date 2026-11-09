@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.2.2
+	Athena UI · v1.2.4
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -212,6 +212,7 @@ function Button.new(section, options)
 
 	local name = options.Name or options.Title or "Button"
 	local description = options.Description
+	local tooltipText = options.Tooltip or options.HoverText
 	local pillLabel = options.ButtonText or options.Text or "Run"
 	local style = options.Style or "Primary"
 	local isPrimary = style == "Primary"
@@ -230,11 +231,11 @@ function Button.new(section, options)
 	local textWidth = Util.Measure(pillLabel, 11.5, labelFont).X
 	local horizontalPadding
 	if isPrimary then
-		horizontalPadding = iconName and 58 or 36
+		horizontalPadding = iconName and 58 or 26
 	else
-		horizontalPadding = iconName and 44 or 32
+		horizontalPadding = iconName and 44 or 26
 	end
-	local pillWidth = math.ceil(math.clamp(textWidth + horizontalPadding, 70, 176))
+	local pillWidth = math.ceil(math.clamp(textWidth + horizontalPadding, 54, 176))
 
 	local row = section:_Row({
 		Name = name,
@@ -314,6 +315,15 @@ function Button.new(section, options)
 	})
 	self.Label = label
 	self.Icon = icon
+
+	if tooltipText and tooltipText ~= "" and section.Window and section.Window._ShowTooltip then
+		self.Maid:Add(pill.MouseEnter:Connect(function()
+			section.Window:_ShowTooltip(tooltipText, pill)
+		end))
+		self.Maid:Add(pill.MouseLeave:Connect(function()
+			section.Window:_HideTooltip()
+		end))
+	end
 
 	local function setBaseColor(hovered)
 		if not self.Enabled then
@@ -664,8 +674,8 @@ function Card.new(tab, options)
 		local showIcon = action.Icon and not isPrimary
 		local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 		local textWidth = Util.Measure(label, 11.5, labelFont).X
-		local extra = isPrimary and 36 or (showIcon and 32 or 24)
-		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 70 or 50, 150))
+		local extra = isPrimary and 24 or (showIcon and 32 or 24)
+		local width = math.ceil(math.clamp(textWidth + extra, isPrimary and 52 or 48, 150))
 
 		local button = Util.Create("TextButton", {
 			Name = "CardAction_" .. label,
@@ -692,7 +702,7 @@ function Card.new(tab, options)
 		end
 
 		local labelX = showIcon and 25 or 0
-		local labelRight = 12
+		local labelRight = showIcon and 12 or 0
 
 		local labelLabel = Util.Create("TextLabel", {
 			Position = UDim2.fromOffset(labelX, 0),
@@ -703,6 +713,7 @@ function Card.new(tab, options)
 			TextSize = 11.5,
 			TextColor3 = textColor,
 			TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 3,
 			Parent = button,
@@ -1349,7 +1360,7 @@ function Dropdown.new(section, options)
 	})
 	Util.Corner(pill, 8)
 	local stroke = Util.Stroke(pill, theme.Border, 1)
-	Util.Padding(pill, 0, 26, 0, 10)
+	Util.Padding(pill, 0, 10, 0, 10)
 
 	local label = Util.Create("TextLabel", {
 		Size = UDim2.fromScale(1, 1),
@@ -1363,13 +1374,8 @@ function Dropdown.new(section, options)
 		Parent = pill,
 	})
 
-	local chevron = Icons.New("chevronDown", 11, theme.TextMuted, pill)
-	chevron.Frame.AnchorPoint = Vector2.new(0, 0.5)
-	chevron.Frame.Position = UDim2.new(1, -21, 0.5, 0)
-
 	self.Pill = pill
 	self.Label = label
-	self.Chevron = chevron
 	self.Stroke = stroke
 
 	self.Popup = section.Window:_CreatePopup({
@@ -1379,7 +1385,6 @@ function Dropdown.new(section, options)
 		Padding = 5,
 		OnClose = function()
 			self._open = false
-			Util.Tween(chevron.Frame, { Rotation = 0 }, 0.16)
 			Util.Tween(stroke, { Color = theme.Border }, 0.16)
 		end,
 	})
@@ -1561,7 +1566,6 @@ function Dropdown.new(section, options)
 		self:_Measure()
 		self:_Build()
 		self.Popup:OpenAt(self.Pill)
-		Util.Tween(chevron.Frame, { Rotation = 180 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Util.Tween(stroke, { Color = theme.SurfaceActive }, 0.16)
 	end
 
@@ -1604,13 +1608,11 @@ function Dropdown.new(section, options)
 	self.Maid:Add(pill.MouseEnter:Connect(function()
 		Util.Tween(pill, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
 		Util.Tween(stroke, { Color = theme.SurfaceActive }, 0.12)
-		chevron:SetColor(theme.Text)
 	end))
 	self.Maid:Add(pill.MouseLeave:Connect(function()
 		if not self.Popup:IsOpen() then
 			Util.Tween(pill, { BackgroundColor3 = theme.SurfaceAlt }, 0.12)
 			Util.Tween(stroke, { Color = theme.Border }, 0.12)
-			chevron:SetColor(theme.TextMuted)
 		end
 	end))
 
@@ -6480,8 +6482,8 @@ function Tab:AddAction(input)
 	local labelFont = isPrimary and theme.FontBold or theme.FontMedium
 	local textWidth = Util.Measure(label, 11.5, labelFont).X
 	local iconSpace = showIcon and (isPrimary and 28 or 20) or 0
-	local extra = isPrimary and 36 or 28
-	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 74 or 44, 168))
+	local extra = isPrimary and 24 or 28
+	local width = math.ceil(math.clamp(textWidth + iconSpace + extra, isPrimary and 56 or 44, 168))
 
 	local button = Util.Create("TextButton", {
 		Name = "Action_" .. label,
@@ -6550,7 +6552,7 @@ function Tab:AddAction(input)
 		textRight = isPrimary and 11 or 9
 	else
 		textX = 0
-		textRight = 12
+		textRight = 0
 	end
 
 	local text = Util.Create("TextLabel", {
@@ -6562,6 +6564,7 @@ function Tab:AddAction(input)
 		TextSize = 11.5,
 		TextColor3 = textColor,
 		TextXAlignment = showIcon and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
 		TextTruncate = Enum.TextTruncate.AtEnd,
 		ZIndex = 3,
 		Parent = button,
@@ -6886,6 +6889,7 @@ function Window.new(library, options)
 		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
 
 		if active then
+			self:_HideTooltip()
 			if self._buttonFadeStates then
 				return
 			end
@@ -7202,15 +7206,66 @@ function Window.new(library, options)
 	-- Content
 	--------------------------------------------------------------------------------
 
+	local footerText = options.Footer
+	if footerText == true then
+		footerText = "Info"
+	end
+	local footerHeight = footerText and 30 or 0
+
 	local content = Util.Create("Frame", {
 		Name = "Content",
 		Position = UDim2.fromOffset(0, theme.TopbarHeight),
-		Size = UDim2.new(1, 0, 1, -theme.TopbarHeight),
+		Size = UDim2.new(1, 0, 1, -(theme.TopbarHeight + footerHeight)),
 		BackgroundTransparency = 1,
 		ZIndex = 1,
 		Parent = frame,
 	})
 	self.Content = content
+
+	if footerHeight > 0 then
+		local footer = Util.Create("Frame", {
+			Name = "Footer",
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new(0, 0, 1, 0),
+			Size = UDim2.new(1, 0, 0, footerHeight),
+			BackgroundTransparency = 1,
+			ZIndex = 8,
+			Parent = frame,
+		})
+		Util.Create("Frame", {
+			Name = "Hairline",
+			Size = UDim2.new(1, 0, 0, 1),
+			BackgroundColor3 = theme.BorderSoft,
+			BackgroundTransparency = 0.35,
+			BorderSizePixel = 0,
+			ZIndex = 8,
+			Parent = footer,
+		})
+
+		local infoTab = Util.Create("TextLabel", {
+			Name = "InfoTab",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(0, 20),
+			AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = theme.SurfaceAlt,
+			BorderSizePixel = 0,
+			Text = tostring(footerText),
+			Font = theme.Font,
+			TextSize = 9.5,
+			TextColor3 = theme.TextMuted,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 9,
+			Parent = footer,
+		})
+		Util.Corner(infoTab, 6)
+		Util.Padding(infoTab, 0, 10, 0, 10)
+		Util.Stroke(infoTab, theme.BorderSoft, 1, 0.45)
+
+		self.Footer = footer
+		self.FooterLabel = infoTab
+	end
 
 	local overlay = Util.Create("Frame", {
 		Name = "Overlay",
@@ -7727,6 +7782,102 @@ function Window:_CreatePopup(options)
 	}, options)
 	self:_RegisterPopup(popup)
 	return popup
+end
+
+--------------------------------------------------------------------------------
+-- Tooltips
+--------------------------------------------------------------------------------
+
+function Window:_EnsureTooltip()
+	if self._tooltip and self._tooltip.Parent then
+		return self._tooltip
+	end
+
+	local theme = self.Theme
+	local tooltip = Util.Create("TextLabel", {
+		Name = "Tooltip",
+		Size = UDim2.fromOffset(0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Text = "",
+		Font = theme.Font,
+		TextSize = 10.5,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextWrapped = false,
+		Visible = false,
+		ZIndex = 90,
+		Parent = self.Frame,
+	})
+	Util.Corner(tooltip, 6)
+	Util.Padding(tooltip, 6, 9, 6, 9)
+	Util.Stroke(tooltip, theme.BorderSoft, 1, 0.2)
+
+	self._tooltip = tooltip
+	return tooltip
+end
+
+function Window:_ShowTooltip(text, target)
+	if self.Closed or not text or text == "" or not target or not target.Parent then
+		return
+	end
+
+	local tooltip = self:_EnsureTooltip()
+	tooltip.Text = tostring(text)
+	tooltip.Visible = true
+
+	local function place()
+		if not tooltip.Visible or not target.Parent then
+			return
+		end
+
+		local scale = self.Scale.Scale
+		if scale <= 0 then
+			scale = 1
+		end
+
+		local windowPosition = self.Frame.AbsolutePosition
+		local targetPosition = target.AbsolutePosition
+		local targetSize = target.AbsoluteSize
+		local baseX = (targetPosition.X - windowPosition.X) / scale + targetSize.X / (2 * scale)
+		local baseY = (targetPosition.Y - windowPosition.Y) / scale
+		local baseHeight = targetSize.Y / scale
+		local tooltipWidth = tooltip.AbsoluteSize.X / scale
+		local tooltipHeight = tooltip.AbsoluteSize.Y / scale
+		local windowWidth = self.Frame.Size.X.Offset
+		local windowHeight = self.Frame.Size.Y.Offset
+
+		local x = math.clamp(
+			baseX,
+			tooltipWidth / 2 + 6,
+			math.max(tooltipWidth / 2 + 6, windowWidth - tooltipWidth / 2 - 6)
+		)
+		local y = baseY - 6
+		local anchorY = 1
+		if y - tooltipHeight < 4 then
+			y = baseY + baseHeight + 6
+			anchorY = 0
+		end
+		if anchorY == 1 then
+			y = math.clamp(y, tooltipHeight + 4, windowHeight - 4)
+		else
+			y = math.clamp(y, 4, math.max(4, windowHeight - tooltipHeight - 4))
+		end
+
+		tooltip.AnchorPoint = Vector2.new(0.5, anchorY)
+		tooltip.Position = UDim2.fromOffset(math.round(x), math.round(y))
+	end
+
+	task.defer(place)
+end
+
+function Window:_HideTooltip()
+	if self._tooltip then
+		self._tooltip.Visible = false
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -8655,7 +8806,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.2.2"
+Athena.Version = "1.2.4"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}

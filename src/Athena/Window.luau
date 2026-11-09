@@ -158,6 +158,7 @@ function Window.new(library, options)
 		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
 
 		if active then
+			self:_HideTooltip()
 			if self._buttonFadeStates then
 				return
 			end
@@ -474,15 +475,66 @@ function Window.new(library, options)
 	-- Content
 	--------------------------------------------------------------------------------
 
+	local footerText = options.Footer
+	if footerText == true then
+		footerText = "Info"
+	end
+	local footerHeight = footerText and 30 or 0
+
 	local content = Util.Create("Frame", {
 		Name = "Content",
 		Position = UDim2.fromOffset(0, theme.TopbarHeight),
-		Size = UDim2.new(1, 0, 1, -theme.TopbarHeight),
+		Size = UDim2.new(1, 0, 1, -(theme.TopbarHeight + footerHeight)),
 		BackgroundTransparency = 1,
 		ZIndex = 1,
 		Parent = frame,
 	})
 	self.Content = content
+
+	if footerHeight > 0 then
+		local footer = Util.Create("Frame", {
+			Name = "Footer",
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new(0, 0, 1, 0),
+			Size = UDim2.new(1, 0, 0, footerHeight),
+			BackgroundTransparency = 1,
+			ZIndex = 8,
+			Parent = frame,
+		})
+		Util.Create("Frame", {
+			Name = "Hairline",
+			Size = UDim2.new(1, 0, 0, 1),
+			BackgroundColor3 = theme.BorderSoft,
+			BackgroundTransparency = 0.35,
+			BorderSizePixel = 0,
+			ZIndex = 8,
+			Parent = footer,
+		})
+
+		local infoTab = Util.Create("TextLabel", {
+			Name = "InfoTab",
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(0, 20),
+			AutomaticSize = Enum.AutomaticSize.X,
+			BackgroundColor3 = theme.SurfaceAlt,
+			BorderSizePixel = 0,
+			Text = tostring(footerText),
+			Font = theme.Font,
+			TextSize = 9.5,
+			TextColor3 = theme.TextMuted,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			TextYAlignment = Enum.TextYAlignment.Center,
+			ZIndex = 9,
+			Parent = footer,
+		})
+		Util.Corner(infoTab, 6)
+		Util.Padding(infoTab, 0, 10, 0, 10)
+		Util.Stroke(infoTab, theme.BorderSoft, 1, 0.45)
+
+		self.Footer = footer
+		self.FooterLabel = infoTab
+	end
 
 	local overlay = Util.Create("Frame", {
 		Name = "Overlay",
@@ -999,6 +1051,102 @@ function Window:_CreatePopup(options)
 	}, options)
 	self:_RegisterPopup(popup)
 	return popup
+end
+
+--------------------------------------------------------------------------------
+-- Tooltips
+--------------------------------------------------------------------------------
+
+function Window:_EnsureTooltip()
+	if self._tooltip and self._tooltip.Parent then
+		return self._tooltip
+	end
+
+	local theme = self.Theme
+	local tooltip = Util.Create("TextLabel", {
+		Name = "Tooltip",
+		Size = UDim2.fromOffset(0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
+		AnchorPoint = Vector2.new(0.5, 1),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Text = "",
+		Font = theme.Font,
+		TextSize = 10.5,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextWrapped = false,
+		Visible = false,
+		ZIndex = 90,
+		Parent = self.Frame,
+	})
+	Util.Corner(tooltip, 6)
+	Util.Padding(tooltip, 6, 9, 6, 9)
+	Util.Stroke(tooltip, theme.BorderSoft, 1, 0.2)
+
+	self._tooltip = tooltip
+	return tooltip
+end
+
+function Window:_ShowTooltip(text, target)
+	if self.Closed or not text or text == "" or not target or not target.Parent then
+		return
+	end
+
+	local tooltip = self:_EnsureTooltip()
+	tooltip.Text = tostring(text)
+	tooltip.Visible = true
+
+	local function place()
+		if not tooltip.Visible or not target.Parent then
+			return
+		end
+
+		local scale = self.Scale.Scale
+		if scale <= 0 then
+			scale = 1
+		end
+
+		local windowPosition = self.Frame.AbsolutePosition
+		local targetPosition = target.AbsolutePosition
+		local targetSize = target.AbsoluteSize
+		local baseX = (targetPosition.X - windowPosition.X) / scale + targetSize.X / (2 * scale)
+		local baseY = (targetPosition.Y - windowPosition.Y) / scale
+		local baseHeight = targetSize.Y / scale
+		local tooltipWidth = tooltip.AbsoluteSize.X / scale
+		local tooltipHeight = tooltip.AbsoluteSize.Y / scale
+		local windowWidth = self.Frame.Size.X.Offset
+		local windowHeight = self.Frame.Size.Y.Offset
+
+		local x = math.clamp(
+			baseX,
+			tooltipWidth / 2 + 6,
+			math.max(tooltipWidth / 2 + 6, windowWidth - tooltipWidth / 2 - 6)
+		)
+		local y = baseY - 6
+		local anchorY = 1
+		if y - tooltipHeight < 4 then
+			y = baseY + baseHeight + 6
+			anchorY = 0
+		end
+		if anchorY == 1 then
+			y = math.clamp(y, tooltipHeight + 4, windowHeight - 4)
+		else
+			y = math.clamp(y, 4, math.max(4, windowHeight - tooltipHeight - 4))
+		end
+
+		tooltip.AnchorPoint = Vector2.new(0.5, anchorY)
+		tooltip.Position = UDim2.fromOffset(math.round(x), math.round(y))
+	end
+
+	task.defer(place)
+end
+
+function Window:_HideTooltip()
+	if self._tooltip then
+		self._tooltip.Visible = false
+	end
 end
 
 --------------------------------------------------------------------------------

@@ -27,13 +27,14 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
 ))()
 
 local Window = Athena:CreateWindow({
     Title = "Athena",
     Theme = "Athena",
     DynamicIsland = { Enabled = true, Expanded = false, Animated = true },
+    Footer = "Funded by the israel goverment",
 })
 
 -- Force the draggable top-centre island on (it is enabled by default).
@@ -44,13 +45,14 @@ local Section = Tab:CreateSection("General")
 
 Section:CreateButton({
     Name = "Run script",
+    Tooltip = "Runs the example callback.",
     Callback = function()
         print("Clicked!")
     end,
 })
 
 Section:CreateToggle({
-    Name = "Enable feature",
+    Name = "DDOS Syringee",
     Default = false,
     Callback = function(Value)
         print(Value)
@@ -84,7 +86,7 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The small `v1.2.2` tag beside the Athena brand confirms which bundle an executor actually loaded.
+The small `v1.2.4` tag beside the Athena brand confirms which bundle an executor actually loaded.
 Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
@@ -113,7 +115,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -455,7 +457,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.2"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
 ))()
 ```
 

@@ -15,6 +15,7 @@ function Button.new(section, options)
 
 	local name = options.Name or options.Title or "Button"
 	local description = options.Description
+	local tooltipText = options.Tooltip or options.HoverText
 	local pillLabel = options.ButtonText or options.Text or "Run"
 	local style = options.Style or "Primary"
 	local isPrimary = style == "Primary"
@@ -33,11 +34,11 @@ function Button.new(section, options)
 	local textWidth = Util.Measure(pillLabel, 11.5, labelFont).X
 	local horizontalPadding
 	if isPrimary then
-		horizontalPadding = iconName and 58 or 36
+		horizontalPadding = iconName and 58 or 26
 	else
-		horizontalPadding = iconName and 44 or 32
+		horizontalPadding = iconName and 44 or 26
 	end
-	local pillWidth = math.ceil(math.clamp(textWidth + horizontalPadding, 70, 176))
+	local pillWidth = math.ceil(math.clamp(textWidth + horizontalPadding, 54, 176))
 
 	local row = section:_Row({
 		Name = name,
@@ -117,6 +118,15 @@ function Button.new(section, options)
 	})
 	self.Label = label
 	self.Icon = icon
+
+	if tooltipText and tooltipText ~= "" and section.Window and section.Window._ShowTooltip then
+		self.Maid:Add(pill.MouseEnter:Connect(function()
+			section.Window:_ShowTooltip(tooltipText, pill)
+		end))
+		self.Maid:Add(pill.MouseLeave:Connect(function()
+			section.Window:_HideTooltip()
+		end))
+	end
 
 	local function setBaseColor(hovered)
 		if not self.Enabled then

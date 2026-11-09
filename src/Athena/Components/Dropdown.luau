@@ -60,7 +60,7 @@ function Dropdown.new(section, options)
 	})
 	Util.Corner(pill, 8)
 	local stroke = Util.Stroke(pill, theme.Border, 1)
-	Util.Padding(pill, 0, 26, 0, 10)
+	Util.Padding(pill, 0, 10, 0, 10)
 
 	local label = Util.Create("TextLabel", {
 		Size = UDim2.fromScale(1, 1),
@@ -74,13 +74,8 @@ function Dropdown.new(section, options)
 		Parent = pill,
 	})
 
-	local chevron = Icons.New("chevronDown", 11, theme.TextMuted, pill)
-	chevron.Frame.AnchorPoint = Vector2.new(0, 0.5)
-	chevron.Frame.Position = UDim2.new(1, -21, 0.5, 0)
-
 	self.Pill = pill
 	self.Label = label
-	self.Chevron = chevron
 	self.Stroke = stroke
 
 	self.Popup = section.Window:_CreatePopup({
@@ -90,7 +85,6 @@ function Dropdown.new(section, options)
 		Padding = 5,
 		OnClose = function()
 			self._open = false
-			Util.Tween(chevron.Frame, { Rotation = 0 }, 0.16)
 			Util.Tween(stroke, { Color = theme.Border }, 0.16)
 		end,
 	})
@@ -272,7 +266,6 @@ function Dropdown.new(section, options)
 		self:_Measure()
 		self:_Build()
 		self.Popup:OpenAt(self.Pill)
-		Util.Tween(chevron.Frame, { Rotation = 180 }, 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		Util.Tween(stroke, { Color = theme.SurfaceActive }, 0.16)
 	end
 
@@ -315,13 +308,11 @@ function Dropdown.new(section, options)
 	self.Maid:Add(pill.MouseEnter:Connect(function()
 		Util.Tween(pill, { BackgroundColor3 = theme.SurfaceHover }, 0.12)
 		Util.Tween(stroke, { Color = theme.SurfaceActive }, 0.12)
-		chevron:SetColor(theme.Text)
 	end))
 	self.Maid:Add(pill.MouseLeave:Connect(function()
 		if not self.Popup:IsOpen() then
 			Util.Tween(pill, { BackgroundColor3 = theme.SurfaceAlt }, 0.12)
 			Util.Tween(stroke, { Color = theme.Border }, 0.12)
-			chevron:SetColor(theme.TextMuted)
 		end
 	end))
 
