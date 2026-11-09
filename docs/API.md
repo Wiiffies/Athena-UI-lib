@@ -44,8 +44,8 @@ Window:SetDynamicIslandEnabled(true)
 `Athena.Executor` is detected when the library loads. It checks
 `identifyexecutor`/`getexecutorname` first, then records available capabilities such as
 `Loadstring`, `HttpGet`, `SetClipboard`, `WriteFile`, `GetScriptBytecode`, `GetHui` and
-`Request`. When neither identity function exists, the profile reports `Unknown` rather than
-failing.
+`Request`. When neither identity function exists, the profile is `Capability-based` if
+`loadstring` is present and `Unknown` otherwise, rather than failing.
 
 ```lua
 local executor = Athena:GetExecutor()
