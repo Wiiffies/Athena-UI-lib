@@ -82,11 +82,8 @@ function DynamicIsland.new(window, options)
 
 	local viewport = Util.Viewport()
 	local initialHeight = self.Expanded and EXPANDED_HEIGHT or COLLAPSED_HEIGHT
-	local center = Vector2.new(
-		math.round(viewport.X / 2),
-		math.round(SAFE_TOP + initialHeight / 2)
-	)
-	self.BaseCenter = center
+	local basePosition = Vector2.new(math.round(viewport.X / 2), SAFE_TOP)
+	self.BasePosition = basePosition
 
 	local root = Util.Create("Frame", {
 		Name = "AthenaDynamicIsland",
@@ -101,8 +98,8 @@ function DynamicIsland.new(window, options)
 
 	local island = Util.Create("Frame", {
 		Name = "Island",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(center.X, center.Y),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromOffset(basePosition.X, basePosition.Y),
 		Size = UDim2.fromOffset(self.Expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH, initialHeight),
 		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
@@ -551,8 +548,9 @@ function DynamicIsland:_PlayIntro()
 	if self.Destroyed then
 		return
 	end
-	local targetY = self.BaseCenter.Y
-	local startY = targetY - 16
+	local targetY = self.BasePosition.Y
+	-- Begin just below the top edge so the intro never clips against the screen.
+	local startY = targetY + 12
 
 	local function resetContent()
 		self.Island.BackgroundTransparency = 0
@@ -570,14 +568,14 @@ function DynamicIsland:_PlayIntro()
 		self.Island.Visible = true
 		self.Island.BackgroundTransparency = 0
 		self.IslandScale.Scale = 1
-		self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, targetY)
+		self.Island.Position = UDim2.fromOffset(self.BasePosition.X, targetY)
 		self.IslandStroke.Transparency = 0.55
 		resetContent()
 		return
 	end
 
 	self.Island.Visible = true
-	self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, startY)
+	self.Island.Position = UDim2.fromOffset(self.BasePosition.X, startY)
 	self.Island.BackgroundTransparency = 0
 	self.IslandScale.Scale = 0.96
 	self.IslandStroke.Transparency = 1
@@ -589,7 +587,7 @@ function DynamicIsland:_PlayIntro()
 	self.StatusLabel.Position = UDim2.fromOffset(38, 22)
 	self.StatusLabel.TextTransparency = 1
 	self.Dot.BackgroundTransparency = 1
-	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BasePosition.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandScale, { Scale = 1 }, 0.46, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.5)
 	task.delay(0.1, function()
@@ -619,12 +617,22 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 	local token = self._expandToken
 	local targetWidth = expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH
 	local targetHeight = expanded and EXPANDED_HEIGHT or COLLAPSED_HEIGHT
+	local viewport = Util.Viewport()
+	local currentTopLeft = self.Island.AbsolutePosition
 	local currentSize = self.Island.AbsoluteSize
-	local currentCenter = self.Island.AbsolutePosition + currentSize / 2
-	local targetCenter = Vector2.new(
-		currentCenter.X,
-		currentCenter.Y + (targetHeight - currentSize.Y) / 2
+	-- Keep the top edge fixed while the panel grows downward. Only move it when
+	-- the larger panel would leave the viewport.
+	local targetX = math.clamp(
+		currentTopLeft.X + currentSize.X / 2,
+		targetWidth / 2 + SIDE_MARGIN,
+		math.max(targetWidth / 2 + SIDE_MARGIN, viewport.X - targetWidth / 2 - SIDE_MARGIN)
 	)
+	local targetY = math.clamp(
+		currentTopLeft.Y,
+		SAFE_TOP,
+		math.max(SAFE_TOP, viewport.Y - targetHeight - SIDE_MARGIN)
+	)
+	local targetPosition = UDim2.fromOffset(math.round(targetX), math.round(targetY))
 
 	if expanded then
 		self.Stats.Visible = true
@@ -641,7 +649,7 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 
 	if instant then
 		self.Island.Size = UDim2.fromOffset(targetWidth, targetHeight)
-		self.Island.Position = UDim2.fromOffset(targetCenter.X, targetCenter.Y)
+		self.Island.Position = targetPosition
 		self.Stats.GroupTransparency = expanded and 0 or 1
 		self.Stats.Visible = expanded
 		self.StatsScale.Scale = 1
@@ -657,8 +665,10 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 
 	Util.Tween(self.Island, {
 		Size = UDim2.fromOffset(targetWidth, targetHeight),
-		Position = UDim2.fromOffset(targetCenter.X, targetCenter.Y),
-	}, 0.34, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		Position = targetPosition,
+	}, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	self.AvatarScale.Scale = 0.92
+	Util.Tween(self.AvatarScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Util.Tween(self.Stats, { GroupTransparency = expanded and 0 or 1 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	Util.Tween(self.StatsScale, { Scale = 1 }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.Stats, { Position = UDim2.fromOffset(10, 54) }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)

@@ -128,6 +128,11 @@ function Window.new(library, options)
 	})
 	self.Topbar = topbar
 
+	local function setWindowDragState(active)
+		Util.Tween(topbar, { BackgroundTransparency = active and 0.72 or 1 }, 0.14)
+		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
+	end
+
 	Util.Create("Frame", {
 		Name = "TopbarLine",
 		Position = UDim2.new(0, 0, 0, theme.TopbarHeight - 1),
@@ -195,8 +200,14 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
+		OnDragStart = function()
+			setWindowDragState(true)
+		end,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
 		end,
 	})
 
@@ -427,8 +438,14 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
+		OnDragStart = function()
+			setWindowDragState(true)
+		end,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
 		end,
 	})
 

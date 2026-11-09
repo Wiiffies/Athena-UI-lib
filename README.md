@@ -19,14 +19,14 @@ interface library, written in Luau.
 - Proportional scaling across resolutions, draggable window, minimise-to-pill and keyboard
   show/hide.
 - A bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated text-only command rows and window actions. The old floating grid trigger is gone.
-- A draggable dynamic island pinned to the top centre. The collapsed pill shows the avatar, username, runtime, FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. It clamps to every edge while dragging without clipping.
+- A draggable dynamic island pinned to the top centre. It expands downward without moving its top edge. The collapsed pill shows the avatar, username, runtime, FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. It clamps to every edge while dragging without clipping.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
 
 ## Quick start
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.1"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -83,8 +83,9 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The dynamic island is created automatically at the top centre. The collapsed pill shows runtime,
-FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. Drag it anywhere,
+The dynamic island is created automatically at the top centre and grows downward from its top
+edge. The collapsed pill shows runtime, FPS and ping; click it for uptime, FPS, ping, memory,
+player count and local time. Drag it anywhere,
 or start it hidden with `DynamicIsland = { Enabled = false }`.
 
 The title bar sizes itself from the window title, so `Title = "My Application"` no longer collides
@@ -108,7 +109,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.1"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -450,7 +451,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.1.1"
 ))()
 ```
 

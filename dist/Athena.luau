@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.1.0
+	Athena UI · v1.1.1
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -2682,7 +2682,7 @@ end
 __modules["Core.Dragger"] = function(require)
 --[[
 	Athena · Core/Dragger
-	Mouse and touch dragging with viewport clamping, aware of UIScale.
+	Mouse and touch dragging with viewport clamping, aware of anchor points and UIScale.
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -2690,12 +2690,36 @@ local Util = require("Core.Util")
 
 local Dragger = {}
 
+-- A frame can have more than one handle (for example the brand and the topbar).
+-- Only the first handle to receive the press should own that drag.
+local activeDrags = setmetatable({}, { __mode = "k" })
+
 local function parentOrigin(frame)
 	local parent = frame.Parent
 	if parent and parent:IsA("GuiObject") then
 		return parent.AbsolutePosition
 	end
 	return Vector2.zero
+end
+
+local function setTopLeft(frame, topLeft)
+	local origin = parentOrigin(frame)
+	local size = frame.AbsoluteSize
+	local anchor = frame.AnchorPoint
+	frame.Position = UDim2.fromOffset(
+		topLeft.X - origin.X + size.X * anchor.X,
+		topLeft.Y - origin.Y + size.Y * anchor.Y
+	)
+end
+
+local function clampTopLeft(frame, topLeft, margin, topMargin, view)
+	local size = frame.AbsoluteSize
+	local maxX = math.max(margin, view.X - size.X - margin)
+	local maxY = math.max(topMargin, view.Y - size.Y - margin)
+	return Vector2.new(
+		math.clamp(topLeft.X, margin, maxX),
+		math.clamp(topLeft.Y, topMargin, maxY)
+	)
 end
 
 function Dragger.Attach(frame, handle, maid, options)
@@ -2707,26 +2731,10 @@ function Dragger.Attach(frame, handle, maid, options)
 	local dragging = false
 	local moved = false
 	local startInput = Vector2.zero
-	local startCenter = Vector2.zero
+	local startTopLeft = Vector2.zero
 
 	local function viewport()
 		return options.Viewport and options.Viewport() or Util.Viewport()
-	end
-
-	local function applyCenter(center)
-		local origin = parentOrigin(frame)
-		frame.Position = UDim2.fromOffset(
-			math.round(center.X - origin.X),
-			math.round(center.Y - origin.Y)
-		)
-	end
-
-	local function clampCenter(center)
-		local view = viewport()
-		local half = frame.AbsoluteSize / 2
-		local x = math.clamp(center.X, half.X + margin, math.max(half.X + margin, view.X - half.X - margin))
-		local y = math.clamp(center.Y, half.Y + topMargin, math.max(half.Y + topMargin, view.Y - half.Y - margin))
-		return Vector2.new(x, y)
 	end
 
 	handle.Active = true
@@ -2737,10 +2745,15 @@ function Dragger.Attach(frame, handle, maid, options)
 		then
 			return
 		end
+		if activeDrags[frame] then
+			return
+		end
+
+		activeDrags[frame] = true
 		dragging = true
 		moved = false
 		startInput = Vector2.new(input.Position.X, input.Position.Y)
-		startCenter = frame.AbsolutePosition + frame.AbsoluteSize / 2
+		startTopLeft = frame.AbsolutePosition
 		if options.OnDragStart then
 			options.OnDragStart()
 		end
@@ -2764,7 +2777,14 @@ function Dragger.Attach(frame, handle, maid, options)
 			moved = true
 		end
 
-		applyCenter(clampCenter(startCenter + delta))
+		local target = clampTopLeft(
+			frame,
+			startTopLeft + delta,
+			margin,
+			topMargin,
+			viewport()
+		)
+		setTopLeft(frame, target)
 		if options.OnDrag then
 			options.OnDrag()
 		end
@@ -2779,29 +2799,21 @@ function Dragger.Attach(frame, handle, maid, options)
 		then
 			return
 		end
+
 		dragging = false
+		activeDrags[frame] = nil
 		if options.OnDragEnd then
 			options.OnDragEnd(moved)
 		end
 	end))
 end
 
---- Re-clamps a frame's centre into the viewport (used after resizing).
+--- Re-clamps a frame's absolute top-left into the viewport (used after resizing).
 function Dragger.Clamp(frame, margin, topMargin)
 	margin = margin or 0
 	topMargin = topMargin or margin
 	local view = Util.Viewport()
-	local half = frame.AbsoluteSize / 2
-	local origin = parentOrigin(frame)
-	local center = frame.AbsolutePosition + half
-
-	local x = math.clamp(center.X, half.X + margin, math.max(half.X + margin, view.X - half.X - margin))
-	local y = math.clamp(center.Y, half.Y + topMargin, math.max(half.Y + topMargin, view.Y - half.Y - margin))
-
-	frame.Position = UDim2.fromOffset(
-		math.round(x - origin.X),
-		math.round(y - origin.Y)
-	)
+	setTopLeft(frame, clampTopLeft(frame, frame.AbsolutePosition, margin, topMargin, view))
 end
 
 return Dragger
@@ -4101,11 +4113,8 @@ function DynamicIsland.new(window, options)
 
 	local viewport = Util.Viewport()
 	local initialHeight = self.Expanded and EXPANDED_HEIGHT or COLLAPSED_HEIGHT
-	local center = Vector2.new(
-		math.round(viewport.X / 2),
-		math.round(SAFE_TOP + initialHeight / 2)
-	)
-	self.BaseCenter = center
+	local basePosition = Vector2.new(math.round(viewport.X / 2), SAFE_TOP)
+	self.BasePosition = basePosition
 
 	local root = Util.Create("Frame", {
 		Name = "AthenaDynamicIsland",
@@ -4120,8 +4129,8 @@ function DynamicIsland.new(window, options)
 
 	local island = Util.Create("Frame", {
 		Name = "Island",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromOffset(center.X, center.Y),
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.fromOffset(basePosition.X, basePosition.Y),
 		Size = UDim2.fromOffset(self.Expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH, initialHeight),
 		BackgroundColor3 = theme.Surface,
 		BackgroundTransparency = 0,
@@ -4570,8 +4579,9 @@ function DynamicIsland:_PlayIntro()
 	if self.Destroyed then
 		return
 	end
-	local targetY = self.BaseCenter.Y
-	local startY = targetY - 16
+	local targetY = self.BasePosition.Y
+	-- Begin just below the top edge so the intro never clips against the screen.
+	local startY = targetY + 12
 
 	local function resetContent()
 		self.Island.BackgroundTransparency = 0
@@ -4589,14 +4599,14 @@ function DynamicIsland:_PlayIntro()
 		self.Island.Visible = true
 		self.Island.BackgroundTransparency = 0
 		self.IslandScale.Scale = 1
-		self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, targetY)
+		self.Island.Position = UDim2.fromOffset(self.BasePosition.X, targetY)
 		self.IslandStroke.Transparency = 0.55
 		resetContent()
 		return
 	end
 
 	self.Island.Visible = true
-	self.Island.Position = UDim2.fromOffset(self.BaseCenter.X, startY)
+	self.Island.Position = UDim2.fromOffset(self.BasePosition.X, startY)
 	self.Island.BackgroundTransparency = 0
 	self.IslandScale.Scale = 0.96
 	self.IslandStroke.Transparency = 1
@@ -4608,7 +4618,7 @@ function DynamicIsland:_PlayIntro()
 	self.StatusLabel.Position = UDim2.fromOffset(38, 22)
 	self.StatusLabel.TextTransparency = 1
 	self.Dot.BackgroundTransparency = 1
-	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BaseCenter.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	Util.Tween(self.Island, { Position = UDim2.fromOffset(self.BasePosition.X, targetY) }, 0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandScale, { Scale = 1 }, 0.46, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Util.Tween(self.IslandStroke, { Transparency = 0.55 }, 0.5)
 	task.delay(0.1, function()
@@ -4638,12 +4648,22 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 	local token = self._expandToken
 	local targetWidth = expanded and EXPANDED_WIDTH or COLLAPSED_WIDTH
 	local targetHeight = expanded and EXPANDED_HEIGHT or COLLAPSED_HEIGHT
+	local viewport = Util.Viewport()
+	local currentTopLeft = self.Island.AbsolutePosition
 	local currentSize = self.Island.AbsoluteSize
-	local currentCenter = self.Island.AbsolutePosition + currentSize / 2
-	local targetCenter = Vector2.new(
-		currentCenter.X,
-		currentCenter.Y + (targetHeight - currentSize.Y) / 2
+	-- Keep the top edge fixed while the panel grows downward. Only move it when
+	-- the larger panel would leave the viewport.
+	local targetX = math.clamp(
+		currentTopLeft.X + currentSize.X / 2,
+		targetWidth / 2 + SIDE_MARGIN,
+		math.max(targetWidth / 2 + SIDE_MARGIN, viewport.X - targetWidth / 2 - SIDE_MARGIN)
 	)
+	local targetY = math.clamp(
+		currentTopLeft.Y,
+		SAFE_TOP,
+		math.max(SAFE_TOP, viewport.Y - targetHeight - SIDE_MARGIN)
+	)
+	local targetPosition = UDim2.fromOffset(math.round(targetX), math.round(targetY))
 
 	if expanded then
 		self.Stats.Visible = true
@@ -4660,7 +4680,7 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 
 	if instant then
 		self.Island.Size = UDim2.fromOffset(targetWidth, targetHeight)
-		self.Island.Position = UDim2.fromOffset(targetCenter.X, targetCenter.Y)
+		self.Island.Position = targetPosition
 		self.Stats.GroupTransparency = expanded and 0 or 1
 		self.Stats.Visible = expanded
 		self.StatsScale.Scale = 1
@@ -4676,8 +4696,10 @@ function DynamicIsland:_SetExpanded(expanded, instant)
 
 	Util.Tween(self.Island, {
 		Size = UDim2.fromOffset(targetWidth, targetHeight),
-		Position = UDim2.fromOffset(targetCenter.X, targetCenter.Y),
-	}, 0.34, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+		Position = targetPosition,
+	}, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+	self.AvatarScale.Scale = 0.92
+	Util.Tween(self.AvatarScale, { Scale = 1 }, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 	Util.Tween(self.Stats, { GroupTransparency = expanded and 0 or 1 }, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 	Util.Tween(self.StatsScale, { Scale = 1 }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 	Util.Tween(self.Stats, { Position = UDim2.fromOffset(10, 54) }, 0.34, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
@@ -6661,6 +6683,11 @@ function Window.new(library, options)
 	})
 	self.Topbar = topbar
 
+	local function setWindowDragState(active)
+		Util.Tween(topbar, { BackgroundTransparency = active and 0.72 or 1 }, 0.14)
+		Util.Tween(shellStroke, { Transparency = active and 0 or 0.05 }, 0.14)
+	end
+
 	Util.Create("Frame", {
 		Name = "TopbarLine",
 		Position = UDim2.new(0, 0, 0, theme.TopbarHeight - 1),
@@ -6728,8 +6755,14 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
+		OnDragStart = function()
+			setWindowDragState(true)
+		end,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
 		end,
 	})
 
@@ -6960,8 +6993,14 @@ function Window.new(library, options)
 		Threshold = 4,
 		Margin = 8,
 		TopMargin = 44,
+		OnDragStart = function()
+			setWindowDragState(true)
+		end,
 		OnDrag = function()
 			self:_ClosePopups(nil, true)
+		end,
+		OnDragEnd = function()
+			setWindowDragState(false)
 		end,
 	})
 
@@ -8352,7 +8391,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.1.0"
+Athena.Version = "1.1.1"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}
