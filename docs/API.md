@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.10"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -23,12 +23,60 @@ Window:SetDynamicIslandEnabled(true)
 | --- | --- |
 | `Athena.Version` | Library version string; also shown as a small tag beside the window brand. |
 | `Athena.Themes` | Table of preset themes (`Athena`, `Light`). |
+| `Athena.Executor` | Detected executor profile: `Name`, `Known`, `Profile`, `Capabilities` and `DetectedAt`. |
+| `Athena.FeatureRequirements` | Feature-name to required-capability map used by the feature gates. |
 | `Athena:CreateWindow(options)` | Creates a window and returns it. |
+| `Athena:GetExecutor()` | Returns the detected executor profile. |
+| `Athena:RefreshExecutor()` | Re-runs detection, then returns the updated profile. |
+| `Athena:IsExecutor(name)` | Checks the detected executor name, ignoring case and extra whitespace. |
+| `Athena:GetFeature(name)` | Returns `{ Available, Enabled, Missing, Required }` for a registered feature. |
+| `Athena:IsFeatureAvailable(name)` | Whether the executor has every capability the feature requires. |
+| `Athena:IsFeatureEnabled(name)` | Whether a feature is available and has not been disabled. |
+| `Athena:SetFeatureEnabled(name, enabled)` | Enables or disables a registered feature; unavailable features stay disabled. |
 | `Athena:Notify(options)` | Shows a toast in the top right (creates the interface if needed). |
 | `Athena:SetTheme(nameOrTable)` | Sets the theme used by notifications and future windows. |
 | `Athena:GetWindows()` | Returns every live window. |
 | `Athena:Destroy()` | Removes every window, toast and the ScreenGui. |
 | `Athena.Util` | Helper table (`ColorToHex`, `HexToColor`, `FormatNumber`, …). |
+
+### Executor detection and feature gates
+
+`Athena.Executor` is detected when the library loads. It checks
+`identifyexecutor`/`getexecutorname` first, then records available capabilities such as
+`Loadstring`, `HttpGet`, `SetClipboard`, `WriteFile`, `GetScriptBytecode`, `GetHui` and
+`Request`. When neither identity function exists, the profile reports `Unknown` rather than
+failing.
+
+```lua
+local executor = Athena:GetExecutor()
+print(executor.Name, executor.Profile)
+print(executor.Capabilities.Loadstring)
+```
+
+The default gates are:
+
+| Feature | Required capability |
+| --- | --- |
+| `ScriptExecution` | `Loadstring`, `HttpGet` |
+| `Clipboard` | `SetClipboard` |
+| `FileSystem` | `WriteFile` |
+| `ScriptDump` | `GetScriptBytecode` |
+| `ProtectedUI` | `GetHui` |
+| `HttpRequest` | `Request` |
+
+`Athena:IsFeatureEnabled(name)` is false when a requirement is missing. A feature can also be
+turned off manually with `Athena:SetFeatureEnabled(name, false)`; it cannot be forced on when the
+executor lacks the capability. `Athena:GetFeature(name)` returns `Available`, `Enabled`, `Missing`
+and `Required` details so a script can explain why a control is unavailable.
+
+```lua
+if Athena:IsFeatureEnabled("Clipboard") then
+    -- Show clipboard controls.
+else
+    local feature = Athena:GetFeature("Clipboard")
+    print("Unavailable; missing:", table.concat(feature.Missing, ", "))
+end
+```
 
 ### `Athena:CreateWindow(options)`
 

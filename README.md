@@ -27,7 +27,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.10"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -43,9 +43,15 @@ Window:SetDynamicIslandEnabled(true)
 local Tab = Window:CreateTab("Skid")
 local Section = Tab:CreateSection("General")
 
+Section:CreateLabel({
+    Text = "Executor",
+    Value = Athena.Executor.Name .. " · " .. Athena.Executor.Profile,
+})
+
 Section:CreateButton({
     Name = "Run script",
     Tooltip = "Runs the example callback.",
+    Enabled = Athena:IsFeatureEnabled("ScriptExecution"),
     Callback = function()
         print("Clicked!")
     end,
@@ -134,7 +140,7 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The small `v1.2.10` tag beside the Athena brand confirms which bundle an executor actually loaded.
+The small `v1.3.0` tag beside the Athena brand confirms which bundle an executor actually loaded.
 Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
@@ -163,7 +169,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.10"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -505,7 +511,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.10"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.3.0"
 ))()
 ```
 
@@ -610,6 +616,7 @@ Athena-UI-lib/
 │       │   ├── Util.luau        primitives, tweens, maid, colour helpers
 │       │   ├── Icons.luau       Lucide image icons
 │       │   ├── Popup.luau       floating surfaces (dropdowns, pickers, panels)
+│       │   ├── Executor.luau    executor identity and capability detection
 │       │   └── Dragger.luau     drag with viewport clamping
 │       └── Components/
 │           ├── Button.luau

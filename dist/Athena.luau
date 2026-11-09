@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.2.10
+	Athena UI · v1.3.0
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -2823,6 +2823,148 @@ function Dragger.Clamp(frame, margin, topMargin)
 end
 
 return Dragger
+end
+
+__modules["Core.Executor"] = function(require)
+--[[
+	Athena · Core/Executor
+	Detects the host executor and records the capabilities that feature gates
+	can check without probing or running user code.
+]]
+
+local Executor = {}
+
+local KNOWN_PROFILES = {
+	["synapse x"] = "Full",
+	["script-ware"] = "Full",
+	["krnl"] = "Full",
+	["fluxus"] = "Full",
+	["delta"] = "Full",
+	["solara"] = "Full",
+	["xeno"] = "Full",
+	["wave"] = "Full",
+	["arceus x"] = "Limited",
+	["hydrogen"] = "Limited",
+	["codex"] = "Full",
+	["electron"] = "Full",
+	["sirhurt"] = "Full",
+	["awp"] = "Full",
+	["valyse"] = "Full",
+	["vega"] = "Full",
+	["swift"] = "Limited",
+	["bunny"] = "Full",
+	["nihon"] = "Full",
+}
+
+local function environment()
+	local ok, env = pcall(function()
+		return getfenv(0)
+	end)
+	if ok and type(env) == "table" then
+		return env
+	end
+	return _G
+end
+
+local function readGlobal(name)
+	local env = environment()
+	if type(env) == "table" then
+		local ok, value = pcall(function()
+			return env[name]
+		end)
+		if ok then
+			return value
+		end
+	end
+
+	local ok, value = pcall(function()
+		return _G[name]
+	end)
+	if ok then
+		return value
+	end
+	return nil
+end
+
+local function hasGlobal(name)
+	return type(readGlobal(name)) == "function"
+end
+
+local function hasMethod(object, name)
+	if not object then
+		return false
+	end
+	local ok, value = pcall(function()
+		return object[name]
+	end)
+	return ok and type(value) == "function"
+end
+
+local function readName()
+	for _, name in ipairs({ "identifyexecutor", "getexecutorname" }) do
+		local detect = readGlobal(name)
+		if type(detect) == "function" then
+			local ok, result = pcall(detect)
+			if ok and type(result) == "string" and result ~= "" then
+				return result
+			end
+		end
+	end
+	return "Unknown"
+end
+
+function Executor.normalize(name)
+	if type(name) ~= "string" then
+		return ""
+	end
+	local normalized = string.lower(name)
+	normalized = string.gsub(normalized, "%s+", " ")
+	normalized = string.gsub(normalized, "^%s+", "")
+	normalized = string.gsub(normalized, "%s+$", "")
+	return normalized
+end
+
+local function profileFor(normalized)
+	for name, profile in pairs(KNOWN_PROFILES) do
+		if normalized == name or string.find(normalized, name, 1, true) ~= nil then
+			return profile
+		end
+	end
+	return nil
+end
+
+function Executor.Detect()
+	local name = readName()
+	local normalized = Executor.normalize(name)
+	local capabilities = {
+		Loadstring = hasGlobal("loadstring"),
+		HttpGet = hasMethod(game, "HttpGet") or hasGlobal("httpget"),
+		SetClipboard = hasGlobal("setclipboard"),
+		WriteFile = hasGlobal("writefile"),
+		ReadFile = hasGlobal("readfile"),
+		IsFile = hasGlobal("isfile"),
+		GetScriptBytecode = hasGlobal("getscriptbytecode"),
+		GetHui = hasGlobal("gethui"),
+		ProtectGui = hasGlobal("protect_gui"),
+		Request = hasGlobal("request") or hasGlobal("http_request"),
+		GetGenv = hasGlobal("getgenv"),
+		HookFunction = hasGlobal("hookfunction"),
+	}
+
+	local knownProfile = profileFor(normalized)
+	local profile = knownProfile or (capabilities.Loadstring and "Capability-based" or "Unknown")
+
+	return {
+		Name = name,
+		Normalized = normalized,
+		Known = knownProfile ~= nil,
+		Profile = profile,
+		Capabilities = capabilities,
+		DetectedAt = os.time(),
+	}
+end
+
+return Executor
 end
 
 __modules["Core.Icons"] = function(require)
@@ -8882,13 +9024,24 @@ local Players = game:GetService("Players")
 
 local Theme = require("Core.Theme")
 local Util = require("Core.Util")
+local Executor = require("Core.Executor")
 local Notifications = require("Notifications")
 local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.2.10"
+Athena.Version = "1.3.0"
 Athena.Themes = Theme.Presets
+Athena.Executor = Executor.Detect()
+Athena.FeatureRequirements = {
+	ScriptExecution = { "Loadstring", "HttpGet" },
+	Clipboard = { "SetClipboard" },
+	FileSystem = { "WriteFile" },
+	ScriptDump = { "GetScriptBytecode" },
+	ProtectedUI = { "GetHui" },
+	HttpRequest = { "Request" },
+}
+Athena._featureOverrides = {}
 
 Athena._windows = {}
 Athena._gui = nil
@@ -8993,6 +9146,65 @@ function Athena:GetWindows()
 		table.insert(list, window)
 	end
 	return list
+end
+
+function Athena:GetExecutor()
+	return self.Executor
+end
+
+function Athena:RefreshExecutor()
+	self.Executor = Executor.Detect()
+	return self.Executor
+end
+
+function Athena:IsExecutor(name)
+	local normalized = Executor.normalize(name)
+	if normalized == "" then
+		return false
+	end
+	local detected = self.Executor.Normalized
+	return detected == normalized or string.find(detected, normalized, 1, true) ~= nil
+end
+
+function Athena:GetFeature(name)
+	local required = self.FeatureRequirements[name]
+	if not required then
+		return nil
+	end
+
+	local missing = {}
+	for _, capability in ipairs(required) do
+		if not self.Executor.Capabilities[capability] then
+			table.insert(missing, capability)
+		end
+	end
+
+	local available = #missing == 0
+	return {
+		Name = name,
+		Available = available,
+		Enabled = available and self._featureOverrides[name] ~= false,
+		Missing = missing,
+		Required = required,
+	}
+end
+
+function Athena:IsFeatureAvailable(name)
+	local feature = self:GetFeature(name)
+	return feature ~= nil and feature.Available
+end
+
+function Athena:IsFeatureEnabled(name)
+	local feature = self:GetFeature(name)
+	return feature ~= nil and feature.Enabled
+end
+
+function Athena:SetFeatureEnabled(name, enabled)
+	if not self.FeatureRequirements[name] then
+		return false
+	end
+	self._featureOverrides[name] = enabled == true
+	return self:IsFeatureEnabled(name)
 end
 
 function Athena:_RemoveWindow(window)

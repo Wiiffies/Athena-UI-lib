@@ -18,13 +18,24 @@ local Players = game:GetService("Players")
 
 local Theme = require(script.Core.Theme)
 local Util = require(script.Core.Util)
+local Executor = require(script.Core.Executor)
 local Notifications = require(script.Notifications)
 local Window = require(script.Window)
 
 local Athena = {}
 
-Athena.Version = "1.2.10"
+Athena.Version = "1.3.0"
 Athena.Themes = Theme.Presets
+Athena.Executor = Executor.Detect()
+Athena.FeatureRequirements = {
+	ScriptExecution = { "Loadstring", "HttpGet" },
+	Clipboard = { "SetClipboard" },
+	FileSystem = { "WriteFile" },
+	ScriptDump = { "GetScriptBytecode" },
+	ProtectedUI = { "GetHui" },
+	HttpRequest = { "Request" },
+}
+Athena._featureOverrides = {}
 
 Athena._windows = {}
 Athena._gui = nil
@@ -129,6 +140,65 @@ function Athena:GetWindows()
 		table.insert(list, window)
 	end
 	return list
+end
+
+function Athena:GetExecutor()
+	return self.Executor
+end
+
+function Athena:RefreshExecutor()
+	self.Executor = Executor.Detect()
+	return self.Executor
+end
+
+function Athena:IsExecutor(name)
+	local normalized = Executor.normalize(name)
+	if normalized == "" then
+		return false
+	end
+	local detected = self.Executor.Normalized
+	return detected == normalized or string.find(detected, normalized, 1, true) ~= nil
+end
+
+function Athena:GetFeature(name)
+	local required = self.FeatureRequirements[name]
+	if not required then
+		return nil
+	end
+
+	local missing = {}
+	for _, capability in ipairs(required) do
+		if not self.Executor.Capabilities[capability] then
+			table.insert(missing, capability)
+		end
+	end
+
+	local available = #missing == 0
+	return {
+		Name = name,
+		Available = available,
+		Enabled = available and self._featureOverrides[name] ~= false,
+		Missing = missing,
+		Required = required,
+	}
+end
+
+function Athena:IsFeatureAvailable(name)
+	local feature = self:GetFeature(name)
+	return feature ~= nil and feature.Available
+end
+
+function Athena:IsFeatureEnabled(name)
+	local feature = self:GetFeature(name)
+	return feature ~= nil and feature.Enabled
+end
+
+function Athena:SetFeatureEnabled(name, enabled)
+	if not self.FeatureRequirements[name] then
+		return false
+	end
+	self._featureOverrides[name] = enabled == true
+	return self:IsFeatureEnabled(name)
 end
 
 function Athena:_RemoveWindow(window)
