@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.2.5
+	Athena UI · v1.2.6
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -8790,7 +8790,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.2.5"
+Athena.Version = "1.2.6"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}
