@@ -27,7 +27,7 @@ interface library, written in Luau.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.5"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -59,8 +59,28 @@ Section:CreateToggle({
     end,
 })
 
+Section:CreateButton({
+    Name = "Bomb Syringee",
+    ButtonText = "Bomb",
+    Tooltip = "Drops a completely fictional meme bomb on Syringee.",
+    Callback = function()
+        Window:Notify({
+            Title = "Bomb Syringee",
+            Text = "Syringee has been hit by the meme bomb.",
+            Tone = "Warning",
+        })
+    end,
+})
+
+Section:CreateButton({
+    Name = "Pay off Israel goverment dept",
+    ButtonText = "Pay",
+    Tooltip = "This one is intentionally not wired up.",
+    Enabled = false,
+})
+
 Section:CreateSlider({
-    Name = "Strength",
+    Name = "DDOS strength",
     Description = "Drag the white rail or click anywhere on it.",
     Min = 0,
     Max = 100,
@@ -72,7 +92,7 @@ Section:CreateSlider({
 })
 
 Section:CreateDropdown({
-    Name = "Method",
+    Name = "DDOS methods",
     Options = { "Option A", "Option B", "Option C" },
     Default = "Option A",
     Callback = function(Value)
@@ -86,7 +106,7 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The small `v1.2.4` tag beside the Athena brand confirms which bundle an executor actually loaded.
+The small `v1.2.5` tag beside the Athena brand confirms which bundle an executor actually loaded.
 Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
@@ -115,7 +135,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.5"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -457,7 +477,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.4"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.2.5"
 ))()
 ```
 

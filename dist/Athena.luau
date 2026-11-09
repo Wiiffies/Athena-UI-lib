@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.2.4
+	Athena UI · v1.2.5
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -7210,58 +7210,42 @@ function Window.new(library, options)
 	if footerText == true then
 		footerText = "Info"
 	end
-	local footerHeight = footerText and 30 or 0
 
 	local content = Util.Create("Frame", {
 		Name = "Content",
 		Position = UDim2.fromOffset(0, theme.TopbarHeight),
-		Size = UDim2.new(1, 0, 1, -(theme.TopbarHeight + footerHeight)),
+		Size = UDim2.new(1, 0, 1, -theme.TopbarHeight),
 		BackgroundTransparency = 1,
 		ZIndex = 1,
 		Parent = frame,
 	})
 	self.Content = content
 
-	if footerHeight > 0 then
+	if footerText then
 		local footer = Util.Create("Frame", {
 			Name = "Footer",
-			AnchorPoint = Vector2.new(0, 1),
-			Position = UDim2.new(0, 0, 1, 0),
-			Size = UDim2.new(1, 0, 0, footerHeight),
+			AnchorPoint = Vector2.new(0.5, 1),
+			Position = UDim2.new(0.5, 0, 1, -80),
+			Size = UDim2.new(1, -48, 0, 26),
 			BackgroundTransparency = 1,
 			ZIndex = 8,
 			Parent = frame,
 		})
-		Util.Create("Frame", {
-			Name = "Hairline",
-			Size = UDim2.new(1, 0, 0, 1),
-			BackgroundColor3 = theme.BorderSoft,
-			BackgroundTransparency = 0.35,
-			BorderSizePixel = 0,
-			ZIndex = 8,
-			Parent = footer,
-		})
-
 		local infoTab = Util.Create("TextLabel", {
 			Name = "InfoTab",
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(0.5, 0.5),
-			Size = UDim2.fromOffset(0, 20),
-			AutomaticSize = Enum.AutomaticSize.X,
-			BackgroundColor3 = theme.SurfaceAlt,
-			BorderSizePixel = 0,
+			Size = UDim2.fromScale(1, 1),
+			BackgroundTransparency = 1,
 			Text = tostring(footerText),
 			Font = theme.Font,
-			TextSize = 9.5,
+			TextSize = 13,
 			TextColor3 = theme.TextMuted,
+			TextTransparency = 0.15,
 			TextXAlignment = Enum.TextXAlignment.Center,
 			TextYAlignment = Enum.TextYAlignment.Center,
+			TextTruncate = Enum.TextTruncate.AtEnd,
 			ZIndex = 9,
 			Parent = footer,
 		})
-		Util.Corner(infoTab, 6)
-		Util.Padding(infoTab, 0, 10, 0, 10)
-		Util.Stroke(infoTab, theme.BorderSoft, 1, 0.45)
 
 		self.Footer = footer
 		self.FooterLabel = infoTab
@@ -8806,7 +8790,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.2.4"
+Athena.Version = "1.2.5"
 Athena.Themes = Theme.Presets
 
 Athena._windows = {}
