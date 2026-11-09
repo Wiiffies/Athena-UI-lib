@@ -1042,6 +1042,99 @@ function Window:_CreatePopup(options)
 end
 
 --------------------------------------------------------------------------------
+-- No modal
+--------------------------------------------------------------------------------
+
+function Window:_ShowNoPopup()
+	if self.Closed or not self.Gui then
+		return
+	end
+	if self._noPopup and self._noPopup.Parent then
+		return
+	end
+
+	local theme = self.Theme
+	local overlay = Util.Create("Frame", {
+		Name = "NoPopup",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.7,
+		BorderSizePixel = 0,
+		ZIndex = 200,
+		Parent = self.Gui,
+	})
+
+	local blocker = Util.Create("TextButton", {
+		Name = "Dismiss",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		ZIndex = 201,
+		Parent = overlay,
+	})
+
+	local card = Util.Create("TextButton", {
+		Name = "Card",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(520, 280),
+		BackgroundColor3 = theme.Window,
+		BorderSizePixel = 0,
+		Text = "",
+		AutoButtonColor = false,
+		ZIndex = 202,
+		Parent = overlay,
+	})
+	Util.Corner(card, 22)
+	local stroke = Util.Stroke(card, theme.Border, 1, 0.08)
+	local cardScale = Instance.new("UIScale")
+	cardScale.Scale = 0.9
+	cardScale.Parent = card
+
+	local label = Util.Create("TextLabel", {
+		Name = "No",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "No",
+		Font = theme.FontBold,
+		TextSize = 76,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 203,
+		Parent = card,
+	})
+
+	local closing = false
+	local function close()
+		if closing or not overlay.Parent then
+			return
+		end
+		closing = true
+		Util.Tween(overlay, { BackgroundTransparency = 1 }, 0.18)
+		Util.Tween(card, { BackgroundTransparency = 1 }, 0.16)
+		Util.Tween(label, { TextTransparency = 1 }, 0.16)
+		Util.Tween(stroke, { Transparency = 1 }, 0.16)
+		Util.Tween(cardScale, { Scale = 0.94 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		task.delay(0.2, function()
+			overlay:Destroy()
+			if self._noPopup == overlay then
+				self._noPopup = nil
+			end
+		end)
+	end
+
+	blocker.MouseButton1Click:Connect(close)
+	card.MouseButton1Click:Connect(close)
+	self._noPopup = overlay
+	self.Maid:Add(overlay)
+
+	Util.Tween(overlay, { BackgroundTransparency = 0.45 }, 0.2)
+	Util.Tween(cardScale, { Scale = 1 }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+end
+
+--------------------------------------------------------------------------------
 -- Tooltips
 --------------------------------------------------------------------------------
 
