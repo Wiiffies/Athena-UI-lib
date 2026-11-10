@@ -5,7 +5,7 @@ so a mistake in your script logs a warning instead of breaking the interface.
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.5.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -23,10 +23,10 @@ Window:SetDynamicIslandEnabled(true)
 | --- | --- |
 | `Athena.Version` | Library version string; also shown as a small tag beside the window brand. |
 | `Athena.Themes` | Table of preset themes (`Athena`, `Light`). |
-| `Athena.Executor` | Detected executor profile: `Name`, `Known`, `Profile`, `Capabilities` and `DetectedAt`. |
+| `Athena.Executor` | Detected executor profile: `Name`, `Known`, `Profile`, `Source`, `Capabilities` and `DetectedAt`. |
 | `Athena.FeatureRequirements` | Feature-name to required-capability map used by the feature gates. |
 | `Athena:CreateWindow(options)` | Creates a window and returns it. |
-| `Athena:CreateKeySystem(options)` | Creates a local key gate with key input and copyable provider links. |
+| `Athena:CreateKeySystem(options)` | Creates a license-style local gate with key input, signed-in name and copyable provider links. |
 | `Athena:GetExecutor()` | Returns the detected executor profile. |
 | `Athena:RefreshExecutor()` | Re-runs detection, then returns the updated profile. |
 | `Athena:IsExecutor(name)` | Checks the detected executor name, ignoring case and extra whitespace. |
@@ -42,15 +42,16 @@ Window:SetDynamicIslandEnabled(true)
 
 ### Executor detection and feature gates
 
-`Athena.Executor` is detected when the library loads. It checks
-`identifyexecutor`/`getexecutorname` first, then records available capabilities such as
-`Loadstring`, `HttpGet`, `SetClipboard`, `WriteFile`, `GetScriptBytecode`, `GetHui` and
-`Request`. When neither identity function exists, the profile is `Capability-based` if
-`loadstring` is present and `Unknown` otherwise, rather than failing.
+`Athena.Executor` is detected when the library loads. It checks `identifyexecutor` and
+`getexecutorname` across `getgenv()`, `shared`, the thread environment and `_G`, then falls back to
+known executor markers such as `syn`, `fluxus`, `krnl`, `delta` and `wave`. It also records
+available capabilities such as `Loadstring`, `HttpGet`, `SetClipboard`, `WriteFile`,
+`GetScriptBytecode`, `GetHui` and `Request`. When no identity is available, the profile is
+`Capability-based` if `loadstring` is present and `Unknown` otherwise, rather than failing.
 
 ```lua
 local executor = Athena:GetExecutor()
-print(executor.Name, executor.Profile)
+print(executor.Name, executor.Profile, executor.Source)
 print(executor.Capabilities.Loadstring)
 ```
 
@@ -87,20 +88,41 @@ it as a presentation/access gate rather than secure authorization.
 ```lua
 local KeySystem = Athena:CreateKeySystem({
     Keys = { "my-key" },
-    Subtitle = "Enter your key to continue.",
+    Username = "your-name", -- defaults to the local player's display name
+    Title = "Activate Athena",
+    Note = "Keys stack onto whatever time you have left.",
     Providers = {
-        { Name = "Main provider", Link = "https://example.com/get-key" },
+        { Name = "Discord", Link = "https://discord.gg/your-invite" },
     },
     OnSuccess = function()
         Window:Show()
+    end,
+    OnSignOut = function()
+        Window:Hide(true)
     end,
 })
 KeySystem:Show()
 ```
 
-Each provider creates a **Get key** button that copies its `Link` with `setclipboard` (or the
-equivalent executor function). If copying is unavailable, the link is shown in the status line.
-Add more keys or providers after creation with:
+| Option | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `Keys` | table or string | `{}` | Exact keys accepted by the gate. |
+| `Key` | table or string | – | Alias for `Keys`. |
+| `Title` | string | `"Activate Athena"` | Main heading. |
+| `Brand` | string | `"Athena"` | Wordmark beside the mark. |
+| `Username` | string | local display name | Name used by the signed-in line. |
+| `SignedInText` | string | `"Signed in as …"` | Overrides the signed-in line. |
+| `Note` | string | `"Keys stack onto whatever time you have left."` | Footer note. |
+| `Placeholder` | string | `"License key"` | Input placeholder. |
+| `Providers` | table | `{}` | Each item accepts `Name`, `Link` and optional `Icon`. |
+| `ProviderText` | format string | `"Get a free key on %s"` | `%s` is replaced with the provider name. |
+| `SignOutText` | string | `"Sign out"` | Footer sign-out label. |
+| `OnSuccess` | function | `nil` | Called after a correct key unlocks the gate. |
+| `OnSignOut` | function | `nil` | Called when **Sign out** is clicked. |
+
+Each provider creates a full-width **Get a free key on Name** button that copies its `Link` with
+`setclipboard` (or the equivalent executor function). If copying is unavailable, the link is shown
+in the status line. Add more keys or providers after creation with:
 
 ```lua
 KeySystem:SetKeys({ "my-key", "backup-key" })
@@ -116,8 +138,10 @@ KeySystem:SetProviders({
 | `KeySystem:Show()` / `KeySystem:Hide()` | Show or dismiss the gate. |
 | `KeySystem:Submit()` | Validate the current input. |
 | `KeySystem:Unlock()` | Mark the gate unlocked and run `OnSuccess`. |
+| `KeySystem:SignOut()` | Clear the local unlock, run `OnSignOut`, and show the gate again. |
 | `KeySystem:SetKeys(keys)` / `AddKey(key)` | Replace or extend the accepted keys. |
 | `KeySystem:SetProviders(list)` / `AddProvider(provider)` | Replace or add copyable provider links. |
+| `KeySystem:SetSignedIn(text)` | Change the signed-in line after creation. |
 | `KeySystem:IsUnlocked()` | Whether the gate has been passed. |
 | `KeySystem:Destroy()` | Remove the key-system overlay. |
 
@@ -500,8 +524,9 @@ Icons use public Lucide image assets (`rbxassetid`), with the original vector At
 circle fallback for unknown names. Available names:
 
 `athena`, `bell`, `bolt`, `check`, `chevronDown`, `chevronLeft`, `chevronRight`, `chevronUp`,
-`clock`, `close`, `code`, `dot`, `gamepad`, `gear`, `grid`, `home`, `info`, `maximize`, `minus`,
-`pause`, `play`, `plus`, `pulse`, `refresh`, `search`, `smartphone`, `trash`, `warning`.
+`clock`, `close`, `code`, `dot`, `gamepad`, `gear`, `grid`, `home`, `info`, `maximize`,
+`messageCircle`, `minus`, `pause`, `play`, `plus`, `pulse`, `refresh`, `search`, `smartphone`,
+`trash`, `warning`.
 
 Pass the name to `Icon` anywhere an icon is accepted. Names are colour-tinted and animate on
 hover and press automatically.

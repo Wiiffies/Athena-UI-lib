@@ -1,5 +1,5 @@
 --[[
-	Athena UI · v1.4.0
+	Athena UI · v1.5.0
 	A close recreation of the Athena client interface for Roblox.
 
 	Load it in a LocalScript:
@@ -2854,34 +2854,134 @@ local KNOWN_PROFILES = {
 	["swift"] = "Limited",
 	["bunny"] = "Full",
 	["nihon"] = "Full",
+	["cryptic"] = "Full",
+	["seliware"] = "Full",
+	["velocity"] = "Full",
 }
 
-local function environment()
-	local ok, env = pcall(function()
-		return getfenv(0)
-	end)
-	if ok and type(env) == "table" then
-		return env
+local ENV_GETTERS = { "identifyexecutor", "getexecutorname" }
+local NAME_KEYS = { "Name", "name", "Executor", "executor", "Title", "title", "Product", "product" }
+
+local MARKER_NAMES = {
+	syn = "Synapse X",
+	synapse = "Synapse X",
+	fluxus = "Fluxus",
+	krnl = "KRNL",
+	krnl_loaded = "KRNL",
+	delta = "Delta",
+	wave = "Wave",
+	solara = "Solara",
+	xeno = "Xeno",
+	sirhurt = "SirHurt",
+	is_sirhurt_closure = "SirHurt",
+	electron = "Electron",
+	codex = "Codex",
+	valyse = "Valyse",
+	vega = "Vega",
+	bunny = "Bunny",
+	arceus = "Arceus X",
+	hydrogen = "Hydrogen",
+	swift = "Swift",
+	awp = "AWP",
+	cryptic = "Cryptic",
+	seliware = "Seliware",
+	velocity = "Velocity",
+}
+
+local function trim(value)
+	if type(value) ~= "string" then
+		return nil
 	end
-	return _G
+	local text = string.gsub(value, "^%s+", "")
+	text = string.gsub(text, "%s+$", "")
+	if text == "" then
+		return nil
+	end
+	return text
 end
 
-local function readGlobal(name)
-	local env = environment()
-	if type(env) == "table" then
-		local ok, value = pcall(function()
-			return env[name]
-		end)
-		if ok then
-			return value
+local function meaningfulName(value)
+	local text = trim(value)
+	if not text then
+		return nil
+	end
+	local lower = string.lower(text)
+	if lower == "unknown" or lower == "n/a" or lower == "none" or lower == "nil" then
+		return nil
+	end
+	return text
+end
+
+local function nameFromValue(value)
+	if type(value) == "string" then
+		return meaningfulName(value)
+	end
+	if type(value) == "table" then
+		for _, key in ipairs(NAME_KEYS) do
+			local name = meaningfulName(value[key])
+			if name then
+				return name
+			end
+		end
+	end
+	return nil
+end
+
+local function addEnvironment(list, seen, value)
+	if type(value) == "table" and not seen[value] then
+		seen[value] = true
+		table.insert(list, value)
+	end
+end
+
+local function environments()
+	local list = {}
+	local seen = {}
+
+	local ok, getgenvFn = pcall(function()
+		return getgenv
+	end)
+	if ok and type(getgenvFn) == "function" then
+		local got, env = pcall(getgenvFn)
+		if got then
+			addEnvironment(list, seen, env)
 		end
 	end
 
-	local ok, value = pcall(function()
-		return _G[name]
+	addEnvironment(list, seen, _G)
+
+	local gotShared, sharedEnv = pcall(function()
+		return shared
 	end)
-	if ok then
-		return value
+	if gotShared then
+		addEnvironment(list, seen, sharedEnv)
+	end
+
+	local gotThread, threadEnv = pcall(function()
+		return getfenv(0)
+	end)
+	if gotThread then
+		addEnvironment(list, seen, threadEnv)
+	end
+
+	local gotFunction, functionEnv = pcall(function()
+		return getfenv(1)
+	end)
+	if gotFunction then
+		addEnvironment(list, seen, functionEnv)
+	end
+
+	return list
+end
+
+local function readGlobal(name)
+	for _, env in ipairs(environments()) do
+		local ok, value = pcall(function()
+			return env[name]
+		end)
+		if ok and value ~= nil then
+			return value
+		end
 	end
 	return nil
 end
@@ -2900,17 +3000,74 @@ local function hasMethod(object, name)
 	return ok and type(value) == "function"
 end
 
+local function callNameGetter(getter)
+	local ok, result = pcall(getter)
+	if ok then
+		return nameFromValue(result)
+	end
+	return nil
+end
+
 local function readName()
-	for _, name in ipairs({ "identifyexecutor", "getexecutorname" }) do
-		local detect = readGlobal(name)
-		if type(detect) == "function" then
-			local ok, result = pcall(detect)
-			if ok and type(result) == "string" and result ~= "" then
-				return result
+	local envs = environments()
+
+	-- Executors commonly expose these only inside getgenv(), not in _G.
+	for _, env in ipairs(envs) do
+		for _, key in ipairs(ENV_GETTERS) do
+			local value = env[key]
+			if type(value) == "function" then
+				local name = callNameGetter(value)
+				if name then
+					return name, key
+				end
+			else
+				local name = meaningfulName(value)
+				if name then
+					return name, key
+				end
 			end
 		end
 	end
-	return "Unknown"
+
+	-- Some executors put their name in a named environment table or marker.
+	for _, env in ipairs(envs) do
+		for key, label in pairs(MARKER_NAMES) do
+			local value = env[key]
+			if value ~= nil and value ~= false then
+				if type(value) == "table" then
+					for _, getterName in ipairs(ENV_GETTERS) do
+						local getter = value[getterName]
+						if type(getter) == "function" then
+							local name = callNameGetter(getter)
+							if name then
+								return name, key .. "." .. getterName
+							end
+						end
+					end
+					return label, key
+				elseif type(value) == "function" then
+					-- is_sirhurt_closure is the only common function marker.
+					if key == "is_sirhurt_closure" then
+						return label, key
+					end
+				elseif value == true then
+					return label, key
+				end
+			end
+		end
+	end
+
+	-- Last resort: some executors publish their name as a plain environment value.
+	for _, env in ipairs(envs) do
+		for _, key in ipairs({ "ExecutorName", "EXECUTOR_NAME", "executor", "Executor" }) do
+			local name = nameFromValue(env[key])
+			if name then
+				return name, key
+			end
+		end
+	end
+
+	return "Unknown", "none"
 end
 
 function Executor.normalize(name)
@@ -2934,7 +3091,7 @@ local function profileFor(normalized)
 end
 
 function Executor.Detect()
-	local name = readName()
+	local name, source = readName()
 	local normalized = Executor.normalize(name)
 	local capabilities = {
 		Loadstring = hasGlobal("loadstring"),
@@ -2959,6 +3116,7 @@ function Executor.Detect()
 		Normalized = normalized,
 		Known = knownProfile ~= nil,
 		Profile = profile,
+		Source = source,
 		Capabilities = capabilities,
 		DetectedAt = os.time(),
 	}
@@ -3171,6 +3329,10 @@ local SPECS = {
 		{ kind = "ring", x = 0.5, y = 0.5, w = 0.68, h = 0.68, thickness = 0.1 },
 		{ kind = "bar", x = 0.76, y = 0.24, w = 0.22, h = 0.12, rot = 30 },
 		{ kind = "bar", x = 0.76, y = 0.24, w = 0.12, h = 0.2, rot = 30 },
+	},
+	messageCircle = {
+		{ kind = "ring", x = 0.5, y = 0.48, w = 0.8, h = 0.68, thickness = 0.1, corner = 1 },
+		{ kind = "bar", x = 0.76, y = 0.8, w = 0.2, h = 0.1, rot = 45 },
 	},
 	info = {
 		{ kind = "ring", x = 0.5, y = 0.5, w = 0.84, h = 0.84, thickness = 0.1 },
@@ -5078,10 +5240,13 @@ end
 __modules["KeySystem"] = function(require)
 --[[
 	Athena · KeySystem
-	A small local key gate with copyable provider links.
+	A local license-style activation gate with copyable provider links.
 ]]
 
+local Players = game:GetService("Players")
+
 local Util = require("Core.Util")
+local Icons = require("Core.Icons")
 
 local KeySystem = {}
 KeySystem.__index = KeySystem
@@ -5104,12 +5269,16 @@ end
 
 local function normalizeProvider(value)
 	if type(value) == "string" then
-		return { Name = "Get key", Link = value }
+		return { Name = "provider", Link = value }
 	end
 	if type(value) == "table" then
 		local link = value.Link or value.Url or value.URL
 		if type(link) == "string" and link ~= "" then
-			return { Name = tostring(value.Name or "Get key"), Link = link }
+			return {
+				Name = tostring(value.Name or "key"),
+				Link = link,
+				Icon = value.Icon,
+			}
 		end
 	end
 	return nil
@@ -5128,24 +5297,69 @@ local function normalizeProviders(value)
 	return providers
 end
 
-local function getEnvironment()
-	local ok, env = pcall(function()
+local function environments()
+	local list = {}
+	local seen = {}
+
+	local function add(env)
+		if type(env) == "table" and not seen[env] then
+			seen[env] = true
+			table.insert(list, env)
+		end
+	end
+
+	local ok, getgenvFn = pcall(function()
+		return getgenv
+	end)
+	if ok and type(getgenvFn) == "function" then
+		local got, env = pcall(getgenvFn)
+		if got then
+			add(env)
+		end
+	end
+
+	add(_G)
+
+	local gotShared, sharedEnv = pcall(function()
+		return shared
+	end)
+	if gotShared then
+		add(sharedEnv)
+	end
+
+	local gotThread, threadEnv = pcall(function()
 		return getfenv(0)
 	end)
-	if ok and type(env) == "table" then
-		return env
+	if gotThread then
+		add(threadEnv)
 	end
-	return _G
+
+	return list
 end
 
 local function copyText(text)
-	local env = getEnvironment()
-	for _, name in ipairs({ "setclipboard", "toclipboard", "copy" }) do
-		local fn = env and env[name]
-		if type(fn) == "function" then
-			local ok = pcall(fn, text)
-			if ok then
-				return true
+	for _, env in ipairs(environments()) do
+		for _, name in ipairs({ "setclipboard", "toclipboard", "copy" }) do
+			local fn = env[name]
+			if type(fn) == "function" then
+				local ok = pcall(fn, text)
+				if ok then
+					return true
+				end
+			end
+		end
+		for _, executorName in ipairs({ "syn", "fluxus", "krnl", "delta", "wave" }) do
+			local executor = env[executorName]
+			if type(executor) == "table" then
+				for _, name in ipairs({ "setclipboard", "toclipboard", "copy" }) do
+					local fn = executor[name]
+					if type(fn) == "function" then
+						local ok = pcall(fn, text)
+						if ok then
+							return true
+						end
+					end
+				end
 			end
 		end
 	end
@@ -5156,9 +5370,18 @@ local function trimmed(text)
 	return (string.gsub(tostring(text or ""), "^%s+", ""):gsub("%s+$", ""))
 end
 
+local function defaultUsername()
+	local player = Players.LocalPlayer
+	if player then
+		return player.DisplayName or player.Name
+	end
+	return "player"
+end
+
 function KeySystem.new(athena, options)
 	options = options or {}
 	local theme = athena._theme
+	local username = tostring(options.Username or defaultUsername())
 	local self = setmetatable({
 		Athena = athena,
 		Theme = theme,
@@ -5176,7 +5399,7 @@ function KeySystem.new(athena, options)
 	local overlay = Util.Create("TextButton", {
 		Name = "KeySystem",
 		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundColor3 = Color3.fromRGB(8, 9, 11),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		Text = "",
@@ -5186,155 +5409,260 @@ function KeySystem.new(athena, options)
 		Parent = gui,
 	})
 
-	local card = Util.Create("Frame", {
-		Name = "Card",
+	local content = Util.Create("Frame", {
+		Name = "Content",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(460, 380),
-		BackgroundColor3 = theme.Window,
+		Size = UDim2.fromOffset(420, 440),
+		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ZIndex = 301,
 		Parent = overlay,
 	})
-	Util.Corner(card, 18)
-	Util.Stroke(card, theme.Border, 1, 0.05)
 
-	local cardScale = Instance.new("UIScale")
-	cardScale.Scale = 0.92
-	cardScale.Parent = card
+	local contentScale = Instance.new("UIScale")
+	contentScale.Scale = 0.97
+	contentScale.Parent = content
 
-	local title = Util.Create("TextLabel", {
-		Name = "Title",
-		Position = UDim2.fromOffset(24, 22),
-		Size = UDim2.new(1, -48, 0, 24),
+	local logoRow = Util.Create("Frame", {
+		Name = "Brand",
+		AnchorPoint = Vector2.new(0.5, 0),
+		Position = UDim2.new(0.5, 0, 0, 0),
+		Size = UDim2.fromOffset(126, 26),
 		BackgroundTransparency = 1,
-		Text = options.Title or "Key system",
+		BorderSizePixel = 0,
+		ZIndex = 302,
+		Parent = content,
+	})
+
+	local brandMark = Icons.New("athena", 22, theme.Text, logoRow, 303)
+	brandMark.Frame.Position = UDim2.fromOffset(0, 2)
+
+	Util.Create("TextLabel", {
+		Name = "BrandName",
+		Position = UDim2.fromOffset(32, 0),
+		Size = UDim2.new(1, -32, 1, 0),
+		BackgroundTransparency = 1,
+		Text = options.Brand or "Athena",
 		Font = theme.FontBold,
-		TextSize = 19,
+		TextSize = 18,
 		TextColor3 = theme.Text,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
-		ZIndex = 302,
-		Parent = card,
+		ZIndex = 303,
+		Parent = logoRow,
 	})
 
-	local subtitle = Util.Create("TextLabel", {
-		Name = "Subtitle",
-		Position = UDim2.fromOffset(24, 50),
-		Size = UDim2.new(1, -48, 0, 20),
+	local title = Util.Create("TextLabel", {
+		Name = "Title",
+		Position = UDim2.fromOffset(0, 38),
+		Size = UDim2.new(1, 0, 0, 38),
 		BackgroundTransparency = 1,
-		Text = options.Subtitle or "Enter your key to continue.",
-		Font = theme.Font,
-		TextSize = 11,
-		TextColor3 = theme.TextMuted,
-		TextXAlignment = Enum.TextXAlignment.Left,
+		Text = options.Title or "Activate Athena",
+		Font = theme.FontBold,
+		TextSize = 30,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Center,
 		TextYAlignment = Enum.TextYAlignment.Center,
-		TextWrapped = true,
 		ZIndex = 302,
-		Parent = card,
+		Parent = content,
+	})
+
+	local signedIn = Util.Create("TextLabel", {
+		Name = "SignedIn",
+		Position = UDim2.fromOffset(0, 82),
+		Size = UDim2.new(1, 0, 0, 18),
+		BackgroundTransparency = 1,
+		Text = options.SignedInText or options.Subtitle or ("Signed in as " .. username),
+		Font = theme.Font,
+		TextSize = 12,
+		TextColor3 = theme.TextMuted,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 302,
+		Parent = content,
 	})
 
 	local input = Util.Create("TextBox", {
-		Name = "KeyInput",
-		Position = UDim2.fromOffset(24, 84),
-		Size = UDim2.new(1, -48, 0, 38),
-		BackgroundColor3 = theme.SurfaceAlt,
+		Name = "LicenseKey",
+		Position = UDim2.fromOffset(0, 118),
+		Size = UDim2.new(1, 0, 0, 52),
+		BackgroundColor3 = theme.Surface,
+		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
 		Text = "",
-		PlaceholderText = options.Placeholder or "Enter key",
+		PlaceholderText = options.Placeholder or "License key",
 		PlaceholderColor3 = theme.TextFaint,
 		Font = theme.Font,
-		TextSize = 12,
+		TextSize = 13,
 		TextColor3 = theme.Text,
 		TextXAlignment = Enum.TextXAlignment.Left,
 		TextYAlignment = Enum.TextYAlignment.Center,
 		ClearTextOnFocus = false,
 		ZIndex = 302,
-		Parent = card,
+		Parent = content,
 	})
-	Util.Corner(input, 8)
-	local inputStroke = Util.Stroke(input, theme.Border, 1, 0.1)
-	Util.Padding(input, 0, 12, 0, 12)
-
-	local submit = Util.Create("TextButton", {
-		Name = "Submit",
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -24, 0, 132),
-		Size = UDim2.fromOffset(92, 34),
-		BackgroundColor3 = theme.Primary,
-		BorderSizePixel = 0,
-		Text = "Unlock",
-		Font = theme.FontBold,
-		TextSize = 11.5,
-		TextColor3 = theme.PrimaryText,
-		AutoButtonColor = false,
-		ZIndex = 302,
-		Parent = card,
-	})
-	Util.Corner(submit, 17)
+	Util.Corner(input, 10)
+	local inputStroke = Util.Stroke(input, theme.Border, 1, 0.05)
+	Util.Padding(input, 0, 16, 0, 16)
 
 	local status = Util.Create("TextLabel", {
 		Name = "Status",
-		Position = UDim2.fromOffset(24, 174),
-		Size = UDim2.new(1, -48, 0, 28),
+		Position = UDim2.fromOffset(0, 174),
+		Size = UDim2.new(1, 0, 0, 20),
 		BackgroundTransparency = 1,
 		Text = "",
 		Font = theme.Font,
 		TextSize = 10.5,
 		TextColor3 = theme.TextMuted,
 		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Top,
+		TextYAlignment = Enum.TextYAlignment.Center,
 		TextWrapped = true,
 		ZIndex = 302,
-		Parent = card,
+		Parent = content,
 	})
 
-	local providerLabel = Util.Create("TextLabel", {
-		Name = "ProviderLabel",
-		Position = UDim2.fromOffset(24, 214),
-		Size = UDim2.new(1, -48, 0, 16),
-		BackgroundTransparency = 1,
-		Text = "Get a key",
+	local submit = Util.Create("TextButton", {
+		Name = "Activate",
+		Position = UDim2.fromOffset(0, 202),
+		Size = UDim2.new(1, 0, 0, 52),
+		BackgroundColor3 = theme.SurfaceAlt,
+		BorderSizePixel = 0,
+		Text = "Activate",
 		Font = theme.FontBold,
-		TextSize = 10.5,
+		TextSize = 13.5,
 		TextColor3 = theme.TextMuted,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		TextYAlignment = Enum.TextYAlignment.Center,
+		AutoButtonColor = false,
 		ZIndex = 302,
-		Parent = card,
+		Parent = content,
+	})
+	Util.Corner(submit, 26)
+
+	local divider = Util.Create("Frame", {
+		Name = "Or",
+		Position = UDim2.fromOffset(0, 270),
+		Size = UDim2.new(1, 0, 0, 16),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 302,
+		Parent = content,
+	})
+	Util.Create("Frame", {
+		Name = "LeftLine",
+		AnchorPoint = Vector2.new(0, 0.5),
+		Position = UDim2.fromOffset(0, 8),
+		Size = UDim2.fromOffset(170, 1),
+		BackgroundColor3 = theme.Border,
+		BorderSizePixel = 0,
+		ZIndex = 302,
+		Parent = divider,
+	})
+	Util.Create("Frame", {
+		Name = "RightLine",
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, 0, 0, 8),
+		Size = UDim2.fromOffset(170, 1),
+		BackgroundColor3 = theme.Border,
+		BorderSizePixel = 0,
+		ZIndex = 302,
+		Parent = divider,
+	})
+	Util.Create("TextLabel", {
+		Name = "OrLabel",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(40, 16),
+		BackgroundTransparency = 1,
+		Text = "or",
+		Font = theme.Font,
+		TextSize = 11,
+		TextColor3 = theme.TextFaint,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		ZIndex = 303,
+		Parent = divider,
 	})
 
 	local providerList = Util.Create("ScrollingFrame", {
 		Name = "Providers",
-		Position = UDim2.fromOffset(24, 236),
-		Size = UDim2.new(1, -48, 0, 112),
+		Position = UDim2.fromOffset(0, 292),
+		Size = UDim2.new(1, 0, 0, 92),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		CanvasSize = UDim2.new(0, 0, 0, 0),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
-		ScrollBarThickness = 3,
-		ScrollBarImageColor3 = theme.Border,
-		ScrollBarImageTransparency = 0.2,
+		ScrollBarThickness = 0,
 		ZIndex = 302,
-		Parent = card,
+		Parent = content,
 	})
-	Util.List(providerList, 4, Enum.HorizontalAlignment.Center)
+	Util.List(providerList, 8, Enum.HorizontalAlignment.Center)
+
+	local footer = Util.Create("Frame", {
+		Name = "Footer",
+		Position = UDim2.fromOffset(0, 400),
+		Size = UDim2.new(1, 0, 0, 20),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		ZIndex = 302,
+		Parent = content,
+	})
+
+	local note = Util.Create("TextLabel", {
+		Name = "Note",
+		Size = UDim2.new(1, -94, 1, 0),
+		BackgroundTransparency = 1,
+		Text = options.Note or "Keys stack onto whatever time you have left.",
+		Font = theme.Font,
+		TextSize = 10.5,
+		TextColor3 = theme.TextMuted,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 302,
+		Parent = footer,
+	})
+
+	local signOut = Util.Create("TextButton", {
+		Name = "SignOut",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.fromOffset(84, 20),
+		BackgroundTransparency = 1,
+		BorderSizePixel = 0,
+		Text = options.SignOutText or "Sign out",
+		Font = theme.FontBold,
+		TextSize = 10.5,
+		TextColor3 = theme.Text,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		TextYAlignment = Enum.TextYAlignment.Center,
+		AutoButtonColor = false,
+		ZIndex = 302,
+		Parent = footer,
+	})
 
 	self.Overlay = overlay
-	self.Card = card
-	self.CardScale = cardScale
+	self.Content = content
+	self.ContentScale = contentScale
 	self.TitleLabel = title
-	self.SubtitleLabel = subtitle
+	self.SignedInLabel = signedIn
 	self.Input = input
 	self.InputStroke = inputStroke
 	self.Submit = submit
 	self.Status = status
 	self.ProviderList = providerList
+	self.NoteLabel = note
+	self.SignOut = signOut
 
 	function self:_SetStatus(text, isError)
 		status.Text = text or ""
 		status.TextColor3 = isError and Color3.fromRGB(255, 116, 116) or theme.TextMuted
+	end
+
+	local function refreshSubmit()
+		local hasText = trimmed(input.Text) ~= ""
+		submit.BackgroundColor3 = hasText and theme.Primary or theme.SurfaceAlt
+		submit.TextColor3 = hasText and theme.PrimaryText or theme.TextMuted
 	end
 
 	function self:_RefreshProviders()
@@ -5354,7 +5682,7 @@ function KeySystem.new(athena, options)
 				Font = theme.Font,
 				TextSize = 10.5,
 				TextColor3 = theme.TextFaint,
-				TextXAlignment = Enum.TextXAlignment.Left,
+				TextXAlignment = Enum.TextXAlignment.Center,
 				TextYAlignment = Enum.TextYAlignment.Center,
 				ZIndex = 303,
 				Parent = providerList,
@@ -5362,30 +5690,62 @@ function KeySystem.new(athena, options)
 			return
 		end
 
+		local providerText = options.ProviderText or "Get a free key on %s"
 		for index, provider in ipairs(self.Providers) do
 			local button = Util.Create("TextButton", {
 				Name = "Provider_" .. tostring(index),
 				LayoutOrder = index,
-				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = theme.SurfaceAlt,
+				Size = UDim2.new(1, 0, 0, 48),
+				BackgroundColor3 = theme.Surface,
+				BackgroundTransparency = 1,
 				BorderSizePixel = 0,
-				Text = "Get key — " .. provider.Name,
-				Font = theme.FontMedium,
-				TextSize = 10.5,
-				TextColor3 = theme.TextSoft,
-				TextXAlignment = Enum.TextXAlignment.Left,
+				Text = "",
 				AutoButtonColor = false,
 				ZIndex = 303,
 				Parent = providerList,
 			})
-			Util.Corner(button, 7)
-			Util.Padding(button, 0, 10, 0, 10)
+			Util.Corner(button, 24)
+			local stroke = Util.Stroke(button, theme.Border, 1, 0.05)
+
+			local row = Util.Create("Frame", {
+				Name = "Row",
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				ZIndex = 304,
+				Parent = button,
+			})
+			local layout = Instance.new("UIListLayout")
+			layout.FillDirection = Enum.FillDirection.Horizontal
+			layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			layout.VerticalAlignment = Enum.VerticalAlignment.Center
+			layout.Padding = UDim.new(0, 8)
+			layout.Parent = row
+
+			Icons.New(provider.Icon or "messageCircle", 15, theme.TextSoft, row, 304)
+
+			Util.Create("TextLabel", {
+				Name = "Label",
+				AutomaticSize = Enum.AutomaticSize.X,
+				Size = UDim2.fromOffset(0, 20),
+				BackgroundTransparency = 1,
+				Text = string.format(providerText, provider.Name),
+				Font = theme.FontMedium,
+				TextSize = 12,
+				TextColor3 = theme.TextSoft,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextYAlignment = Enum.TextYAlignment.Center,
+				ZIndex = 304,
+				Parent = row,
+			})
 
 			self.ProviderMaid:Add(button.MouseEnter:Connect(function()
-				Util.Tween(button, { BackgroundColor3 = theme.SurfaceHover }, 0.1)
+				Util.Tween(button, { BackgroundTransparency = 0.55 }, 0.12)
+				Util.Tween(stroke, { Transparency = 0 }, 0.12)
 			end))
 			self.ProviderMaid:Add(button.MouseLeave:Connect(function()
-				Util.Tween(button, { BackgroundColor3 = theme.SurfaceAlt }, 0.1)
+				Util.Tween(button, { BackgroundTransparency = 1 }, 0.12)
+				Util.Tween(stroke, { Transparency = 0.05 }, 0.12)
 			end))
 			self.ProviderMaid:Add(button.MouseButton1Click:Connect(function()
 				if copyText(provider.Link) then
@@ -5432,18 +5792,31 @@ function KeySystem.new(athena, options)
 		end
 	end
 
+	function self:SignOut()
+		Util.Safe(self.Options.OnSignOut)
+		if self.Destroyed then
+			return
+		end
+		self.Unlocked = false
+		input.Text = ""
+		refreshSubmit()
+		self:_SetStatus("")
+		self:Show()
+	end
+
 	function self:Show()
 		if self.Destroyed then
 			return
 		end
 		self.Visible = true
 		overlay.Visible = true
-		overlay.BackgroundTransparency = 0.7
-		cardScale.Scale = 0.92
+		overlay.BackgroundTransparency = 1
+		contentScale.Scale = 0.97
 		input.Text = ""
+		refreshSubmit()
 		self:_SetStatus("")
-		Util.Tween(overlay, { BackgroundTransparency = 0.45 }, 0.2)
-		Util.Tween(cardScale, { Scale = 1 }, 0.26, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(overlay, { BackgroundTransparency = 0.04 }, 0.2)
+		Util.Tween(contentScale, { Scale = 1 }, 0.28, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		task.defer(function()
 			if self.Visible and not self.Destroyed then
 				input:CaptureFocus()
@@ -5457,7 +5830,7 @@ function KeySystem.new(athena, options)
 		end
 		self.Visible = false
 		Util.Tween(overlay, { BackgroundTransparency = 1 }, 0.16)
-		Util.Tween(cardScale, { Scale = 0.94 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+		Util.Tween(contentScale, { Scale = 0.98 }, 0.16, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 		task.delay(0.18, function()
 			if not self.Visible and not self.Destroyed then
 				overlay.Visible = false
@@ -5489,6 +5862,10 @@ function KeySystem.new(athena, options)
 		self:_RefreshProviders()
 	end
 
+	function self:SetSignedIn(text)
+		signedIn.Text = tostring(text or "")
+	end
+
 	function self:IsUnlocked()
 		return self.Unlocked
 	end
@@ -5510,21 +5887,36 @@ function KeySystem.new(athena, options)
 		Util.Tween(inputStroke, { Color = theme.Primary, Transparency = 0.15 }, 0.12)
 	end))
 	self.Maid:Add(input.FocusLost:Connect(function(enterPressed)
-		Util.Tween(inputStroke, { Color = theme.Border, Transparency = 0.1 }, 0.12)
+		Util.Tween(inputStroke, { Color = theme.Border, Transparency = 0.05 }, 0.12)
 		if enterPressed then
 			self:Submit()
 		end
 	end))
+	self.Maid:Add(input.TextChanged:Connect(function()
+		refreshSubmit()
+	end))
 	self.Maid:Add(submit.MouseEnter:Connect(function()
-		Util.Tween(submit, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
+		if trimmed(input.Text) ~= "" then
+			Util.Tween(submit, { BackgroundColor3 = theme.PrimaryHover }, 0.12)
+		end
 	end))
 	self.Maid:Add(submit.MouseLeave:Connect(function()
-		Util.Tween(submit, { BackgroundColor3 = theme.Primary }, 0.12)
+		refreshSubmit()
 	end))
 	self.Maid:Add(submit.MouseButton1Click:Connect(function()
 		self:Submit()
 	end))
+	self.Maid:Add(signOut.MouseEnter:Connect(function()
+		Util.Tween(signOut, { TextColor3 = theme.TextSoft }, 0.12)
+	end))
+	self.Maid:Add(signOut.MouseLeave:Connect(function()
+		Util.Tween(signOut, { TextColor3 = theme.Text }, 0.12)
+	end))
+	self.Maid:Add(signOut.MouseButton1Click:Connect(function()
+		self:SignOut()
+	end))
 
+	refreshSubmit()
 	self:_RefreshProviders()
 	return self
 end
@@ -9488,7 +9880,7 @@ local Window = require("Window")
 
 local Athena = {}
 
-Athena.Version = "1.4.0"
+Athena.Version = "1.5.0"
 Athena.Themes = Theme.Presets
 Athena.Executor = Executor.Detect()
 Athena.FeatureRequirements = {

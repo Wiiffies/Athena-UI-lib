@@ -202,6 +202,10 @@ local SPECS = {
 		{ kind = "bar", x = 0.76, y = 0.24, w = 0.22, h = 0.12, rot = 30 },
 		{ kind = "bar", x = 0.76, y = 0.24, w = 0.12, h = 0.2, rot = 30 },
 	},
+	messageCircle = {
+		{ kind = "ring", x = 0.5, y = 0.48, w = 0.8, h = 0.68, thickness = 0.1, corner = 1 },
+		{ kind = "bar", x = 0.76, y = 0.8, w = 0.2, h = 0.1, rot = 45 },
+	},
 	info = {
 		{ kind = "ring", x = 0.5, y = 0.5, w = 0.84, h = 0.84, thickness = 0.1 },
 		{ kind = "bar", x = 0.5, y = 0.3, w = 0.13, h = 0.13 },

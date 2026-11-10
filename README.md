@@ -22,12 +22,13 @@ interface library, written in Luau.
 - A draggable bottom-right quick menu that stays visible with the window; **K** hides and shows both the main window and the palette. It has search, animated text-only command rows and window actions. The old floating grid trigger is gone.
 - A draggable dynamic island pinned to the top centre. It expands downward without moving its top edge. The collapsed pill shows the avatar, username, runtime, FPS and ping; click it for uptime, FPS, ping, memory, player count and local time. It clamps to every edge while dragging without clipping.
 - One `loadstring` for in-game use, plus a Rojo-ready module tree in `src/`.
+- A local license-style activation gate with a signed-in name, copyable provider links and a sign-out callback.
 
 ## Quick start
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.5.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -40,15 +41,19 @@ local Window = Athena:CreateWindow({
 -- Force the draggable top-centre island on (it is enabled by default).
 Window:SetDynamicIslandEnabled(true)
 
--- Local key gate. Change the demo key and provider links for your own build.
+-- Local license-style gate (demo key: athena). Your Roblox display name is shown by default.
 local KeySystem = Athena:CreateKeySystem({
     Keys = { "athena" },
-    Subtitle = "Demo key: athena",
+    Title = "Activate Athena",
+    Note = "Keys stack onto whatever time you have left.",
     Providers = {
         { Name = "GitHub", Link = "https://github.com/Wiiffies/Athena-UI-lib" },
     },
     OnSuccess = function()
         Window:Show()
+    end,
+    OnSignOut = function()
+        Window:Hide(true)
     end,
 })
 Window:Hide(true)
@@ -154,7 +159,7 @@ disable it). **K** does the same pair. The palette is visible whenever the windo
 commands leave it open. The window is draggable from the title bar and scales with the viewport.
 Every window also creates the quick menu automatically; pass `QuickMenu = false` to turn it off.
 
-The small `v1.4.0` tag beside the Athena brand confirms which bundle an executor actually loaded.
+The small `v1.5.0` tag beside the Athena brand confirms which bundle an executor actually loaded.
 Keep the cache-busting query in the URL current when you update the library.
 
 The dynamic island is created automatically at the top centre and grows downward from its top
@@ -183,7 +188,7 @@ an executor.
 -- Every component in one script. RightShift hides/shows the window.
 
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.5.0"
 ))()
 
 local Window = Athena:CreateWindow({
@@ -525,7 +530,7 @@ returns the library table, so all you need is:
 
 ```lua
 local Athena = loadstring(game:HttpGet(
-    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.4.0"
+    "https://raw.githubusercontent.com/Wiiffies/Athena-UI-lib/main/dist/Athena.luau?v=1.5.0"
 ))()
 ```
 

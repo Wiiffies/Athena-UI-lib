@@ -25,7 +25,7 @@ local Window = require(script.Window)
 
 local Athena = {}
 
-Athena.Version = "1.4.0"
+Athena.Version = "1.5.0"
 Athena.Themes = Theme.Presets
 Athena.Executor = Executor.Detect()
 Athena.FeatureRequirements = {
